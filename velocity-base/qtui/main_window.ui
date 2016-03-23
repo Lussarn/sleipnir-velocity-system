@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>990</width>
+    <height>952</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Speed</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QLabel" name="label_video1">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>70</y>
+      <width>480</width>
+      <height>720</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_video2">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>70</y>
+      <width>480</width>
+      <height>720</height>
+     </rect>
+    </property>
+    <property name="frameShape">
+     <enum>QFrame::Box</enum>
+    </property>
+    <property name="text">
+     <string/>
+    </property>
+   </widget>
+   <widget class="QSlider" name="slider_video1">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>790</y>
+      <width>391</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QSlider" name="slider_video2">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>790</y>
+      <width>391</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_time_video1">
+    <property name="geometry">
+     <rect>
+      <x>410</x>
+      <y>780</y>
+      <width>81</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>00:00.000</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_time_video2">
+    <property name="geometry">
+     <rect>
+      <x>900</x>
+      <y>780</y>
+      <width>81</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>00:00.000 </string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video2_copy">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>820</y>
+      <width>111</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Copy left</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video1_copy">
+    <property name="geometry">
+     <rect>
+      <x>380</x>
+      <y>820</y>
+      <width>111</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Copy right</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video1_find">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>820</y>
+      <width>71</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Find</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video2_find">
+    <property name="geometry">
+     <rect>
+      <x>690</x>
+      <y>820</y>
+      <width>71</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Find</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video1_playbackward">
+    <property name="geometry">
+     <rect>
+      <x>90</x>
+      <y>820</y>
+      <width>51</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video1_backstep">
+    <property name="geometry">
+     <rect>
+      <x>130</x>
+      <y>820</y>
+      <width>51</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video1_forwardstep">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>820</y>
+      <width>51</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video1_playforward">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>820</y>
+      <width>51</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video2_playbackward">
+    <property name="geometry">
+     <rect>
+      <x>770</x>
+      <y>820</y>
+      <width>51</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video2_backstep">
+    <property name="geometry">
+     <rect>
+      <x>810</x>
+      <y>820</y>
+      <width>51</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&lt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video2_forwardstep">
+    <property name="geometry">
+     <rect>
+      <x>890</x>
+      <y>820</y>
+      <width>51</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video2_playforward">
+    <property name="geometry">
+     <rect>
+      <x>930</x>
+      <y>820</y>
+      <width>51</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>&gt;&gt;</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_start">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>860</y>
+      <width>151</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Start cameras</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_speed">
+    <property name="geometry">
+     <rect>
+      <x>670</x>
+      <y>870</y>
+      <width>311</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-size: 30px;</string>
+    </property>
+    <property name="text">
+     <string>Speed: 178.4Kmh</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video2_pause">
+    <property name="geometry">
+     <rect>
+      <x>850</x>
+      <y>820</y>
+      <width>51</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>||</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_video1_pause">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>820</y>
+      <width>51</width>
+      <height>32</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>||</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_video1_online">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>20</y>
+      <width>181</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-size: 20px;</string>
+    </property>
+    <property name="text">
+     <string>Waiting...</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_video2_online">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>20</y>
+      <width>161</width>
+      <height>41</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">font-size: 20px;</string>
+    </property>
+    <property name="text">
+     <string>Waiting...</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushbutton_stop">
+    <property name="geometry">
+     <rect>
+      <x>170</x>
+      <y>860</y>
+      <width>151</width>
+      <height>61</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Stop Cameras</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="lineEdit_distance">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>890</y>
+      <width>113</width>
+      <height>33</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>340</x>
+      <y>870</y>
+      <width>111</width>
+      <height>21</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Distance meters</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_video1_align">
+    <property name="geometry">
+     <rect>
+      <x>375</x>
+      <y>30</y>
+      <width>111</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Align Camera</string>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_video2_align">
+    <property name="geometry">
+     <rect>
+      <x>860</x>
+      <y>30</y>
+      <width>111</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Align Camera</string>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
