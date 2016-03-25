@@ -1,0 +1,4 @@
+gcc -c sleipnir.c -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/ -I/opt/vc/include/interface/vmcs_host/linux/
+gcc -c RaspiCamControl.c -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/ -I/opt/vc/include/interface/vmcs_host/linux/
+gcc -c RaspiCLI.c -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/ -I/opt/vc/include/interface/vmcs_host/linux/
+gcc -o sleipnir *.o -L/opt/vc/lib -lvcos -lbcm_host -lturbojpeg -lb64 -lcurl -lpthread -lmmal_core -lmmal -lmmal_components -lmmal_util
