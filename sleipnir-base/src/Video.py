@@ -206,8 +206,6 @@ class Video:
             if motion["motion"]:
                self.timer.stop()
 
-
-
       self.update(image)
 
    def have_motion(self, image_pil):
@@ -283,6 +281,11 @@ class Video:
       if not frame:
          return
 
+      local_timestamp = frame["timestamp"] - self.start_timestamp
+      if (local_timestamp < 0):
+         local_timestamp = 0
+      self.labelTime.setText(self.__format_time(local_timestamp))
+
       if use_image:
          frame["image"] = use_image
 
@@ -290,11 +293,6 @@ class Video:
          self.slider.setSliderPosition(1)
       else:
          self.slider.setSliderPosition(self.current_frame_number)
-
-      local_timestamp = frame["timestamp"] - self.start_timestamp
-      if (local_timestamp < 0):
-         local_timestamp = 0
-      self.labelTime.setText(self.__format_time(local_timestamp))
 
       image_pil = frame["image"];
       draw = ImageDraw.Draw(image_pil)
