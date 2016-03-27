@@ -12,6 +12,7 @@ import logging
 import base64
 import sys
 import os
+import shutil
 
 import CamerasData
 
@@ -19,7 +20,8 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 class ServerData:
-   basedir = "/home/linus/rctest/3/"
+   camera_directory_base = ""
+   flight_number = 1
    taking_pictures = False
    last_picture_timestamp = 0
    fetching_pictures = False
@@ -54,20 +56,25 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
 
    def mkdir(self, cam):
       global ServerData
-      camdir = ServerData.basedir + "/"  + cam
-      if not os.path.exists(camdir):
-         os.mkdir(camdir);
+      flight_dir = os.path.join(ServerData.camera_directory_base, str(ServerData.flight_number))
+      if not os.path.exists(flight_dir):
+         os.mkdir(flight_dir);
 
-   def saveFrame(self, id, frame, data, timestamp):
+      cam_dir = os.path.join(flight_dir, cam)
+      if not os.path.exists(cam_dir):
+         os.mkdir(cam_dir);
+
+
+   def saveFrame(self, cam, frame, data, timestamp):
       global ServerData
-      camdir = ServerData.basedir + "/"  + id
+      cam_dir = os.path.join(ServerData.camera_directory_base, str(ServerData.flight_number), str(cam))
 
-      filename = camdir + "/" + str((frame / 100) *100).zfill(6) 
-      if not os.path.exists(filename):
-         os.mkdir(filename);
+      picture_directory = os.path.join(cam_dir, str((frame / 100) *100).zfill(6))
+      if not os.path.exists(picture_directory):
+         os.mkdir(picture_directory);
 
-      filename = camdir + "/" + str((frame / 100) *100).zfill(6) + "/image" + str(frame).zfill(9) + ".jpg"
-      file = open(filename, "w")
+      picture_filename = os.path.join(picture_directory, "image" + str(frame).zfill(9) + ".jpg")
+      file = open(picture_filename, "w")
       file.write(data)
       file.close()
 
@@ -136,9 +143,8 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
          # First frame create dir and open timestamp file
          if (imageNum == 1):
             self.mkdir(id)
-            camdir = ServerData.basedir + "/"  + id
-            filename = camdir + "/timestamps.txt"
-            ServerData.timestamp_file[id] = open(filename, "w")
+            filename_timestamp = os.path.join(ServerData.camera_directory_base, str(ServerData.flight_number), id, "timestamps.txt")
+            ServerData.timestamp_file[id] = open(filename_timestamp, "w")
 
          if ServerData.debug:
             print "uploadpictures", id, imageNum, timestamp;
@@ -161,8 +167,6 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
       self.wfile.write(msg);
       self.wfile.close();      
 
-
-
 def __startHTTP(threadName, delay):
    server = ThreadingSimpleServer(('', port), MyRequestHandler)
    while True:
@@ -173,10 +177,16 @@ def is_shooting():
    global ServerData
    return ServerData.fetching_pictures
 
-def start_shooting(cameras_data):
+def start_shooting(cameras_data, flight_number):
    global ServerData
    if not ServerData.ready:
       return False
+
+   ServerData.camdir = os.path.join(ServerData.camdir, str(flight_number))
+   try:
+      shutil.rmtree(ServerData.camdir)
+   except:
+      pass
 
    ServerData.cameras_data = cameras_data
    ServerData.ready = False

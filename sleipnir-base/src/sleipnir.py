@@ -15,10 +15,16 @@ import CameraServer
 class WindowMain(QtGui.QMainWindow):
 
    def __init__(self):
+      self.cameras_directory_base = "/home/linus/rctest/"
+      CameraServer.ServerData.camdir = self.cameras_directory_base
+
+
       self.cameras_data = None
       self.cameras_data = CamerasData.CamerasData()
 
       self.videos = {}
+
+      self.radio_buttons_flights = {}
 
       self.online_cam1 = False
       self.online_cam2 = False
@@ -34,9 +40,33 @@ class WindowMain(QtGui.QMainWindow):
       QtGui.QMainWindow.__init__(self)
       self.ui = Ui_MainWindow()
       self.ui.setupUi(self)
+      self.setWindowTitle("Sleipnir Velocity")
 
       self.ui.label_video1_online.setText("Cam1: Offline")
       self.ui.label_video2_online.setText("Cam2: Offline")
+
+      self.radio_buttons_flights[0] = self.ui.radioButton_flight_1
+      self.radio_buttons_flights[1] = self.ui.radioButton_flight_2
+      self.radio_buttons_flights[2] = self.ui.radioButton_flight_3
+      self.radio_buttons_flights[3] = self.ui.radioButton_flight_4
+      self.radio_buttons_flights[4] = self.ui.radioButton_flight_5
+      self.radio_buttons_flights[5] = self.ui.radioButton_flight_6
+      self.radio_buttons_flights[6] = self.ui.radioButton_flight_7
+      self.radio_buttons_flights[7] = self.ui.radioButton_flight_8
+      self.radio_buttons_flights[8] = self.ui.radioButton_flight_9
+      self.radio_buttons_flights[9] = self.ui.radioButton_flight_10
+      self.radio_buttons_flights[10] = self.ui.radioButton_flight_11
+      self.radio_buttons_flights[11] = self.ui.radioButton_flight_12
+      self.radio_buttons_flights[12] = self.ui.radioButton_flight_13
+      self.radio_buttons_flights[13] = self.ui.radioButton_flight_14
+      self.radio_buttons_flights[14] = self.ui.radioButton_flight_15
+      self.radio_buttons_flights[15] = self.ui.radioButton_flight_16
+      self.radio_buttons_flights[16] = self.ui.radioButton_flight_17
+      self.radio_buttons_flights[17] = self.ui.radioButton_flight_18
+      self.radio_buttons_flights[18] = self.ui.radioButton_flight_19
+      self.radio_buttons_flights[19] = self.ui.radioButton_flight_20
+      for i in xrange(0,20):
+         self.radio_buttons_flights[i].clicked.connect(self.__flight_number_clicked)
 
       self.videos[0] = Video(
          "cam1",
@@ -67,19 +97,7 @@ class WindowMain(QtGui.QMainWindow):
       self.videos[0].set_sibling_video(self.videos[1])
       self.videos[1].set_sibling_video(self.videos[0])
 
-
-#      self.cameras_data.load()
-#      self.videos[0].cameras_data = self.cameras_data
-#      self.videos[1].cameras_data = self.cameras_data
-#      self.videos[0].slider.setMinimum(1)
-#      self.videos[0].slider.setMaximum(self.cameras_data.get_last_frame("cam1"))
-#      self.videos[1].slider.setMinimum(1)
-#      self.videos[1].slider.setMaximum(self.cameras_data.get_last_frame("cam2"))
-#      self.videos[0].setStartTimestamp(self.cameras_data.get_start_timestamp())
-#      self.videos[1].setStartTimestamp(self.cameras_data.get_start_timestamp())
-#      self.videos[0].set_current_frame_number(1)
-#      self.videos[1].set_current_frame_number(1)
-
+      self.load_flight(1)
 
       self.ui.label_speed.setText("")
 
@@ -99,6 +117,31 @@ class WindowMain(QtGui.QMainWindow):
       self.timer = QtCore.QTimer(self)
       self.timer.timeout.connect(self.__timerGui)
       self.timer.start(20)
+
+   def load_flight(self, flight_number):
+      self.radio_buttons_flights[flight_number - 1].setChecked(True)
+
+      self.cameras_data.load(self.cameras_directory_base, flight_number)
+      self.videos[0].cameras_data = self.cameras_data
+      self.videos[1].cameras_data = self.cameras_data
+      self.videos[0].camdir = os.path.join(self.cameras_directory_base, str(flight_number), "cam1")
+      self.videos[1].camdir = os.path.join(self.cameras_directory_base, str(flight_number), "cam2")
+      self.videos[0].slider.setMinimum(1)
+      self.videos[0].slider.setMaximum(self.cameras_data.get_last_frame("cam1"))
+      self.videos[1].slider.setMinimum(1)
+      self.videos[1].slider.setMaximum(self.cameras_data.get_last_frame("cam2"))
+      self.videos[0].setStartTimestamp(self.cameras_data.get_start_timestamp())
+      self.videos[1].setStartTimestamp(self.cameras_data.get_start_timestamp())
+      self.videos[0].set_current_frame_number(1)
+      self.videos[1].set_current_frame_number(1)
+      self.videos[0].update();
+      self.videos[1].update();
+
+   def __flight_number_clicked(self):
+      for i in xrange(0,20):
+         if self.radio_buttons_flights[i].isChecked():
+            break
+      self.load_flight(i + 1)
 
    def __on_distance_changed(self, value):
       try:
@@ -218,11 +261,14 @@ class WindowMain(QtGui.QMainWindow):
          else:
             kmh = 0
          if (kmh > 999 or kmh  < 10):
-            speed_text = "Speed: Out of range"
+            speed_text = "Out of range"
+            time_text = "Out of range"
          else:
-            speed_text = 'Speed: {1:.{0}f} km/h'.format(1, kmh)
+            speed_text = '{1:.{0}f} km/h'.format(1, kmh)
+            time_text = '{1:.{0}f} sec'.format(3, float(milliseconds) / 1000)
 
          self.ui.label_speed.setText(speed_text)
+         self.ui.label_time.setText(time_text)
 
    def align_cam1(self):
       if (self.aligning_cam1):
@@ -233,7 +279,7 @@ class WindowMain(QtGui.QMainWindow):
          self.videos[0].set_shooting(True)
          self.cameras_data = CamerasData.CamerasData()
          self.videos[0].cameras_data = self.cameras_data
-         CameraServer.start_shooting(self.cameras_data)
+         CameraServer.start_shooting(self.cameras_data, 1)
          self.enable_all_gui_elements(False)
          self.ui.pushButton_video1_align.setText("Stop")
 
@@ -246,13 +292,19 @@ class WindowMain(QtGui.QMainWindow):
          self.videos[1].set_shooting(True)
          self.cameras_data = CamerasData.CamerasData()
          self.videos[1].cameras_data = self.cameras_data
-         CameraServer.start_shooting(self.cameras_data)
+         CameraServer.start_shooting(self.cameras_data, 1)
          self.enable_all_gui_elements(False)
          self.ui.pushButton_video2_align.setText("Stop")
 
    def startCameras(self):
       if not CameraServer.is_ready():
          return False
+
+      for flight_number in xrange(0,20):
+         if self.radio_buttons_flights[flight_number].isChecked():
+            break
+      flight_number += 1
+
       self.ui.label_speed.setText("")
       self.stop_camera_wait = False
       self.shooting = True
@@ -263,7 +315,9 @@ class WindowMain(QtGui.QMainWindow):
       self.cameras_data = CamerasData.CamerasData()
       self.videos[0].cameras_data = self.cameras_data
       self.videos[1].cameras_data = self.cameras_data
-      CameraServer.start_shooting(self.cameras_data)
+      CameraServer.ServerData.flight_number = flight_number
+      CameraServer.ServerData.camera_directory_base = self.cameras_directory_base
+      CameraServer.start_shooting(self.cameras_data, flight_number)
  
    def stopCameras(self):
       self.stop_camera_wait = True
@@ -293,6 +347,9 @@ class WindowMain(QtGui.QMainWindow):
       self.ui.pushbutton_stop.setEnabled(enabled)
       self.ui.pushbutton_start.setEnabled(enabled)
 
+      for i in xrange(0,20):
+         self.radio_buttons_flights[i].setEnabled(enabled)
+
 
 if __name__ == '__main__':
    import sys
@@ -305,6 +362,6 @@ if __name__ == '__main__':
       var = traceback.format_exc()
       msg_box = QtGui.QMessageBox()
       msg_box.setIcon(QtGui.QMessageBox.Critical)
-      msg_box.setWindowTitle("VBar Control message")
+      msg_box.setWindowTitle("Sleipnir message")
       msg_box.setText("UNRECOVERABLE ERROR!\n\n" + var)
       msg_box.exec_()

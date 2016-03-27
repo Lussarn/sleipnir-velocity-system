@@ -1,11 +1,11 @@
 from threading import Thread, Lock
+import os
 
 
 class FrameData():
 
    def __init__(self):
       self.frames_2_timestamps = {}
-      self.timestamps_2_frames = {}
 
 class CamerasData:
    mutex = Lock()
@@ -18,7 +18,6 @@ class CamerasData:
    def add_frame(self, cam, frame_number, timestamp):
       self.mutex.acquire()
 
-      self.frame_data[cam].timestamps_2_frames[timestamp] = frame_number
       self.frame_data[cam].frames_2_timestamps[frame_number] = timestamp
 
       self.mutex.release()
@@ -36,7 +35,7 @@ class CamerasData:
 
    def get_last_frame(self, cam):
       self.mutex.acquire()
-      frame_number =  len(self.frame_data[cam].timestamps_2_frames)
+      frame_number =  len(self.frame_data[cam].frames_2_timestamps)
       self.mutex.release()
       return frame_number
 
@@ -48,14 +47,21 @@ class CamerasData:
    def is_data_ok(self):
       return len(self.frame_data["cam1"].frames_2_timestamps) >= 90 and len(self.frame_data["cam2"].frames_2_timestamps) >= 90
 
-   def load(self):
+   def load(self, camdir_base, flight_number):
       for cam in ["cam1", "cam2"]:
-         print cam
-         filename ="/home/linus/rctest/3/" + cam + "/timestamps.txt"
+         self.frame_data[cam].frames_2_timestamps = {}
+
+         filename = os.path.join(camdir_base, str(flight_number), cam, "timestamps.txt")
+         if not os.path.exists(filename):
+            self.frame_data["cam1"].frames_2_timestamps = {}
+            self.frame_data["cam2"].frames_2_timestamps = {}
+            return False
+
          with open(filename) as f:
             content = f.readlines()
 
          for data in content:
             data = data.split()
             self.frame_data[cam].frames_2_timestamps[int(data[0])] = int(data[1])
-            self.frame_data[cam].timestamps_2_frames[int(data[1])] = int(data[0])
+
+      return True
