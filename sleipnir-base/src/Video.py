@@ -21,6 +21,9 @@ class Video:
       # Currently found motion
       self.found_motion = False
 
+      # Motion direction
+      self.direction = 0
+
       # Motion boxes for all frames
       self.motion_boxes = {}
 
@@ -75,9 +78,11 @@ class Video:
       self.comparison_image_cv = None
       self.comparison_image_frame_count = 0 
       self.found_motion = 0
+      self.direction = 0
 
    # Set this Video instance to shooting, mening realtime view of data
    def set_shooting(self, shooting):
+      self.direction = 0
       self.shooting = shooting
       if (self.shooting):
          self.buttonPlayForward.setEnabled(False)
@@ -132,23 +137,28 @@ class Video:
          if timestamp_sibling >= timestamp_this:
             break
       self.sibling_video.set_current_frame_number(i)
+      self.sibling_video.direction = 0
 
    def __onSliderChanged(self, value):
+      self.direction = 0
       self.current_frame_number = value
       self.update()
       self.timer.stop()
 
    def __onPlayForward(self):
+      self.direction = 0
       self.find = False
       self.forward = True
       self.timer.start(11)
 
    def __onPlayBackward(self):
+      self.direction = 0
       self.find = False
       self.forward = False
       self.timer.start(11)
 
    def __onPause(self):
+      self.direction = 0
       self.timer.stop()
       self.update()
 
@@ -159,12 +169,14 @@ class Video:
       self.timer.start(0)
 
    def __onForwardStep(self):
+      self.direction = 0
       if self.current_frame_number < self.cameras_data.get_last_frame(self.cam):
          self.current_frame_number += 1
       self.timer.stop()
       self.update()
 
    def __onBackStep(self):
+      self.direction = 0
       if self.current_frame_number > 1:
          self.current_frame_number -= 1
       self.timer.stop()
@@ -172,6 +184,15 @@ class Video:
 
    def __timerplay(self):
       image = None
+
+      if self.forward:
+         self.current_frame_number += 1
+         if self.current_frame_number > self.cameras_data.get_last_frame(self.cam):
+            self.current_frame_number = self.cameras_data.get_last_frame(self.cam)   
+      else:
+         self.current_frame_number -= 1
+         if (self.current_frame_number < 1):
+            self.current_frame_number  =1
 
       frame = self.getFrame(self.current_frame_number)
       if not frame:
@@ -185,14 +206,7 @@ class Video:
             if motion["motion"]:
                self.timer.stop()
 
-      if self.forward:
-         self.current_frame_number += 1
-         if self.current_frame_number > self.cameras_data.get_last_frame(self.cam):
-            self.current_frame_number = self.cameras_data.get_last_frame(self.cam)   
-      else:
-         self.current_frame_number -= 1
-         if (self.current_frame_number < 1):
-            self.current_frame_number  =1
+
 
       self.update(image)
 
@@ -202,7 +216,14 @@ class Video:
       image_gray_cv = cv.cvtColor(image_cv, cv.COLOR_BGR2GRAY)
       image_blur_cv = cv.GaussianBlur(image_gray_cv, (21, 21), 0)
       found_motion = False
-      if (self.comparison_image_cv is not None):
+
+      if self.direction < 0:
+         self.direction +=1
+
+      if self.direction > 0:
+         self.direction -=1
+
+      if (self.comparison_image_cv is not None and self.direction == 0):
 
          frame_delta = cv.absdiff(self.comparison_image_cv, image_blur_cv)
          threshold = cv.threshold(frame_delta, 2, 255, cv.THRESH_BINARY)[1]
@@ -236,12 +257,11 @@ class Video:
 
                # Find direction from first frame
                if x + w < x2 + w2:
-                  direction = -90 * 6
+                  self.direction = -90 * 6
                else:
-                  direction = 90 * 6
+                  self.direction = 90 * 6
 
-            if (direction != 0):
-               print direction
+            if (self.direction != 0):
                found_motion = True
             else:
                found_motion = False
