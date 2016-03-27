@@ -20,7 +20,7 @@ logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 class ServerData:
-   camera_directory_base = ""
+   cameras_directory_base = ""
    flight_number = 1
    taking_pictures = False
    last_picture_timestamp = 0
@@ -56,7 +56,7 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
 
    def mkdir(self, cam):
       global ServerData
-      flight_dir = os.path.join(ServerData.camera_directory_base, str(ServerData.flight_number))
+      flight_dir = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number))
       if not os.path.exists(flight_dir):
          os.mkdir(flight_dir);
 
@@ -67,7 +67,7 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
 
    def saveFrame(self, cam, frame, data, timestamp):
       global ServerData
-      cam_dir = os.path.join(ServerData.camera_directory_base, str(ServerData.flight_number), str(cam))
+      cam_dir = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), str(cam))
 
       picture_directory = os.path.join(cam_dir, str((frame / 100) *100).zfill(6))
       if not os.path.exists(picture_directory):
@@ -143,7 +143,7 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
          # First frame create dir and open timestamp file
          if (imageNum == 1):
             self.mkdir(id)
-            filename_timestamp = os.path.join(ServerData.camera_directory_base, str(ServerData.flight_number), id, "timestamps.txt")
+            filename_timestamp = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), id, "timestamps.txt")
             ServerData.timestamp_file[id] = open(filename_timestamp, "w")
 
          if ServerData.debug:
@@ -182,9 +182,9 @@ def start_shooting(cameras_data, flight_number):
    if not ServerData.ready:
       return False
 
-   ServerData.camdir = os.path.join(ServerData.camdir, str(flight_number))
+   ServerData.flight_directory = os.path.join(ServerData.cameras_directory_base, str(flight_number))
    try:
-      shutil.rmtree(ServerData.camdir)
+      shutil.rmtree(ServerData.flight_directory)
    except:
       pass
 

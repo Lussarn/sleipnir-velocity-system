@@ -16,7 +16,7 @@ class WindowMain(QtGui.QMainWindow):
 
    def __init__(self):
       self.cameras_directory_base = "/home/linus/rctest/"
-      CameraServer.ServerData.camdir = self.cameras_directory_base
+      CameraServer.ServerData.cameras_directory_base = self.cameras_directory_base
 
 
       self.cameras_data = None

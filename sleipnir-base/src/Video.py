@@ -272,8 +272,8 @@ class Video:
       self.comparison_image_cv = image_blur_cv
       return { "motion": found_motion, "image": image }
 
-   def view_image(self, image):
-      self.current_frame_number = image
+   def view_image(self, frame_number):
+      self.current_frame_number = frame_number
       self.update()
 
    def update(self, use_image = None):
