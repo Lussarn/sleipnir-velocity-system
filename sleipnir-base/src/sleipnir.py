@@ -122,10 +122,12 @@ class WindowMain(QtGui.QMainWindow):
       self.radio_buttons_flights[flight_number - 1].setChecked(True)
 
       self.cameras_data.load(self.cameras_directory_base, flight_number)
+
+      # FIXME: Clean this shit up to some kind of API
       self.videos[0].cameras_data = self.cameras_data
       self.videos[1].cameras_data = self.cameras_data
-      self.videos[0].camdir = os.path.join(self.cameras_directory_base, str(flight_number), "cam1")
-      self.videos[1].camdir = os.path.join(self.cameras_directory_base, str(flight_number), "cam2")
+      self.videos[0].flight_directory = os.path.join(self.cameras_directory_base, str(flight_number), "cam1")
+      self.videos[1].flight_directory = os.path.join(self.cameras_directory_base, str(flight_number), "cam2")
       self.videos[0].slider.setMinimum(1)
       self.videos[0].slider.setMaximum(self.cameras_data.get_last_frame("cam1"))
       self.videos[1].slider.setMinimum(1)
@@ -134,6 +136,12 @@ class WindowMain(QtGui.QMainWindow):
       self.videos[1].setStartTimestamp(self.cameras_data.get_start_timestamp())
       self.videos[0].set_current_frame_number(1)
       self.videos[1].set_current_frame_number(1)
+      self.videos[0].comparison_image_cv = None
+      self.videos[1].comparison_image_cv = None
+      self.videos[0].found_motion = False
+      self.videos[1].found_motion = False
+      
+
       self.videos[0].update();
       self.videos[1].update();
 
