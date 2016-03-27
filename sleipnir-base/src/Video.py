@@ -221,7 +221,7 @@ class Video:
       if self.direction > 0:
          self.direction -=1
 
-      if (self.comparison_image_cv is not None and self.direction == 0):
+      if self.comparison_image_cv is not None:
 
          frame_delta = cv.absdiff(self.comparison_image_cv, image_blur_cv)
          threshold = cv.threshold(frame_delta, 2, 255, cv.THRESH_BINARY)[1]
@@ -239,7 +239,7 @@ class Video:
             if x < 160 and x + w > 160:
                found_motion = True
 
-         if len(self.motion_boxes[self.current_frame_number]) == 1 and found_motion and self.current_frame_number > 4:
+         if len(self.motion_boxes[self.current_frame_number]) == 1 and found_motion and self.current_frame_number > 4 and self.direction == 0:
             # Check previous motion boxes
             direction = 0
             for c2 in self.motion_boxes[self.current_frame_number - 1]:
@@ -258,7 +258,7 @@ class Video:
                   self.direction = -90 * 6
                else:
                   self.direction = 90 * 6
-
+ 
             if (self.direction != 0):
                found_motion = True
             else:

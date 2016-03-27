@@ -246,7 +246,6 @@ class WindowMain(QtGui.QMainWindow):
             if frame_number > 0:
                self.videos[0].setStartTimestamp(start)
                self.videos[0].view_image(frame_number)
-
             frame_number = CameraServer.get_last_image("cam2")
             if frame_number > 0:
                self.videos[1].setStartTimestamp(start)
