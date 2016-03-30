@@ -19,7 +19,7 @@ class Video:
       self.comparison_image_cv = None
 
       # Currently found motion
-      self.found_motion = False
+      self.found_motion = 0
 
       # Motion direction
       self.direction = 0
@@ -212,7 +212,7 @@ class Video:
       image = None
       image_cv = self.pilImageToCV(image_pil)
       image_gray_cv = cv.cvtColor(image_cv, cv.COLOR_BGR2GRAY)
-      image_blur_cv = cv.GaussianBlur(image_gray_cv, (21, 21), 0)
+      image_blur_cv = cv.GaussianBlur(image_gray_cv, (11, 11), 0)
       found_motion = False
 
       if self.direction < 0:
@@ -225,52 +225,94 @@ class Video:
 
          frame_delta = cv.absdiff(self.comparison_image_cv, image_blur_cv)
          threshold = cv.threshold(frame_delta, 2, 255, cv.THRESH_BINARY)[1]
-         threshold = cv.dilate(threshold, None, iterations=2)
+         threshold = cv.dilate(threshold, None, iterations=3)
          (self.motion_boxes[self.current_frame_number], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
          for c in self.motion_boxes[self.current_frame_number]:
+            found_motion = False
             (x, y, w, h) = cv.boundingRect(c)
+
+            # Set ground level
+            if y > 400:
+               continue
+
             cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
 
-            if cv.contourArea(c) < 50:
+            if cv.contourArea(c) < 15:
                continue
             if cv.contourArea(c) > 10000:
                continue
             if x < 160 and x + w > 160:
                found_motion = True
 
-         if len(self.motion_boxes[self.current_frame_number]) == 1 and found_motion and self.current_frame_number > 4 and self.direction == 0:
-            # Check previous motion boxes
-            direction = 0
-            for c2 in self.motion_boxes[self.current_frame_number - 1]:
-               (x2, y2, w2, h2) = cv.boundingRect(c2)
-               if (x + w < x2):    # c is left of c2
-                  continue
-               if (x > x2 + w2):   # c is right of c2
-                  continue
-               if (y + h < y2):    # c is above c2
-                  continue
-               if (y > y2 + h2):   # c is below c2                        
-                  continue
+            if found_motion and self.current_frame_number > 4 and self.direction == 0:
+               # Check previous motion boxes
+               direction = self.check_overlap_previous(x, y, w, h, self.current_frame_number - 1, 5)
 
-               # Find direction from first frame
-               if x + w < x2 + w2:
-                  self.direction = -90 * 6
+               self.direction = direction * 90 * 6
+               print self.direction
+
+               if (self.direction != 0):
+                  found_motion = True
+                  break
                else:
-                  self.direction = 90 * 6
- 
-            if (self.direction != 0):
-               found_motion = True
+                  found_motion = False
             else:
                found_motion = False
-         else:
-            found_motion = False
 
          data_pil = cv.cvtColor(image_gray_cv, cv.COLOR_GRAY2BGR)
          image = Image.fromarray(data_pil)
 
       self.comparison_image_cv = image_blur_cv
       return { "motion": found_motion, "image": image }
+
+   def check_overlap_previous(self, x, y, w, h, frame_number, iterations):
+      print "check overlap: " + str(frame_number) + " iteration: " + str(iterations)
+      for c2 in self.motion_boxes[frame_number]:
+         (x2, y2, w2, h2) = cv.boundingRect(c2)
+
+         if cv.contourArea(c2) < 15:
+            continue
+         if cv.contourArea(c2) > 10000:
+            continue
+
+         if x == x2 and y == y2 and w == w2 and h == h2 :
+            continue
+
+         # Sanity on size
+         if w < 5 or h < 5 or w > 160 or h > 160:
+            continue
+
+         # the sizes of the boxes can't be too far off
+         diff = float(w * h) / float(w2 * h2)
+         if diff < 0.5 or diff > 1.5:
+            continue
+
+         direction =  self.overlap_box(x, y, w, h, x2, y2, w2, h2);
+         if (direction == 0):
+            continue
+         else:
+            if (iterations == 0):
+               return direction
+            return self.check_overlap_previous(x2, y2, w2, h2, frame_number - 1, iterations -1)
+      return 0
+
+   # Return 0 on non overlap
+   def overlap_box(self, x, y, w, h, x2, y2, w2, h2):
+      if (x + w < x2):    # c is left of c2
+         return 0
+      if (x > x2 + w2):   # c is right of c2
+         return 0
+      if (y + h < y2):    # c is above c2
+         return 0
+      if (y > y2 + h2):   # c is below c2                        
+         return 0
+
+      # Find direction from first frame
+      if x + w < x2 + w2:
+         return -1;
+      else:
+         return 1   
 
    def view_image(self, frame_number):
       self.current_frame_number = frame_number
