@@ -4,6 +4,7 @@ from PIL import Image, ImageDraw
 import os
 import cv2 as cv
 import numpy
+import time
 
 class Video:
 
@@ -15,17 +16,11 @@ class Video:
       # Find flag
       self.find = False
 
-      # Comparision for motion tracking
-      self.comparison_image_cv = None
-
       # Currently found motion
       self.found_motion = 0
 
       # Motion direction
       self.direction = 0
-
-      # Motion boxes for all frames
-      self.motion_boxes = {}
 
       # Currently shooting
       self.shooting = False
@@ -66,6 +61,8 @@ class Video:
       self.timer = QtCore.QTimer(self.widgetVideo)
       self.timer.timeout.connect(self.__timerplay)
 
+      self.frame_processing_worker = FrameProcessingWorker(self)
+      self.frame_processing_worker.start()
 
    # Sibling video is the Video instance of the other camera
    def set_sibling_video(self, sibling_video):
@@ -188,11 +185,13 @@ class Video:
       if self.forward:
          self.current_frame_number += 1
          if self.current_frame_number > self.cameras_data.get_last_frame(self.cam):
-            self.current_frame_number = self.cameras_data.get_last_frame(self.cam)   
+            self.current_frame_number = self.cameras_data.get_last_frame(self.cam)
+            self.find = False
       else:
          self.current_frame_number -= 1
          if (self.current_frame_number < 1):
             self.current_frame_number  =1
+            self.find = False
 
       frame = self.getFrame(self.current_frame_number)
       if not frame:
@@ -209,11 +208,9 @@ class Video:
       self.update(image)
 
    def have_motion(self, image_pil):
-      image = None
-      image_cv = self.pilImageToCV(image_pil)
-      image_gray_cv = cv.cvtColor(image_cv, cv.COLOR_BGR2GRAY)
-      image_blur_cv = cv.GaussianBlur(image_gray_cv, (11, 11), 0)
-      found_motion = False
+
+      while self.frame_processing_worker.is_processing():
+         time.sleep(0.001)
 
       if self.direction < 0:
          self.direction +=1
@@ -221,98 +218,15 @@ class Video:
       if self.direction > 0:
          self.direction -=1
 
-      if self.comparison_image_cv is not None:
+      self.frame_processing_worker.image_pil = image_pil
+      self.frame_processing_worker.current_frame_number = self.current_frame_number
+      self.frame_processing_worker.start_processing()
 
-         frame_delta = cv.absdiff(self.comparison_image_cv, image_blur_cv)
-         threshold = cv.threshold(frame_delta, 2, 255, cv.THRESH_BINARY)[1]
-         threshold = cv.dilate(threshold, None, iterations=3)
-         (self.motion_boxes[self.current_frame_number], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+      image = self.frame_processing_worker.image
+      found_motion = self.frame_processing_worker.found_motion
 
-         for c in self.motion_boxes[self.current_frame_number]:
-            found_motion = False
-            (x, y, w, h) = cv.boundingRect(c)
-
-            # Set ground level
-            if y > 400:
-               continue
-
-            cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
-
-            if cv.contourArea(c) < 15:
-               continue
-            if cv.contourArea(c) > 10000:
-               continue
-            if x < 160 and x + w > 160:
-               found_motion = True
-
-            if found_motion and self.current_frame_number > 4 and self.direction == 0:
-               # Check previous motion boxes
-               direction = self.check_overlap_previous(x, y, w, h, self.current_frame_number - 1, 5)
-
-               self.direction = direction * 90 * 6
-               print self.direction
-
-               if (self.direction != 0):
-                  found_motion = True
-                  break
-               else:
-                  found_motion = False
-            else:
-               found_motion = False
-
-         data_pil = cv.cvtColor(image_gray_cv, cv.COLOR_GRAY2BGR)
-         image = Image.fromarray(data_pil)
-
-      self.comparison_image_cv = image_blur_cv
       return { "motion": found_motion, "image": image }
 
-   def check_overlap_previous(self, x, y, w, h, frame_number, iterations):
-      print "check overlap: " + str(frame_number) + " iteration: " + str(iterations)
-      for c2 in self.motion_boxes[frame_number]:
-         (x2, y2, w2, h2) = cv.boundingRect(c2)
-
-         if cv.contourArea(c2) < 15:
-            continue
-         if cv.contourArea(c2) > 10000:
-            continue
-
-         if x == x2 and y == y2 and w == w2 and h == h2 :
-            continue
-
-         # Sanity on size
-         if w < 5 or h < 5 or w > 160 or h > 160:
-            continue
-
-         # the sizes of the boxes can't be too far off
-         diff = float(w * h) / float(w2 * h2)
-         if diff < 0.5 or diff > 1.5:
-            continue
-
-         direction =  self.overlap_box(x, y, w, h, x2, y2, w2, h2);
-         if (direction == 0):
-            continue
-         else:
-            if (iterations == 0):
-               return direction
-            return self.check_overlap_previous(x2, y2, w2, h2, frame_number - 1, iterations -1)
-      return 0
-
-   # Return 0 on non overlap
-   def overlap_box(self, x, y, w, h, x2, y2, w2, h2):
-      if (x + w < x2):    # c is left of c2
-         return 0
-      if (x > x2 + w2):   # c is right of c2
-         return 0
-      if (y + h < y2):    # c is above c2
-         return 0
-      if (y > y2 + h2):   # c is below c2                        
-         return 0
-
-      # Find direction from first frame
-      if x + w < x2 + w2:
-         return -1;
-      else:
-         return 1   
 
    def view_image(self, frame_number):
       self.current_frame_number = frame_number
@@ -366,3 +280,162 @@ class Video:
 
    def __format_time(self, ms):
       return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
+
+
+class FrameProcessingWorker(QtCore.QThread):
+
+   def __init__(self, video):
+      self.processing = False
+
+      # Video instance
+      self.video = video
+      # Iamge pil needed for processing
+      self.image_pil = None
+
+      # Comparision for motion tracking
+      self.comparison_image_cv = None
+
+      # Motion boxes for all frames
+      self.motion_boxes = {}
+
+      # Frame number
+      self.current_frame_number = 0
+
+      # Image returned by the have motion
+      self.image = None
+
+      # Found motion returned
+      self.found_motion = False
+
+      QtCore.QThread.__init__(self)
+
+
+   def run(self):
+      while True:
+         if not self.processing:
+            time.sleep(0.001)
+            continue
+
+         image = None
+         image_cv = self.pilImageToCV(self.image_pil)
+         image_gray_cv = cv.cvtColor(image_cv, cv.COLOR_BGR2GRAY)
+         image_blur_cv = cv.GaussianBlur(image_gray_cv, (13, 13), 0)
+         found_motion = False
+
+         if self.comparison_image_cv is not None:
+
+            frame_delta = cv.absdiff(self.comparison_image_cv, image_blur_cv)
+            threshold = cv.threshold(frame_delta, 2, 255, cv.THRESH_BINARY)[1]
+            threshold = cv.dilate(threshold, None, iterations=3)
+            (self.motion_boxes[self.current_frame_number], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+#            print len(self.motion_boxes[self.current_frame_number])
+
+            for c in self.motion_boxes[self.current_frame_number]:
+               found_motion = False
+               (x, y, w, h) = cv.boundingRect(c)
+
+               # Set ground level
+               if y > 400:
+                  continue
+
+
+               if cv.contourArea(c) < 15:
+                  continue
+               if cv.contourArea(c) > 10000:
+                  continue
+               if x < 160 and x + w > 160:
+                  found_motion = True
+
+               cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
+
+               if found_motion and self.current_frame_number > 4 and self.video.direction == 0:
+                  # Check previous motion boxes
+                  direction = self.check_overlap_previous(x, y, w, h, x, w, self.current_frame_number - 1, 10)
+
+                  self.video.direction = direction * 90 * 6
+                  if self.video.direction != 0:
+                     print self.video.direction
+
+                  if (self.video.direction != 0):
+                     found_motion = True
+                     break
+                  else:
+                     found_motion = False
+               else:
+                  found_motion = False
+
+         self.comparison_image_cv = image_blur_cv
+         data_pil = cv.cvtColor(image_gray_cv, cv.COLOR_GRAY2BGR)
+         self.image = Image.fromarray(data_pil)
+         self.found_motion = found_motion
+
+#         time.sleep(0.4)
+         # Close processing
+         self.processing = False
+
+   def check_overlap_previous(self, x, y, w, h, x1, w1, frame_number, iterations):
+#      print "check overlap: " + str(frame_number) + " iteration: " + str(iterations)
+      if not frame_number in self.motion_boxes:
+         return 0
+      for c2 in self.motion_boxes[frame_number]:
+         (x2, y2, w2, h2) = cv.boundingRect(c2)
+
+         if cv.contourArea(c2) < 15:
+            continue
+         if cv.contourArea(c2) > 10000:
+            continue
+
+         if x == x2 and y == y2 and w == w2 and h == h2 :
+            continue
+
+         # Sanity on size
+         if w < 5 or h < 5 or w > 100 or h > 100:
+            continue
+
+         # the sizes of the boxes can't be too far off
+         d1 = float(w * h)
+         d2 = float(w2 * h2)
+         diff = min(d1, d2) / max(d1, d2)
+         if diff < 0.3:
+            continue
+ #        print "size diff: " + str(diff)
+ 
+         if (self.overlap_box(x, y, w, h, x2, y2, w2, h2) == 0):
+            continue
+
+         # if iterations is zero or object is coming to close to the side
+         if iterations == 0 or x2 < 20 or x2 + w2 > 300:
+            if x1 + w1 < x2 + w2:
+               return -1;
+            else:
+               return 1
+         return self.check_overlap_previous(x2, y2, w2, h2, x1, w1, frame_number - 1, iterations -1)
+      return 0
+
+   # Return 0 on non overlap
+   def overlap_box(self, x, y, w, h, x2, y2, w2, h2):
+      if (x + w < x2):    # c is left of c2
+         return 0
+      if (x > x2 + w2):   # c is right of c2
+         return 0
+      if (y + h < y2):    # c is above c2
+         return 0
+      if (y > y2 + h2):   # c is below c2                        
+         return 0
+
+      # Find direction from first frame
+      if x + w < x2 + w2:
+         return -1;
+      else:
+         return 1   
+   
+   def start_processing(self):
+      self.processing = True
+
+   def is_processing(self):
+      return self.processing
+
+   def pilImageToCV(self, image_pil):
+      image_cv = numpy.array(image_pil.convert("RGB")) 
+      image_cv = image_cv[:, :, ::-1].copy()
+      return image_cv   
