@@ -3,6 +3,7 @@ from PySide import QtCore, QtGui
 import os
 import datetime
 import time
+import pygame
 
 import CameraServer
 from Video import Video
@@ -12,12 +13,13 @@ from qtui.Ui_MainWindow import Ui_MainWindow
 import CamerasData
 import CameraServer
 
+pygame.mixer.init()
+
 class WindowMain(QtGui.QMainWindow):
 
    def __init__(self):
       self.cameras_directory_base = "/home/linus/rctest/"
       CameraServer.ServerData.cameras_directory_base = self.cameras_directory_base
-
 
       self.cameras_data = None
       self.cameras_data = CamerasData.CamerasData()
@@ -26,13 +28,25 @@ class WindowMain(QtGui.QMainWindow):
 
       self.radio_buttons_flights = {}
 
+      # none / "Left" / "Right"
+      self.run_direction = None
+      self.run_frame_number_cam1 = None
+      self.run_frame_number_cam2 = None
+      # time to abort run
+      self.run_abort_timestamp = 0 
+
       self.online_cam1 = False
       self.online_cam2 = False
       self.online = False
       self.ready = False
       self.shooting = False
+      self.shooting_frame_number_cam1 = 0
+      self.shooting_frame_number_cam2 = 0
       self.stop_camera_wait = False
       self.distance = 100
+
+      self.run_tell_speed_timestamp = 0
+      self.run_tell_speed = 0
 
       self.aligning_cam1 = False
       self.aligning_cam2 = False
@@ -229,6 +243,7 @@ class WindowMain(QtGui.QMainWindow):
                self.videos[1].set_current_frame_number(1)
                self.videos[0].set_shooting(False)
                self.videos[1].set_shooting(False)
+               self.timer.start(20)
 
       # Update the video view
       if CameraServer.is_shooting():
@@ -241,41 +256,75 @@ class WindowMain(QtGui.QMainWindow):
             if frame_number > 0:
                self.videos[1].view_image(frame_number)
          else:
-            start = CameraServer.get_start_timestamp()
-            frame_number = CameraServer.get_last_image("cam1")
-            if frame_number > 0:
-               self.videos[0].setStartTimestamp(start)
-               self.videos[0].view_image(frame_number)
-            frame_number = CameraServer.get_last_image("cam2")
-            if frame_number > 0:
-               self.videos[1].setStartTimestamp(start)
-               self.videos[1].view_image(frame_number)
+            if self.ui.checkBox_motion_track.isChecked():
+               if self.shooting_frame_number_cam1 <= CameraServer.get_last_image("cam1"):
+                  start = CameraServer.get_start_timestamp()
+                  self.videos[0].setStartTimestamp(start)
+                  motion = self.videos[0].view_frame_motion_track(CameraServer.get_last_image("cam1"))
+                  if motion is not None:
+                     self.check_run("cam1", motion)
+                     print "motion cam1: " + str(motion)
+                  self.shooting_frame_number_cam1 += 1
+               if self.shooting_frame_number_cam2 <= CameraServer.get_last_image("cam2"):
+                  start = CameraServer.get_start_timestamp()
+                  self.videos[1].setStartTimestamp(start)
+                  motion = self.videos[1].view_frame_motion_track(CameraServer.get_last_image("cam2"))
+                  if motion is not None:
+                     self.check_run("cam2", motion)
+                     print "motion cam2: " + str(motion)
+                  self.shooting_frame_number_cam2 += 1
+            else:
+               if self.shooting_frame_number_cam1 <= CameraServer.get_last_image("cam1"):
+                  start = CameraServer.get_start_timestamp()
+                  self.videos[0].setStartTimestamp(start)
+                  self.videos[0].view_frame(CameraServer.get_last_image("cam1"))
+                  self.shooting_frame_number_cam1 += 1
+               if self.shooting_frame_number_cam2 <= CameraServer.get_last_image("cam2"):
+                  start = CameraServer.get_start_timestamp()
+                  self.videos[1].setStartTimestamp(start)
+                  self.videos[1].view_frame(CameraServer.get_last_image("cam2"))
+                  self.shooting_frame_number_cam2 += 1
+
+         if self.run_direction is not None and self.run_abort_timestamp < int(round(time.time() * 1000)):
+            # Abort run
+            self.run_direction = None
+            source = pygame.mixer.Sound("../assets/sounds/error.ogg")
+            source.play()
+
+         if self.run_tell_speed != 0 and self.run_tell_speed_timestamp < int(round(time.time() * 1000)):
+            source = pygame.mixer.Sound("../assets/sounds/numbers/" + str(self.run_tell_speed) + ".ogg")
+            source.play()
+            self.run_tell_speed = 0
+
 
       if self.cameras_data and not self.shooting and self.cameras_data.is_data_ok() and not self.aligning_cam1 and not self.aligning_cam2:
          # Calculate the speed
          cam1_frame_number = self.videos[0].get_current_frame_number()
          cam2_frame_number = self.videos[1].get_current_frame_number()
+         self.set_speed(cam1_frame_number, cam2_frame_number)
 
-         cam1_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam1", cam1_frame_number)
-         cam2_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam2", cam2_frame_number)
-         milliseconds = abs(cam1_timestamp - cam2_timestamp)
+   def set_speed(self, cam1_frame_number, cam2_frame_number):
+      cam1_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam1", cam1_frame_number)
+      cam2_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam2", cam2_frame_number)
+      milliseconds = abs(cam1_timestamp - cam2_timestamp)
 
-         kilometer = float(self.distance) / 1000
-         hours = float(milliseconds) / 1000 / 60  / 60
+      kilometer = float(self.distance) / 1000
+      hours = float(milliseconds) / 1000 / 60  / 60
 
-         if (hours > 0):
-            kmh = kilometer / hours
-         else:
-            kmh = 0
-         if (kmh > 999 or kmh  < 10):
-            speed_text = "Out of range"
-            time_text = "Out of range"
-         else:
-            speed_text = '{1:.{0}f} km/h'.format(1, kmh)
-            time_text = '{1:.{0}f} sec'.format(3, float(milliseconds) / 1000)
+      if (hours > 0):
+         kmh = kilometer / hours
+      else:
+         kmh = 0
+      if (kmh > 999 or kmh  < 10):
+         speed_text = "Out of range"
+         time_text = "Out of range"
+      else:
+         speed_text = '{1:.{0}f} km/h'.format(1, kmh)
+         time_text = '{1:.{0}f} sec'.format(3, float(milliseconds) / 1000)
 
-         self.ui.label_speed.setText(speed_text)
-         self.ui.label_time.setText(time_text)
+      self.ui.label_speed.setText(speed_text)
+      self.ui.label_time.setText(time_text)
+      return int(kmh)
 
    def align_cam1(self):
       if (self.aligning_cam1):
@@ -311,6 +360,10 @@ class WindowMain(QtGui.QMainWindow):
          if self.radio_buttons_flights[flight_number].isChecked():
             break
       flight_number += 1
+
+      self.shooting_frame_number_cam1 = 1
+      self.shooting_frame_number_cam2 = 1
+      self.timer.start(0)
 
       self.ui.label_speed.setText("")
       self.stop_camera_wait = False
@@ -353,12 +406,63 @@ class WindowMain(QtGui.QMainWindow):
 
       self.ui.pushbutton_stop.setEnabled(enabled)
       self.ui.pushbutton_start.setEnabled(enabled)
+      self.ui.checkBox_motion_track.setEnabled(enabled)
 
       for i in xrange(0,20):
          self.radio_buttons_flights[i].setEnabled(enabled)
 
+   def check_run(self, cam, motion):
+      # Check right run
+      if cam == "cam1" and self.run_direction == None and motion["direction"] == 1:
+         # Starting run from cam 1
+         self.run_frame_number_cam1 = motion["frame_number"]
+         self.run_frame_number_cam2 = 0
+         self.run_direction = "RIGHT"
+         # Max 6 second run
+         self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
+         print "STARTING RUN CAM1"
+         source = pygame.mixer.Sound("../assets/sounds/gate-1.ogg")
+         source.play()
+
+      if cam == "cam2" and self.run_direction == "RIGHT" and motion["direction"] == 1:
+         # Ending run on Cam 2
+         self.run_frame_number_cam2 = motion["frame_number"]
+         self.run_direction = None
+         kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
+         print "ENDING RUN CAM2"
+         source = pygame.mixer.Sound("../assets/sounds/gate-2.ogg")
+         source.play()
+         if (kmh < 500):
+            self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
+            self.run_tell_speed = kmh
+
+      # Check left run
+      if cam == "cam2" and self.run_direction == None and motion["direction"] == -1:
+         # Starting run from cam 2
+         self.run_frame_number_cam2 = motion["frame_number"]
+         self.run_frame_number_cam1 = 0
+         self.run_direction = "LEFT"
+         # Max 6 second run
+         self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
+         print "STARTING RUN CAM2"
+         source = pygame.mixer.Sound("../assets/sounds/gate-1.ogg")
+         source.play()
+
+
+      if cam == "cam1" and self.run_direction == "LEFT" and motion["direction"] == -1:
+         # Ending run on Cam 1
+         self.run_frame_number_cam1 = motion["frame_number"]
+         self.run_direction = None
+         kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
+         print "ENDING RUN CAM1"
+         source = pygame.mixer.Sound("../assets/sounds/gate-2.ogg")
+         source.play()
+         if (kmh < 500):
+            self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
+            self.run_tell_speed = kmh
 
 if __name__ == '__main__':
+
    import sys
    app = QtGui.QApplication(sys.argv)
    try:

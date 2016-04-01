@@ -221,16 +221,27 @@ class Video:
       self.frame_processing_worker.image_pil = image_pil
       self.frame_processing_worker.current_frame_number = self.current_frame_number
       self.frame_processing_worker.start_processing()
-
       image = self.frame_processing_worker.image
       found_motion = self.frame_processing_worker.found_motion
 
-      return { "motion": found_motion, "image": image }
+      return { "motion": found_motion, "image": image, "frame_number": self.frame_processing_worker.found_motion_frame_number }
 
-
-   def view_image(self, frame_number):
+   def view_frame(self, frame_number):
       self.current_frame_number = frame_number
       self.update()
+
+   def view_frame_motion_track(self, frame_number):
+      self.current_frame_number = frame_number
+      frame = self.getFrame(self.current_frame_number)
+      if not frame:
+         return
+      image_pil = frame["image"];
+      motion = self.have_motion(image_pil)
+      image = motion["image"]
+      self.update(image)
+      if motion["motion"]:
+         return { "frame_number": motion["frame_number"], "direction": self.direction / self.direction }
+      return None
 
    def update(self, use_image = None):
       frame = self.getFrame(self.current_frame_number)
@@ -301,6 +312,9 @@ class FrameProcessingWorker(QtCore.QThread):
       # Frame number
       self.current_frame_number = 0
 
+      # Found motion on frame number
+      self.found_motion_frame_number = 0
+
       # Image returned by the have motion
       self.image = None
 
@@ -330,44 +344,52 @@ class FrameProcessingWorker(QtCore.QThread):
             (self.motion_boxes[self.current_frame_number], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 #            print len(self.motion_boxes[self.current_frame_number])
 
-            for c in self.motion_boxes[self.current_frame_number]:
-               found_motion = False
-               (x, y, w, h) = cv.boundingRect(c)
-
-               # Set ground level
-               if y > 400:
-                  continue
-
-
-               if cv.contourArea(c) < 15:
-                  continue
-               if cv.contourArea(c) > 10000:
-                  continue
-               if x < 160 and x + w > 160:
+            #DEBUG  MOTION TRACK
+#            if len(self.motion_boxes[self.current_frame_number]) > 100:
+            if False:
+               if (self.video.direction == 0):
                   found_motion = True
+                  self.video.direction = 90*6
+            else:
+               for c in self.motion_boxes[self.current_frame_number]:
+                  found_motion = False
+                  (x, y, w, h) = cv.boundingRect(c)
 
-               cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
+                  # Set ground level
+                  if y > 400:
+                     continue
 
-               if found_motion and self.current_frame_number > 4 and self.video.direction == 0:
-                  # Check previous motion boxes
-                  direction = self.check_overlap_previous(x, y, w, h, x, w, self.current_frame_number - 1, 10)
 
-                  self.video.direction = direction * 90 * 6
-                  if self.video.direction != 0:
-                     print self.video.direction
-
-                  if (self.video.direction != 0):
+                  if cv.contourArea(c) < 15:
+                     continue
+                  if cv.contourArea(c) > 10000:
+                     continue
+                  if x < 160 and x + w > 160:
                      found_motion = True
-                     break
+
+                  cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
+
+                  if found_motion and self.current_frame_number > 4 and self.video.direction == 0:
+                     # Check previous motion boxes
+                     direction = self.check_overlap_previous(x, y, w, h, x, w, self.current_frame_number - 1, 10)
+
+                     self.video.direction = direction * 90 * 6
+#                     if self.video.direction != 0:
+#                        print self.video.direction
+
+                     if (self.video.direction != 0):
+                        found_motion = True
+                        break
+                     else:
+                        found_motion = False
                   else:
                      found_motion = False
-               else:
-                  found_motion = False
 
          self.comparison_image_cv = image_blur_cv
          data_pil = cv.cvtColor(image_gray_cv, cv.COLOR_GRAY2BGR)
          self.image = Image.fromarray(data_pil)
          self.found_motion = found_motion
+         self.found_motion_frame_number = self.current_frame_number
 
 #         time.sleep(0.4)
          # Close processing

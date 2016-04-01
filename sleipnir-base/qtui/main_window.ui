@@ -1103,6 +1103,19 @@
      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
     </property>
    </widget>
+   <widget class="QCheckBox" name="checkBox_motion_track">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>890</y>
+      <width>191</width>
+      <height>26</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Realtime Anouncements</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>

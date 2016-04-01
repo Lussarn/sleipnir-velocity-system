@@ -152,7 +152,6 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
          self.saveFrame(id, imageNum, data, timestamp)
          ServerData.timestamp_file[id].write(str(imageNum) + " " + str(timestamp) + "\n")
          ServerData.cameras_data.add_frame(id, imageNum, timestamp)
-
          
          if (ServerData.taking_pictures):
             self.send200("OK-CONTINUE")

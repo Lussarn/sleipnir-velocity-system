@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'qtui/main_window.ui'
 #
-# Created: Sat Mar 26 20:16:03 2016
+# Created: Fri Apr  1 19:46:55 2016
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -307,6 +307,9 @@ class Ui_MainWindow(object):
         self.label_time.setStyleSheet("font-size: 24px;")
         self.label_time.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.label_time.setObjectName("label_time")
+        self.checkBox_motion_track = QtGui.QCheckBox(self.centralwidget)
+        self.checkBox_motion_track.setGeometry(QtCore.QRect(480, 890, 191, 26))
+        self.checkBox_motion_track.setObjectName("checkBox_motion_track")
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtGui.QStatusBar(MainWindow)
         self.statusbar.setObjectName("statusbar")
@@ -364,4 +367,5 @@ class Ui_MainWindow(object):
         self.label_time_label.setText(QtGui.QApplication.translate("MainWindow", "Time:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_speed.setText(QtGui.QApplication.translate("MainWindow", "888.88 kmh", None, QtGui.QApplication.UnicodeUTF8))
         self.label_time.setText(QtGui.QApplication.translate("MainWindow", "1.423 sec", None, QtGui.QApplication.UnicodeUTF8))
+        self.checkBox_motion_track.setText(QtGui.QApplication.translate("MainWindow", "Realtime Anouncements", None, QtGui.QApplication.UnicodeUTF8))
 
