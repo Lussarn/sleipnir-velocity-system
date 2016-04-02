@@ -308,7 +308,6 @@ class WindowMain(QtGui.QMainWindow):
                   motion = self.videos[0].view_frame_motion_track(CameraServer.get_last_image("cam1"))
                   if motion is not None:
                      self.check_run("cam1", motion)
-                     print "motion cam1: " + str(motion)
                   self.shooting_frame_number_cam1 += 1
                if self.shooting_frame_number_cam2 <= CameraServer.get_last_image("cam2"):
                   start = CameraServer.get_start_timestamp()
@@ -316,7 +315,6 @@ class WindowMain(QtGui.QMainWindow):
                   motion = self.videos[1].view_frame_motion_track(CameraServer.get_last_image("cam2"))
                   if motion is not None:
                      self.check_run("cam2", motion)
-                     print "motion cam2: " + str(motion)
                   self.shooting_frame_number_cam2 += 1
             else:
                if self.shooting_frame_number_cam1 <= CameraServer.get_last_image("cam1"):
@@ -471,7 +469,6 @@ class WindowMain(QtGui.QMainWindow):
          self.run_direction = "RIGHT"
          # Max 6 second run
          self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
-         print "STARTING RUN CAM1"
          source = pygame.mixer.Sound("../assets/sounds/gate-1.ogg")
          source.play()
 
@@ -480,7 +477,6 @@ class WindowMain(QtGui.QMainWindow):
          self.run_frame_number_cam2 = motion["frame_number"]
          self.run_direction = None
          kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
-         print "ENDING RUN CAM2"
          source = pygame.mixer.Sound("../assets/sounds/gate-2.ogg")
          source.play()
          if (kmh < 500):
@@ -496,7 +492,6 @@ class WindowMain(QtGui.QMainWindow):
          self.run_direction = "LEFT"
          # Max 6 second run
          self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
-         print "STARTING RUN CAM2"
          source = pygame.mixer.Sound("../assets/sounds/gate-1.ogg")
          source.play()
 
@@ -506,7 +501,6 @@ class WindowMain(QtGui.QMainWindow):
          self.run_frame_number_cam1 = motion["frame_number"]
          self.run_direction = None
          kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
-         print "ENDING RUN CAM1"
          source = pygame.mixer.Sound("../assets/sounds/gate-2.ogg")
          source.play()
          if (kmh < 500):
