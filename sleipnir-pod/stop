@@ -1,0 +1,7 @@
+#!/bin/bash
+service dbus stop
+service triggerhappy stop 
+service cron stop 
+service rsyslog stop 
+swapoff -a
+
