@@ -104,7 +104,7 @@ class WindowMain(QtGui.QMainWindow):
 
       self.videos[0] = Video(
          "cam1",
-         "/home/linus/rctest/3/cam1", 
+         os.path.join(self.cameras_directory_base, "1", "cam1"), 
          self.ui.label_video1, 
          self.ui.pushbutton_video1_playforward, 
          self.ui.pushbutton_video1_playbackward, 
@@ -117,7 +117,7 @@ class WindowMain(QtGui.QMainWindow):
          self.ui.label_time_video1);
       self.videos[1] = Video(
          "cam2",
-         "/home/linus/rctest/3/cam2",
+         os.path.join(self.cameras_directory_base, "1", "cam2"),
          self.ui.label_video2, 
          self.ui.pushbutton_video2_playforward, 
          self.ui.pushbutton_video2_playbackward, 

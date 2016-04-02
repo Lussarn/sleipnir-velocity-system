@@ -2,7 +2,7 @@ import os
 import sys
 
 image = 1
-filename = "/home/linus/rctest/3/" +sys.argv[1]+ "/timestamps.txt" 
+filename = "/home/linus/sleipnir-videos/1/" +sys.argv[1]+ "/timestamps.txt" 
 
 tt = {}
 with open(filename) as f:
