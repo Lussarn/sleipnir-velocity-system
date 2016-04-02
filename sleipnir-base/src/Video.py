@@ -37,6 +37,9 @@ class Video:
       # Timestamp to start video on, this is the higest number of the two cameras
       self.start_timestamp = 0
 
+      # Ground level, no motion track below this
+      self.groundlevel = 400
+
       # Lots of widgets
       self.widgetVideo = widgetVideo
       self.buttonPlayForward = buttonPlayForward
@@ -345,7 +348,7 @@ class FrameProcessingWorker(QtCore.QThread):
 #            print len(self.motion_boxes[self.current_frame_number])
 
             #DEBUG  MOTION TRACK
-#            if len(self.motion_boxes[self.current_frame_number]) > 100:
+#            if len(self.motion_boxes[self.current_frame_number]) > 30:
             if False:
                if (self.video.direction == 0):
                   found_motion = True
@@ -356,7 +359,7 @@ class FrameProcessingWorker(QtCore.QThread):
                   (x, y, w, h) = cv.boundingRect(c)
 
                   # Set ground level
-                  if y > 400:
+                  if y > self.video.groundlevel:
                      continue
 
 

@@ -4,6 +4,7 @@ import os
 import datetime
 import time
 import pygame
+import ConfigParser
 
 import CameraServer
 from Video import Video
@@ -15,17 +16,28 @@ import CameraServer
 
 pygame.mixer.init()
 
+class Anouncement:
+
+   def __init__(self):
+      self.cam1_frame_number = 0
+      self.cam2_frame_number = 0
+      self.time = 0
+      self.speed = 0
+      self.direction = 0
+
 class WindowMain(QtGui.QMainWindow):
 
    def __init__(self):
-      self.cameras_directory_base = "/home/linus/rctest/"
+      self.config = ConfigParser.ConfigParser()
+      if not self.read_config():
+         exit(0)
+
       CameraServer.ServerData.cameras_directory_base = self.cameras_directory_base
 
       self.cameras_data = None
       self.cameras_data = CamerasData.CamerasData()
 
       self.videos = {}
-
       self.radio_buttons_flights = {}
 
       # none / "Left" / "Right"
@@ -51,13 +63,20 @@ class WindowMain(QtGui.QMainWindow):
       self.aligning_cam1 = False
       self.aligning_cam2 = False
 
+
       QtGui.QMainWindow.__init__(self)
       self.ui = Ui_MainWindow()
       self.ui.setupUi(self)
       self.setWindowTitle("Sleipnir Velocity")
 
+      self.anouncements = []
+      self.model_anouncements = QtGui.QStandardItemModel(self.ui.listView_anouncements)
+      self.update_anouncements()
+
       self.ui.label_video1_online.setText("Cam1: Offline")
       self.ui.label_video2_online.setText("Cam2: Offline")
+
+      self.ui.verticalSlider_groundlevel.sliderMoved.connect(self.__on_groundlevel_changed)
 
       self.radio_buttons_flights[0] = self.ui.radioButton_flight_1
       self.radio_buttons_flights[1] = self.ui.radioButton_flight_2
@@ -81,6 +100,7 @@ class WindowMain(QtGui.QMainWindow):
       self.radio_buttons_flights[19] = self.ui.radioButton_flight_20
       for i in xrange(0,20):
          self.radio_buttons_flights[i].clicked.connect(self.__flight_number_clicked)
+
 
       self.videos[0] = Video(
          "cam1",
@@ -124,6 +144,8 @@ class WindowMain(QtGui.QMainWindow):
       self.ui.lineEdit_distance.setText(str(self.distance))
       self.ui.lineEdit_distance.textChanged.connect(self.__on_distance_changed)
 
+      self.ui.listView_anouncements.clicked.connect(self.__on_anouncement_changed)
+
       self.show()
       self.raise_()
       CameraServer.start_server()
@@ -135,7 +157,22 @@ class WindowMain(QtGui.QMainWindow):
    def load_flight(self, flight_number):
       self.radio_buttons_flights[flight_number - 1].setChecked(True)
 
-      self.cameras_data.load(self.cameras_directory_base, flight_number)
+      filename = os.path.join(self.cameras_directory_base, str(flight_number), "anouncements.csv")
+      self.anouncements = []
+      if self.cameras_data.load(self.cameras_directory_base, flight_number):
+         if os.path.exists(filename):
+            with open(filename, 'r') as f:
+               for row in f:
+                  row = row.split()
+                  anouncement = Anouncement()
+                  anouncement.cam1_frame_number = int(row[0])
+                  anouncement.cam2_frame_number = int(row[1])
+                  anouncement.time = int(row[2])
+                  anouncement.speed = int(row[3])
+                  anouncement.direction = int(row[4])
+                  self.anouncements.append(anouncement)
+      self.update_anouncements()
+
 
       # FIXME: Clean this shit up to some kind of API
       self.videos[0].cameras_data = self.cameras_data
@@ -155,7 +192,6 @@ class WindowMain(QtGui.QMainWindow):
       self.videos[0].found_motion = False
       self.videos[1].found_motion = False
       
-
       self.videos[0].update();
       self.videos[1].update();
 
@@ -172,6 +208,15 @@ class WindowMain(QtGui.QMainWindow):
          value = 100
       self.distance = value
 
+   def __on_groundlevel_changed(self, value):
+      self.videos[0].groundlevel = value
+      self.videos[1].groundlevel = value
+
+   def __on_anouncement_changed(self, event):
+      row = event.row()
+      anouncement = self.anouncements[row]
+      self.videos[0].set_current_frame_number(anouncement.cam1_frame_number)
+      self.videos[1].set_current_frame_number(anouncement.cam2_frame_number)
 
    def __timerGui(self):
       self.online_cam1 = CameraServer.is_online("cam1")
@@ -250,11 +295,11 @@ class WindowMain(QtGui.QMainWindow):
          if self.aligning_cam1:
             frame_number = CameraServer.get_last_image("cam1")
             if frame_number > 0:
-               self.videos[0].view_image(frame_number)
+               self.videos[0].view_frame(frame_number)
          elif self.aligning_cam2:
             frame_number = CameraServer.get_last_image("cam2")
             if frame_number > 0:
-               self.videos[1].view_image(frame_number)
+               self.videos[1].view_frame(frame_number)
          else:
             if self.ui.checkBox_motion_track.isChecked():
                if self.shooting_frame_number_cam1 <= CameraServer.get_last_image("cam1"):
@@ -361,6 +406,9 @@ class WindowMain(QtGui.QMainWindow):
             break
       flight_number += 1
 
+      self.anouncements = []
+      self.update_anouncements()
+
       self.shooting_frame_number_cam1 = 1
       self.shooting_frame_number_cam2 = 1
       self.timer.start(0)
@@ -382,6 +430,7 @@ class WindowMain(QtGui.QMainWindow):
    def stopCameras(self):
       self.stop_camera_wait = True
       CameraServer.stop_shooting()
+      self.save_anouncements()
 
    def enable_all_gui_elements(self, enabled):
       self.ui.pushbutton_video1_playforward.setEnabled(enabled)
@@ -407,6 +456,8 @@ class WindowMain(QtGui.QMainWindow):
       self.ui.pushbutton_stop.setEnabled(enabled)
       self.ui.pushbutton_start.setEnabled(enabled)
       self.ui.checkBox_motion_track.setEnabled(enabled)
+      self.ui.listView_anouncements.setEnabled(enabled)
+      self.ui.verticalSlider_groundlevel.setEnabled(enabled)
 
       for i in xrange(0,20):
          self.radio_buttons_flights[i].setEnabled(enabled)
@@ -435,6 +486,7 @@ class WindowMain(QtGui.QMainWindow):
          if (kmh < 500):
             self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
             self.run_tell_speed = kmh
+         self.add_anouncement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, 1)
 
       # Check left run
       if cam == "cam2" and self.run_direction == None and motion["direction"] == -1:
@@ -460,6 +512,70 @@ class WindowMain(QtGui.QMainWindow):
          if (kmh < 500):
             self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
             self.run_tell_speed = kmh
+         self.add_anouncement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, -1)
+
+   def add_anouncement(self, cam1_frame_number, cam2_frame_number, kmh, direction):
+      cam1_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam1", cam1_frame_number)
+      cam2_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam2", cam2_frame_number)
+      milliseconds = abs(cam1_timestamp - cam2_timestamp)
+      anouncement = Anouncement()
+      anouncement.cam1_frame_number = cam1_frame_number
+      anouncement.cam2_frame_number = cam2_frame_number
+      anouncement.time = milliseconds
+      anouncement.speed = kmh
+      anouncement.direction = direction
+      self.anouncements.append(anouncement)
+      self.update_anouncements()
+
+   def update_anouncements(self):
+      self.model_anouncements.clear()
+
+      for anouncement in self.anouncements:
+         out = ""
+         if (anouncement.direction == 1):
+            out += "--> "
+         else:
+            out += "<-- "
+
+         out += "%.3f" % (float(anouncement.time) / 1000) + "s "
+         out += str(anouncement.speed) + "Kmh "
+         item = QtGui.QStandardItem()
+         item.setText(out)
+         self.model_anouncements.appendRow(item)
+
+      self.ui.listView_anouncements.setModel(self.model_anouncements)
+
+   def save_anouncements(self):
+      for flight_number in xrange(0,20):
+         if self.radio_buttons_flights[flight_number].isChecked():
+            break
+      flight_number += 1
+      filename = os.path.join(self.cameras_directory_base, str(flight_number), "anouncements.csv")
+
+      with open(filename, 'w') as f:
+         for anouncement in self.anouncements:
+            out = str(anouncement.cam1_frame_number) + "  " + str(anouncement.cam2_frame_number) + " "
+            out += str(anouncement.time) + " "
+            out += str(anouncement.speed) + " "
+            out += str(anouncement.direction) + "\n"
+            f.write(out)
+
+   def read_config(self):
+      filename = self.get_config_filename()
+      if self.config.read(filename) == None:
+         print "No config file: " + filename
+         return False
+      self.cameras_directory_base = self.config.get("Files", "save_path")
+      return True
+
+
+   def get_config_filename(self):
+      if sys.platform.startswith("win32"):
+         from win32com.shell import shell,shellcon
+         home = shell.SHGetFolderPath(0, shellcon.CSIDL_PROFILE, None, 0)
+      else:
+         home = os.path.expanduser("~")
+      return os.path.join(home, "sleipnir.cfg")
 
 if __name__ == '__main__':
 

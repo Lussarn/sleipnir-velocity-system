@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>990</width>
-    <height>1036</height>
+    <width>1284</width>
+    <height>959</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -33,7 +33,7 @@
    <widget class="QLabel" name="label_video2">
     <property name="geometry">
      <rect>
-      <x>500</x>
+      <x>530</x>
       <y>70</y>
       <width>480</width>
       <height>720</height>
@@ -62,7 +62,7 @@
    <widget class="QSlider" name="slider_video2">
     <property name="geometry">
      <rect>
-      <x>500</x>
+      <x>530</x>
       <y>790</y>
       <width>391</width>
       <height>22</height>
@@ -88,7 +88,7 @@
    <widget class="QLabel" name="label_time_video2">
     <property name="geometry">
      <rect>
-      <x>900</x>
+      <x>930</x>
       <y>780</y>
       <width>81</width>
       <height>41</height>
@@ -101,7 +101,7 @@
    <widget class="QPushButton" name="pushbutton_video2_copy">
     <property name="geometry">
      <rect>
-      <x>500</x>
+      <x>530</x>
       <y>820</y>
       <width>111</width>
       <height>32</height>
@@ -140,7 +140,7 @@
    <widget class="QPushButton" name="pushbutton_video2_find">
     <property name="geometry">
      <rect>
-      <x>690</x>
+      <x>720</x>
       <y>820</y>
       <width>71</width>
       <height>32</height>
@@ -205,7 +205,7 @@
    <widget class="QPushButton" name="pushbutton_video2_playbackward">
     <property name="geometry">
      <rect>
-      <x>770</x>
+      <x>800</x>
       <y>820</y>
       <width>51</width>
       <height>32</height>
@@ -218,7 +218,7 @@
    <widget class="QPushButton" name="pushbutton_video2_backstep">
     <property name="geometry">
      <rect>
-      <x>810</x>
+      <x>840</x>
       <y>820</y>
       <width>51</width>
       <height>32</height>
@@ -231,7 +231,7 @@
    <widget class="QPushButton" name="pushbutton_video2_forwardstep">
     <property name="geometry">
      <rect>
-      <x>890</x>
+      <x>920</x>
       <y>820</y>
       <width>51</width>
       <height>32</height>
@@ -244,7 +244,7 @@
    <widget class="QPushButton" name="pushbutton_video2_playforward">
     <property name="geometry">
      <rect>
-      <x>930</x>
+      <x>960</x>
       <y>820</y>
       <width>51</width>
       <height>32</height>
@@ -270,7 +270,7 @@
    <widget class="QLabel" name="label_speed_label">
     <property name="geometry">
      <rect>
-      <x>740</x>
+      <x>770</x>
       <y>870</y>
       <width>81</width>
       <height>31</height>
@@ -289,7 +289,7 @@
    <widget class="QPushButton" name="pushbutton_video2_pause">
     <property name="geometry">
      <rect>
-      <x>850</x>
+      <x>880</x>
       <y>820</y>
       <width>51</width>
       <height>32</height>
@@ -331,7 +331,7 @@
    <widget class="QLabel" name="label_video2_online">
     <property name="geometry">
      <rect>
-      <x>510</x>
+      <x>540</x>
       <y>20</y>
       <width>161</width>
       <height>41</height>
@@ -360,8 +360,8 @@
    <widget class="QLineEdit" name="lineEdit_distance">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>890</y>
+      <x>1030</x>
+      <y>100</y>
       <width>113</width>
       <height>33</height>
      </rect>
@@ -370,8 +370,8 @@
    <widget class="QLabel" name="label_distance">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>870</y>
+      <x>1030</x>
+      <y>70</y>
       <width>111</width>
       <height>21</height>
      </rect>
@@ -396,7 +396,7 @@
    <widget class="QPushButton" name="pushButton_video2_align">
     <property name="geometry">
      <rect>
-      <x>860</x>
+      <x>900</x>
       <y>30</y>
       <width>111</width>
       <height>31</height>
@@ -409,8 +409,8 @@
    <widget class="QRadioButton" name="radioButton_flight_1">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>960</y>
+      <x>1060</x>
+      <y>600</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -422,8 +422,8 @@
    <widget class="QRadioButton" name="radioButton_flight_2">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>960</y>
+      <x>1100</x>
+      <y>600</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -435,8 +435,8 @@
    <widget class="QRadioButton" name="radioButton_flight_3">
     <property name="geometry">
      <rect>
-      <x>180</x>
-      <y>960</y>
+      <x>1140</x>
+      <y>600</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -448,8 +448,8 @@
    <widget class="QRadioButton" name="radioButton_flight_5">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>960</y>
+      <x>1220</x>
+      <y>600</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -461,8 +461,8 @@
    <widget class="QRadioButton" name="radioButton_flight_6">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>960</y>
+      <x>1060</x>
+      <y>650</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -474,8 +474,8 @@
    <widget class="QRadioButton" name="radioButton_flight_7">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>960</y>
+      <x>1100</x>
+      <y>650</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -487,8 +487,8 @@
    <widget class="QRadioButton" name="radioButton_flight_8">
     <property name="geometry">
      <rect>
-      <x>380</x>
-      <y>960</y>
+      <x>1140</x>
+      <y>650</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -500,8 +500,8 @@
    <widget class="QRadioButton" name="radioButton_flight_9">
     <property name="geometry">
      <rect>
-      <x>420</x>
-      <y>960</y>
+      <x>1180</x>
+      <y>650</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -513,8 +513,8 @@
    <widget class="QRadioButton" name="radioButton_flight_10">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>960</y>
+      <x>1220</x>
+      <y>650</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -526,8 +526,8 @@
    <widget class="QRadioButton" name="radioButton_flight_11">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>960</y>
+      <x>1060</x>
+      <y>700</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -539,8 +539,8 @@
    <widget class="QRadioButton" name="radioButton_flight_12">
     <property name="geometry">
      <rect>
-      <x>540</x>
-      <y>960</y>
+      <x>1100</x>
+      <y>700</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -552,8 +552,8 @@
    <widget class="QRadioButton" name="radioButton_flight_13">
     <property name="geometry">
      <rect>
-      <x>580</x>
-      <y>960</y>
+      <x>1140</x>
+      <y>700</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -565,8 +565,8 @@
    <widget class="QRadioButton" name="radioButton_flight_14">
     <property name="geometry">
      <rect>
-      <x>620</x>
-      <y>960</y>
+      <x>1180</x>
+      <y>700</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -578,10 +578,10 @@
    <widget class="QRadioButton" name="radioButton_flight_15">
     <property name="geometry">
      <rect>
-      <x>660</x>
-      <y>960</y>
+      <x>1220</x>
+      <y>700</y>
       <width>21</width>
-      <height>26</height>
+      <height>16</height>
      </rect>
     </property>
     <property name="text">
@@ -591,8 +591,8 @@
    <widget class="QRadioButton" name="radioButton_flight_16">
     <property name="geometry">
      <rect>
-      <x>700</x>
-      <y>960</y>
+      <x>1060</x>
+      <y>750</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -604,8 +604,8 @@
    <widget class="QRadioButton" name="radioButton_flight_17">
     <property name="geometry">
      <rect>
-      <x>740</x>
-      <y>960</y>
+      <x>1100</x>
+      <y>750</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -617,8 +617,8 @@
    <widget class="QRadioButton" name="radioButton_flight_18">
     <property name="geometry">
      <rect>
-      <x>780</x>
-      <y>960</y>
+      <x>1140</x>
+      <y>750</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -630,8 +630,8 @@
    <widget class="QRadioButton" name="radioButton_flight_19">
     <property name="geometry">
      <rect>
-      <x>820</x>
-      <y>960</y>
+      <x>1180</x>
+      <y>750</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -643,8 +643,8 @@
    <widget class="QRadioButton" name="radioButton_flight_20">
     <property name="geometry">
      <rect>
-      <x>860</x>
-      <y>960</y>
+      <x>1220</x>
+      <y>750</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -656,8 +656,8 @@
    <widget class="QLabel" name="label_flight_1">
     <property name="geometry">
      <rect>
-      <x>100</x>
-      <y>980</y>
+      <x>1060</x>
+      <y>620</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -675,8 +675,8 @@
    <widget class="QLabel" name="label_flight_2">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>980</y>
+      <x>1100</x>
+      <y>620</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -694,8 +694,8 @@
    <widget class="QLabel" name="label_flight_3">
     <property name="geometry">
      <rect>
-      <x>180</x>
-      <y>980</y>
+      <x>1140</x>
+      <y>620</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -713,8 +713,8 @@
    <widget class="QLabel" name="label_flight_4">
     <property name="geometry">
      <rect>
-      <x>220</x>
-      <y>980</y>
+      <x>1180</x>
+      <y>620</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -732,8 +732,8 @@
    <widget class="QLabel" name="label_flight_5">
     <property name="geometry">
      <rect>
-      <x>260</x>
-      <y>980</y>
+      <x>1220</x>
+      <y>620</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -751,8 +751,8 @@
    <widget class="QLabel" name="label_flight_6">
     <property name="geometry">
      <rect>
-      <x>300</x>
-      <y>980</y>
+      <x>1060</x>
+      <y>670</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -770,8 +770,8 @@
    <widget class="QLabel" name="label_flight_7">
     <property name="geometry">
      <rect>
-      <x>340</x>
-      <y>980</y>
+      <x>1100</x>
+      <y>670</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -789,8 +789,8 @@
    <widget class="QLabel" name="label_flight_8">
     <property name="geometry">
      <rect>
-      <x>380</x>
-      <y>980</y>
+      <x>1140</x>
+      <y>670</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -808,8 +808,8 @@
    <widget class="QLabel" name="label_flight_9">
     <property name="geometry">
      <rect>
-      <x>420</x>
-      <y>980</y>
+      <x>1180</x>
+      <y>670</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -827,10 +827,10 @@
    <widget class="QLabel" name="label_flight_10">
     <property name="geometry">
      <rect>
-      <x>460</x>
-      <y>980</y>
+      <x>1220</x>
+      <y>670</y>
       <width>21</width>
-      <height>21</height>
+      <height>31</height>
      </rect>
     </property>
     <property name="layoutDirection">
@@ -846,8 +846,8 @@
    <widget class="QLabel" name="label_flight_11">
     <property name="geometry">
      <rect>
-      <x>500</x>
-      <y>980</y>
+      <x>1060</x>
+      <y>720</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -865,8 +865,8 @@
    <widget class="QLabel" name="label_flight_12">
     <property name="geometry">
      <rect>
-      <x>540</x>
-      <y>980</y>
+      <x>1100</x>
+      <y>720</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -884,8 +884,8 @@
    <widget class="QLabel" name="label_flight_13">
     <property name="geometry">
      <rect>
-      <x>580</x>
-      <y>980</y>
+      <x>1140</x>
+      <y>720</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -903,8 +903,8 @@
    <widget class="QLabel" name="label_flight_14">
     <property name="geometry">
      <rect>
-      <x>620</x>
-      <y>980</y>
+      <x>1180</x>
+      <y>720</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -922,8 +922,8 @@
    <widget class="QLabel" name="label_flight_15">
     <property name="geometry">
      <rect>
-      <x>660</x>
-      <y>980</y>
+      <x>1220</x>
+      <y>720</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -941,8 +941,8 @@
    <widget class="QLabel" name="label_flight_16">
     <property name="geometry">
      <rect>
-      <x>700</x>
-      <y>980</y>
+      <x>1060</x>
+      <y>770</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -960,8 +960,8 @@
    <widget class="QLabel" name="label_flight_17">
     <property name="geometry">
      <rect>
-      <x>740</x>
-      <y>980</y>
+      <x>1100</x>
+      <y>770</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -979,8 +979,8 @@
    <widget class="QLabel" name="label_flight_18">
     <property name="geometry">
      <rect>
-      <x>780</x>
-      <y>980</y>
+      <x>1140</x>
+      <y>770</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -998,8 +998,8 @@
    <widget class="QLabel" name="label_flight_19">
     <property name="geometry">
      <rect>
-      <x>820</x>
-      <y>980</y>
+      <x>1180</x>
+      <y>770</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -1017,8 +1017,8 @@
    <widget class="QLabel" name="label_flight_20">
     <property name="geometry">
      <rect>
-      <x>860</x>
-      <y>980</y>
+      <x>1220</x>
+      <y>770</y>
       <width>21</width>
       <height>21</height>
      </rect>
@@ -1036,8 +1036,8 @@
    <widget class="QRadioButton" name="radioButton_flight_4">
     <property name="geometry">
      <rect>
-      <x>220</x>
-      <y>960</y>
+      <x>1180</x>
+      <y>600</y>
       <width>21</width>
       <height>26</height>
      </rect>
@@ -1049,7 +1049,7 @@
    <widget class="QLabel" name="label_time_label">
     <property name="geometry">
      <rect>
-      <x>740</x>
+      <x>770</x>
       <y>910</y>
       <width>81</width>
       <height>31</height>
@@ -1068,7 +1068,7 @@
    <widget class="QLabel" name="label_speed">
     <property name="geometry">
      <rect>
-      <x>840</x>
+      <x>870</x>
       <y>870</y>
       <width>141</width>
       <height>31</height>
@@ -1087,7 +1087,7 @@
    <widget class="QLabel" name="label_time">
     <property name="geometry">
      <rect>
-      <x>840</x>
+      <x>870</x>
       <y>910</y>
       <width>141</width>
       <height>31</height>
@@ -1106,8 +1106,8 @@
    <widget class="QCheckBox" name="checkBox_motion_track">
     <property name="geometry">
      <rect>
-      <x>480</x>
-      <y>890</y>
+      <x>1030</x>
+      <y>160</y>
       <width>191</width>
       <height>26</height>
      </rect>
@@ -1116,8 +1116,42 @@
      <string>Realtime Anouncements</string>
     </property>
    </widget>
+   <widget class="QListView" name="listView_anouncements">
+    <property name="geometry">
+     <rect>
+      <x>1030</x>
+      <y>190</y>
+      <width>241</width>
+      <height>371</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QSlider" name="verticalSlider_groundlevel">
+    <property name="geometry">
+     <rect>
+      <x>500</x>
+      <y>69</y>
+      <width>20</width>
+      <height>721</height>
+     </rect>
+    </property>
+    <property name="minimum">
+     <number>1</number>
+    </property>
+    <property name="maximum">
+     <number>480</number>
+    </property>
+    <property name="value">
+     <number>400</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Vertical</enum>
+    </property>
+    <property name="invertedAppearance">
+     <bool>true</bool>
+    </property>
+   </widget>
   </widget>
-  <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
  <connections/>
