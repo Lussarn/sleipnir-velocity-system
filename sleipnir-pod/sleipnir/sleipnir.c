@@ -205,7 +205,7 @@ int write_jpeg(unsigned char *data, int width, int height, int frame_number, uin
     &jpeg_data,
     &size,
     TJSAMP_GRAY,
-    70,
+    80,
     TJFLAG_FASTDCT);
 
   tjDestroy(jpeg_compressor);

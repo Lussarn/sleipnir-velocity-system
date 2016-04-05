@@ -243,7 +243,7 @@ class Video:
       image = motion["image"]
       self.update(image)
       if motion["motion"]:
-         return { "frame_number": motion["frame_number"], "direction": self.direction / self.direction }
+         return { "frame_number": motion["frame_number"], "direction": self.direction / abs(self.direction) }
       return None
 
    def update(self, use_image = None):
