@@ -1,3 +1,6 @@
 #!/bin/bash
 
+# [BASE_IP_ADDRESS] - IP address to base station
+# [CAMERA_NAME] - cam1 or cam2
+
 ./sleipnir/sleipnir --sleep 10400 --url http://[BASE_IP_ADDRESS]:8000/ -id [CAMERA_NAME] --width 320 --height 480 -fps 90
