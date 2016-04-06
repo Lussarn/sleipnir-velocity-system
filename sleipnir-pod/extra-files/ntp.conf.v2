@@ -20,7 +20,7 @@ filegen clockstats file clockstats type day enable
 #server 1.debian.pool.ntp.org iburst
 #server 2.debian.pool.ntp.org iburst
 #server 3.debian.pool.ntp.org iburst
-server 192.168.1.31 prefer
+server [CAMERA1_IP_ADDRESS] prefer
 
 
 # Access control configuration; see /usr/share/doc/ntp-doc/html/accopt.html for
@@ -50,5 +50,5 @@ restrict ::1
 
 # If you want to listen to time broadcasts on your local subnet, de-comment the
 # next lines.  Please do this only if you trust everybody on the network!
-disable auth
-broadcastclient
+#disable auth
+#broadcastclient
