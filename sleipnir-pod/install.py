@@ -89,12 +89,19 @@ def copy_file_with_substitutions(infile, outfile, substitutions):
 		print "Unable to read file: " + infile
 		return False
 
-	print content
+	for key in substitutions:
+		content = content.replace(key, substitutions[key])
+
+	try:
+		with file(outfile, "w") as f:
+			f.write(content)
+	except:
+		return False
+	return True
 
 def apt():
 	print "Installing dependecies..."
 	status = os.system("apt-get --force-yes install git-core gcc build-essential cmake libb64-dev libcurl4-openssl-dev libturbojpeg1-dev")
-	status = os.system("apt-get --force-yes install git-core gcc build-essential cmake")
 	if status != 0:
 		print "Unable to install dependencies. Exiting."
 		exit(1)
@@ -120,6 +127,7 @@ def userland():
 		exit(1)
 
 def sleipnir():
+	global base_ip, camera_number
 	print "Building sleipnir..."
 	try:
 		os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sleipnir'))
@@ -128,18 +136,32 @@ def sleipnir():
 		print "Unable to build sleipnir..."
 		exit(1)
 
-	status = os.system
+	print "copying record.example..."
+	os.chdir(os.path.dirname(os.path.realpath(__file__)))
+	record_filename = "./record.example"
+	if not copy_file_with_substitutions("./record.example", "./record", { "[BASE_IP_ADDRESS]": base_ip, "[CAMERA_NAME]": "cam" + str(camera_number) }):
+		print "Unable to copy ntp.conf. Exiting."
+		exit(1)
+
+
+def ntp():
+	global camera_ip, camera1_ip, camera_number
+
+	print
+	print "Configuring ntp.conf"
+	os.chdir(os.path.dirname(os.path.realpath(__file__)))
+	ntp_filename = "./extra-files/ntp.conf.v" + str(camera_number)
+	if not copy_file_with_substitutions(ntp_filename, "/etc/ntp.conf", { "[CAMERA1_IP_ADDRESS]": camera1_ip }):
+		print "Unable to copy ntp.conf. Exiting."
+		exit(1)
 
 apt()	
 userland()	
 sleipnir()
+ntp()
 
 exit(0)
 
-print "building sleipnir..."
-os.chdir("sleipnir")
-status = os.system.call("./build")
-exit(0)
 print
 print "Configuring ntp.conf"
 ntp_filename = "./extra-files/ntp.conf.v" + str(camera_number)
