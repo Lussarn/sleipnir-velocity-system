@@ -9,7 +9,8 @@ print
 if os.geteuid() != 0:
     exit("You need to have root privileges to run this script.\nPlease try again, this time using 'sudo'. Exiting.")
 
-if os.getlogin() != "linus":
+user = os.getlogin()
+if user != "pi":
 	print "You need to login as pi user and try again. Exiting."
 	exit(0)
 
@@ -90,31 +91,48 @@ def copy_file_with_substitutions(infile, outfile, substitutions):
 
 	print content
 
+def apt():
+	print "Installing dependecies..."
+	status = os.system("apt-get --force-yes install git-core gcc build-essential cmake libb64-dev libcurl4-openssl-dev libturbojpeg1-dev")
+	status = os.system("apt-get --force-yes install git-core gcc build-essential cmake")
+	if status != 0:
+		print "Unable to install dependencies. Exiting."
+		exit(1)
+
+
 def userland():
 	print "Downloading userland..."
-	status = os.system("/Users/linus/homebrew/bin/wget -O /tmp/userland.zip https://github.com/raspberrypi/userland/archive/master.zip")
+	status = os.system('/bin/su - pi -c "/usr/bin/wget -O /tmp/userland.zip https://github.com/raspberrypi/userland/archive/master.zip"')
 	if status != 0:
 		print "Error: Unable to download latest userland zip. Exiting."
 		exit(1)
 	print "Unzipping userland..."
-	status = os.system("/usr/bin/unzip -q -o ~/userland.zip -d ~/")
+	status = os.system('/bin/su - pi -c "/usr/bin/unzip -q -o /tmp/userland.zip -d /home/pi/"')
 	if status != 0:
 		print "Error: Unable to unzip userland zip. Exiting."
 		exit(1)
 
 	try:
-		os.chdir("~/userland-master")
-		os.system("./buildme")
+		os.chdir("/home/pi/userland-master")
+		os.system('/bin/su pi -c "/home/pi/userland-master/buildme"')
 	except:
 		print "Unable to build userland. Exiting."
 		exit(1)
 
-def apt():
-	print "Installing dependacies..."
-	status = os.system("apt-get --force-yes install git-core gcc build-essential cmake libb64-dev libcurl4-openssl-dev libturbojpeg1-dev")
+def sleipnir():
+	print "Building sleipnir..."
+	try:
+		os.chdir(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'sleipnir'))
+		os.system('/bin/su pi -c "./build"')
+	except:
+		print "Unable to build sleipnir..."
+		exit(1)
 
-	
+	status = os.system
+
+apt()	
 userland()	
+sleipnir()
 
 exit(0)
 
