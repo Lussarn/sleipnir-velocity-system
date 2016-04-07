@@ -1,5 +1,5 @@
 import PySide
-from PySide import QtCore, QtGui
+rom PySide import QtCore, QtGui
 import os
 import datetime
 import time
@@ -14,6 +14,7 @@ from qtui.Ui_MainWindow import Ui_MainWindow
 import CamerasData
 import CameraServer
 
+pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.mixer.init()
 
 class Anouncement:
@@ -62,6 +63,12 @@ class WindowMain(QtGui.QMainWindow):
 
       self.aligning_cam1 = False
       self.aligning_cam2 = False
+
+      self.sound_effects = { 
+         "gate-1" : pygame.mixer.Sound("../assets/sounds/gate-1.ogg"),
+         "gate-2" : pygame.mixer.Sound("../assets/sounds/gate-2.ogg"),
+         "error"  : pygame.mixer.Sound("../assets/sounds/error.ogg")
+      }
 
 
       QtGui.QMainWindow.__init__(self)
@@ -331,8 +338,7 @@ class WindowMain(QtGui.QMainWindow):
          if self.run_direction is not None and self.run_abort_timestamp < int(round(time.time() * 1000)):
             # Abort run
             self.run_direction = None
-            source = pygame.mixer.Sound("../assets/sounds/error.ogg")
-            source.play()
+            self.sound_effects["error"].play()
 
          if self.run_tell_speed != 0 and self.run_tell_speed_timestamp < int(round(time.time() * 1000)):
             source = pygame.mixer.Sound("../assets/sounds/numbers/" + str(self.run_tell_speed) + ".ogg")
@@ -469,16 +475,14 @@ class WindowMain(QtGui.QMainWindow):
          self.run_direction = "RIGHT"
          # Max 6 second run
          self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
-         source = pygame.mixer.Sound("../assets/sounds/gate-1.ogg")
-         source.play()
+         self.sound_effects["gate-1"].play()
 
       if cam == "cam2" and self.run_direction == "RIGHT" and motion["direction"] == 1:
          # Ending run on Cam 2
          self.run_frame_number_cam2 = motion["frame_number"]
          self.run_direction = None
          kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
-         source = pygame.mixer.Sound("../assets/sounds/gate-2.ogg")
-         source.play()
+         self.sound_effects["gate-2"].play()
          if (kmh < 500):
             self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
             self.run_tell_speed = kmh
@@ -492,8 +496,7 @@ class WindowMain(QtGui.QMainWindow):
          self.run_direction = "LEFT"
          # Max 6 second run
          self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
-         source = pygame.mixer.Sound("../assets/sounds/gate-1.ogg")
-         source.play()
+         self.sound_effects["gate-1"].play()
 
 
       if cam == "cam1" and self.run_direction == "LEFT" and motion["direction"] == -1:
@@ -501,8 +504,7 @@ class WindowMain(QtGui.QMainWindow):
          self.run_frame_number_cam1 = motion["frame_number"]
          self.run_direction = None
          kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
-         source = pygame.mixer.Sound("../assets/sounds/gate-2.ogg")
-         source.play()
+         self.sound_effects["gate-2"].play()
          if (kmh < 500):
             self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
             self.run_tell_speed = kmh
