@@ -1,5 +1,5 @@
 import PySide
-rom PySide import QtCore, QtGui
+from PySide import QtCore, QtGui
 import os
 import datetime
 import time
