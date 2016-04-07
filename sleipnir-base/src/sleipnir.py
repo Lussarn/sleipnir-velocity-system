@@ -296,6 +296,8 @@ class WindowMain(QtGui.QMainWindow):
                self.videos[0].set_shooting(False)
                self.videos[1].set_shooting(False)
                self.timer.start(20)
+               self.enable_all_gui_elements(True)
+
 
       # Update the video view
       if CameraServer.is_shooting():
@@ -409,6 +411,8 @@ class WindowMain(QtGui.QMainWindow):
          if self.radio_buttons_flights[flight_number].isChecked():
             break
       flight_number += 1
+
+      self.enable_all_gui_elements(False)
 
       self.anouncements = []
       self.update_anouncements()
