@@ -122,8 +122,9 @@ class Video:
          return None
       timestamp = self.cameras_data.get_timestamp_from_frame_number(self.cam, frame_number)
       picture_filename = self.flight_directory + "/" + str((frame_number / 100) *100).zfill(6) + "/image" + str(frame_number).zfill(9) + ".jpg"
-      pil_image = Image.open(picture_filename);
-      return { "timestamp": int(timestamp), "image": pil_image }
+#      pil_image = Image.open(picture_filename);
+      image_cv = cv.imread(picture_filename, 0)
+      return { "timestamp": int(timestamp), "image": image_cv }
 
    # Set the start timestamp
    def setStartTimestamp(self, start_timestamp):
@@ -199,10 +200,12 @@ class Video:
       frame = self.getFrame(self.current_frame_number)
       if not frame:
          return
-      image_pil = frame["image"];
+#      image_pil = frame["image"];
+      image_cv = frame["image"];
 
       if self.forward:
-         motion = self.have_motion(image_pil)
+#         motion = self.have_motion(image_pil)
+         motion = self.have_motion(image_cv)
          if self.find:
             image = motion["image"]
             if motion["motion"]:
@@ -210,7 +213,7 @@ class Video:
 
       self.update(image)
 
-   def have_motion(self, image_pil):
+   def have_motion(self, image_cv):
 
       while self.frame_processing_worker.is_processing():
          time.sleep(0.001)
@@ -221,7 +224,8 @@ class Video:
       if self.direction > 0:
          self.direction -=1
 
-      self.frame_processing_worker.image_pil = image_pil
+#      self.frame_processing_worker.image_pil = image_pil
+      self.frame_processing_worker.image_cv = image_cv
       self.frame_processing_worker.current_frame_number = self.current_frame_number
       self.frame_processing_worker.start_processing()
       image = self.frame_processing_worker.image
@@ -238,8 +242,10 @@ class Video:
       frame = self.getFrame(self.current_frame_number)
       if not frame:
          return
-      image_pil = frame["image"];
-      motion = self.have_motion(image_pil)
+#      image_pil = frame["image"];
+      image_cv = frame["image"];
+ #     motion = self.have_motion(image_pil)
+      motion = self.have_motion(image_cv)
       image = motion["image"]
       self.update(image)
       if motion["motion"]:
@@ -256,7 +262,7 @@ class Video:
          local_timestamp = 0
       self.labelTime.setText(self.__format_time(local_timestamp))
 
-      if use_image:
+      if use_image is not None:
          frame["image"] = use_image
 
       if (self.shooting):
@@ -264,16 +270,21 @@ class Video:
       else:
          self.slider.setSliderPosition(self.current_frame_number)
 
-      image_pil = frame["image"];
-      draw = ImageDraw.Draw(image_pil)
-      draw.line((image_pil.width / 2, 0, image_pil.width / 2, image_pil.height), fill=0)
-      del draw
+#      image_pil = frame["image"];
+#      draw = ImageDraw.Draw(image_pil)
+#      draw.line((image_pil.width / 2, 0, image_pil.width / 2, image_pil.height), fill=0)
+#      del draw
 
-      pilData = self.pilToBytes(image_pil.convert("RGBA"),'raw','BGRA')
-      imageQ = QtGui.QImage(pilData, image_pil.size[0], image_pil.size[1], QtGui.QImage.Format_ARGB32)
-      pixmapQ = QtGui.QPixmap.fromImage(imageQ)
 
-      pixmapQscaled = pixmapQ.scaled(480, 720, QtCore.Qt.KeepAspectRatio)
+#      pilData = self.pilToBytes(image_pil.convert("RGBA"),'raw','BGRA')
+#      imageQ = QtGui.QImage(pilData, image_pil.size[0], image_pil.size[1], QtGui.QImage.Format_ARGB32)
+#      pixmapQ = QtGui.QPixmap.fromImage(imageQ)
+
+      image_qt = QtGui.QImage(frame["image"], frame["image"].shape[1], frame["image"].shape[0], frame["image"].strides[0], QtGui.QImage.Format_Indexed8)
+      pixmap_qt = QtGui.QPixmap.fromImage(image_qt)
+
+#      pixmapQscaled = pixmapQ.scaled(480, 720, QtCore.Qt.KeepAspectRatio)
+      pixmapQscaled = pixmap_qt.scaled(480, 720, QtCore.Qt.KeepAspectRatio)
       self.widgetVideo.setPixmap(pixmapQscaled)
 
    def pilToBytes(self, image, encoder_name='raw', *args):
@@ -304,7 +315,8 @@ class FrameProcessingWorker(QtCore.QThread):
       # Video instance
       self.video = video
       # Iamge pil needed for processing
-      self.image_pil = None
+#      self.image_pil = None
+      self.image_cv = None
 
       # Comparision for motion tracking
       self.comparison_image_cv = None
@@ -334,8 +346,9 @@ class FrameProcessingWorker(QtCore.QThread):
             continue
 
          image = None
-         image_cv = self.pilImageToCV(self.image_pil)
-         image_gray_cv = cv.cvtColor(image_cv, cv.COLOR_BGR2GRAY)
+#         image_cv = self.pilImageToCV(self.image_pil)
+#         image_gray_cv = cv.cvtColor(image_cv, cv.COLOR_BGR2GRAY)
+         image_gray_cv = self.image_cv
          image_blur_cv = cv.GaussianBlur(image_gray_cv, (13, 13), 0)
          found_motion = False
 
@@ -389,8 +402,9 @@ class FrameProcessingWorker(QtCore.QThread):
                      found_motion = False
 
          self.comparison_image_cv = image_blur_cv
-         data_pil = cv.cvtColor(image_gray_cv, cv.COLOR_GRAY2BGR)
-         self.image = Image.fromarray(data_pil)
+#         data_pil = cv.cvtColor(image_gray_cv, cv.COLOR_GRAY2BGR)
+#         self.image = Image.fromarray(data_pil)
+         self.image = image_gray_cv
          self.found_motion = found_motion
          self.found_motion_frame_number = self.current_frame_number
 
