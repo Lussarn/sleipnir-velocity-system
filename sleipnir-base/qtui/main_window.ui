@@ -6,1151 +6,775 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1284</width>
-    <height>959</height>
+    <width>1578</width>
+    <height>759</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Speed</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <widget class="QLabel" name="label_video1">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>70</y>
-      <width>480</width>
-      <height>720</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::Box</enum>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_video2">
-    <property name="geometry">
-     <rect>
-      <x>530</x>
-      <y>70</y>
-      <width>480</width>
-      <height>720</height>
-     </rect>
-    </property>
-    <property name="frameShape">
-     <enum>QFrame::Box</enum>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QSlider" name="slider_video1">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>790</y>
-      <width>391</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
-   </widget>
-   <widget class="QSlider" name="slider_video2">
-    <property name="geometry">
-     <rect>
-      <x>530</x>
-      <y>790</y>
-      <width>391</width>
-      <height>22</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Horizontal</enum>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_time_video1">
-    <property name="geometry">
-     <rect>
-      <x>410</x>
-      <y>780</y>
-      <width>81</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>00:00.000</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_time_video2">
-    <property name="geometry">
-     <rect>
-      <x>930</x>
-      <y>780</y>
-      <width>81</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>00:00.000 </string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video2_copy">
-    <property name="geometry">
-     <rect>
-      <x>530</x>
-      <y>820</y>
-      <width>111</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Copy left</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video1_copy">
-    <property name="geometry">
-     <rect>
-      <x>380</x>
-      <y>820</y>
-      <width>111</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Copy right</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video1_find">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>820</y>
-      <width>71</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Find</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video2_find">
-    <property name="geometry">
-     <rect>
-      <x>720</x>
-      <y>820</y>
-      <width>71</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Find</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video1_playbackward">
-    <property name="geometry">
-     <rect>
-      <x>90</x>
-      <y>820</y>
-      <width>51</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;&lt;</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video1_backstep">
-    <property name="geometry">
-     <rect>
-      <x>130</x>
-      <y>820</y>
-      <width>51</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video1_forwardstep">
-    <property name="geometry">
-     <rect>
-      <x>210</x>
-      <y>820</y>
-      <width>51</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&gt;</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video1_playforward">
-    <property name="geometry">
-     <rect>
-      <x>250</x>
-      <y>820</y>
-      <width>51</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&gt;&gt;</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video2_playbackward">
-    <property name="geometry">
-     <rect>
-      <x>800</x>
-      <y>820</y>
-      <width>51</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;&lt;</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video2_backstep">
-    <property name="geometry">
-     <rect>
-      <x>840</x>
-      <y>820</y>
-      <width>51</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&lt;</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video2_forwardstep">
-    <property name="geometry">
-     <rect>
-      <x>920</x>
-      <y>820</y>
-      <width>51</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&gt;</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video2_playforward">
-    <property name="geometry">
-     <rect>
-      <x>960</x>
-      <y>820</y>
-      <width>51</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>&gt;&gt;</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_start">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>860</y>
-      <width>151</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Start cameras</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_speed_label">
-    <property name="geometry">
-     <rect>
-      <x>770</x>
-      <y>870</y>
-      <width>81</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">font-size: 24px;</string>
-    </property>
-    <property name="text">
-     <string>Speed:</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video2_pause">
-    <property name="geometry">
-     <rect>
-      <x>880</x>
-      <y>820</y>
-      <width>51</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>||</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_video1_pause">
-    <property name="geometry">
-     <rect>
-      <x>170</x>
-      <y>820</y>
-      <width>51</width>
-      <height>32</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>||</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_video1_online">
-    <property name="geometry">
-     <rect>
-      <x>20</x>
-      <y>20</y>
-      <width>181</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">font-size: 20px;</string>
-    </property>
-    <property name="text">
-     <string>Waiting...</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_video2_online">
-    <property name="geometry">
-     <rect>
-      <x>540</x>
-      <y>20</y>
-      <width>161</width>
-      <height>41</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">font-size: 20px;</string>
-    </property>
-    <property name="text">
-     <string>Waiting...</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushbutton_stop">
-    <property name="geometry">
-     <rect>
-      <x>170</x>
-      <y>860</y>
-      <width>151</width>
-      <height>61</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Stop Cameras</string>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="lineEdit_distance">
-    <property name="geometry">
-     <rect>
-      <x>1030</x>
-      <y>100</y>
-      <width>113</width>
-      <height>33</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_distance">
-    <property name="geometry">
-     <rect>
-      <x>1030</x>
-      <y>70</y>
-      <width>111</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Distance meters</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton_video1_align">
-    <property name="geometry">
-     <rect>
-      <x>375</x>
-      <y>30</y>
-      <width>111</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Align Camera</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="pushButton_video2_align">
-    <property name="geometry">
-     <rect>
-      <x>900</x>
-      <y>30</y>
-      <width>111</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Align Camera</string>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_1">
-    <property name="geometry">
-     <rect>
-      <x>1060</x>
-      <y>600</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_2">
-    <property name="geometry">
-     <rect>
-      <x>1100</x>
-      <y>600</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_3">
-    <property name="geometry">
-     <rect>
-      <x>1140</x>
-      <y>600</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_5">
-    <property name="geometry">
-     <rect>
-      <x>1220</x>
-      <y>600</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_6">
-    <property name="geometry">
-     <rect>
-      <x>1060</x>
-      <y>650</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_7">
-    <property name="geometry">
-     <rect>
-      <x>1100</x>
-      <y>650</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_8">
-    <property name="geometry">
-     <rect>
-      <x>1140</x>
-      <y>650</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_9">
-    <property name="geometry">
-     <rect>
-      <x>1180</x>
-      <y>650</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_10">
-    <property name="geometry">
-     <rect>
-      <x>1220</x>
-      <y>650</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_11">
-    <property name="geometry">
-     <rect>
-      <x>1060</x>
-      <y>700</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_12">
-    <property name="geometry">
-     <rect>
-      <x>1100</x>
-      <y>700</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_13">
-    <property name="geometry">
-     <rect>
-      <x>1140</x>
-      <y>700</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_14">
-    <property name="geometry">
-     <rect>
-      <x>1180</x>
-      <y>700</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_15">
-    <property name="geometry">
-     <rect>
-      <x>1220</x>
-      <y>700</y>
-      <width>21</width>
-      <height>16</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_16">
-    <property name="geometry">
-     <rect>
-      <x>1060</x>
-      <y>750</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_17">
-    <property name="geometry">
-     <rect>
-      <x>1100</x>
-      <y>750</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_18">
-    <property name="geometry">
-     <rect>
-      <x>1140</x>
-      <y>750</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_19">
-    <property name="geometry">
-     <rect>
-      <x>1180</x>
-      <y>750</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_20">
-    <property name="geometry">
-     <rect>
-      <x>1220</x>
-      <y>750</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_1">
-    <property name="geometry">
-     <rect>
-      <x>1060</x>
-      <y>620</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>1</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_2">
-    <property name="geometry">
-     <rect>
-      <x>1100</x>
-      <y>620</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>2</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_3">
-    <property name="geometry">
-     <rect>
-      <x>1140</x>
-      <y>620</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>3</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_4">
-    <property name="geometry">
-     <rect>
-      <x>1180</x>
-      <y>620</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>4</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_5">
-    <property name="geometry">
-     <rect>
-      <x>1220</x>
-      <y>620</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>5</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_6">
-    <property name="geometry">
-     <rect>
-      <x>1060</x>
-      <y>670</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>6</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_7">
-    <property name="geometry">
-     <rect>
-      <x>1100</x>
-      <y>670</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>7</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_8">
-    <property name="geometry">
-     <rect>
-      <x>1140</x>
-      <y>670</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>8</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_9">
-    <property name="geometry">
-     <rect>
-      <x>1180</x>
-      <y>670</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>9</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_10">
-    <property name="geometry">
-     <rect>
-      <x>1220</x>
-      <y>670</y>
-      <width>21</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>10</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_11">
-    <property name="geometry">
-     <rect>
-      <x>1060</x>
-      <y>720</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>11</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_12">
-    <property name="geometry">
-     <rect>
-      <x>1100</x>
-      <y>720</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>12</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_13">
-    <property name="geometry">
-     <rect>
-      <x>1140</x>
-      <y>720</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>13</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_14">
-    <property name="geometry">
-     <rect>
-      <x>1180</x>
-      <y>720</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>14</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_15">
-    <property name="geometry">
-     <rect>
-      <x>1220</x>
-      <y>720</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>15</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_16">
-    <property name="geometry">
-     <rect>
-      <x>1060</x>
-      <y>770</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>16</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_17">
-    <property name="geometry">
-     <rect>
-      <x>1100</x>
-      <y>770</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>17</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_18">
-    <property name="geometry">
-     <rect>
-      <x>1140</x>
-      <y>770</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>18</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_19">
-    <property name="geometry">
-     <rect>
-      <x>1180</x>
-      <y>770</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>19</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_flight_20">
-    <property name="geometry">
-     <rect>
-      <x>1220</x>
-      <y>770</y>
-      <width>21</width>
-      <height>21</height>
-     </rect>
-    </property>
-    <property name="layoutDirection">
-     <enum>Qt::LeftToRight</enum>
-    </property>
-    <property name="text">
-     <string>20</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignCenter</set>
-    </property>
-   </widget>
-   <widget class="QRadioButton" name="radioButton_flight_4">
-    <property name="geometry">
-     <rect>
-      <x>1180</x>
-      <y>600</y>
-      <width>21</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string/>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_time_label">
-    <property name="geometry">
-     <rect>
-      <x>770</x>
-      <y>910</y>
-      <width>81</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">font-size: 24px;</string>
-    </property>
-    <property name="text">
-     <string>Time:</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_speed">
-    <property name="geometry">
-     <rect>
-      <x>870</x>
-      <y>870</y>
-      <width>141</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">font-size: 24px;</string>
-    </property>
-    <property name="text">
-     <string>888.88 kmh</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_time">
-    <property name="geometry">
-     <rect>
-      <x>870</x>
-      <y>910</y>
-      <width>141</width>
-      <height>31</height>
-     </rect>
-    </property>
-    <property name="styleSheet">
-     <string notr="true">font-size: 24px;</string>
-    </property>
-    <property name="text">
-     <string>1.423 sec</string>
-    </property>
-    <property name="alignment">
-     <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-    </property>
-   </widget>
-   <widget class="QCheckBox" name="checkBox_motion_track">
-    <property name="geometry">
-     <rect>
-      <x>1030</x>
-      <y>160</y>
-      <width>191</width>
-      <height>26</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Realtime Anouncements</string>
-    </property>
-   </widget>
-   <widget class="QListView" name="listView_anouncements">
-    <property name="geometry">
-     <rect>
-      <x>1030</x>
-      <y>190</y>
-      <width>241</width>
-      <height>371</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QSlider" name="verticalSlider_groundlevel">
-    <property name="geometry">
-     <rect>
-      <x>500</x>
-      <y>69</y>
-      <width>20</width>
-      <height>721</height>
-     </rect>
-    </property>
-    <property name="minimum">
-     <number>1</number>
-    </property>
-    <property name="maximum">
-     <number>480</number>
-    </property>
-    <property name="value">
-     <number>400</number>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Vertical</enum>
-    </property>
-    <property name="invertedAppearance">
-     <bool>true</bool>
-    </property>
-   </widget>
+   <layout class="QVBoxLayout" name="verticalLayout_2">
+    <property name="rightMargin">
+     <number>12</number>
+    </property>
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout_3">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_top" stretch="1,0,1,0">
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="rightMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>0</number>
+        </property>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_video_1" stretch="0,1,0,0">
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_video_1_top" stretch="1,0">
+            <item>
+             <widget class="QLabel" name="label_video1_online">
+              <property name="styleSheet">
+               <string notr="true">font-size: 20px;</string>
+              </property>
+              <property name="text">
+               <string>Waiting...</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_video1_align">
+              <property name="text">
+               <string>Align Camera</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_video1">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_video_1_slider">
+            <property name="topMargin">
+             <number>10</number>
+            </property>
+            <property name="bottomMargin">
+             <number>10</number>
+            </property>
+            <item>
+             <widget class="QSlider" name="slider_video1">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_time_video1">
+              <property name="text">
+               <string>00:00.000</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_video_1_buttons" stretch="0,0,0,0,0,0,0,1,0">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video1_find">
+              <property name="text">
+               <string>Find</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Fixed</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>16</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video1_playbackward">
+              <property name="text">
+               <string>&lt;&lt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video1_backstep">
+              <property name="text">
+               <string>&lt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video1_pause">
+              <property name="text">
+               <string>||</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video1_forwardstep">
+              <property name="text">
+               <string>&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video1_playforward">
+              <property name="text">
+               <string>&gt;&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_3">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video1_copy">
+              <property name="text">
+               <string>Copy right</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_groundlevel">
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <spacer name="verticalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>1</width>
+              <height>34</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QSlider" name="verticalSlider_groundlevel">
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>480</number>
+            </property>
+            <property name="value">
+             <number>400</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="invertedAppearance">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_3">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>1</width>
+              <height>80</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_video_2" stretch="0,1,0,0">
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_video_2_top" stretch="1,0">
+            <item>
+             <widget class="QLabel" name="label_video2_online">
+              <property name="styleSheet">
+               <string notr="true">font-size: 20px;</string>
+              </property>
+              <property name="text">
+               <string>Waiting...</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushButton_video2_align">
+              <property name="text">
+               <string>Align Camera</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_video2">
+            <property name="frameShape">
+             <enum>QFrame::Box</enum>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="scaledContents">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_video_2_slider">
+            <property name="topMargin">
+             <number>10</number>
+            </property>
+            <property name="bottomMargin">
+             <number>10</number>
+            </property>
+            <item>
+             <widget class="QSlider" name="slider_video2">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLabel" name="label_time_video2">
+              <property name="text">
+               <string>00:00.000 </string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_video_2_buttons" stretch="0,1,0,0,0,0,0,0,0">
+            <property name="spacing">
+             <number>0</number>
+            </property>
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <property name="bottomMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video2_copy">
+              <property name="text">
+               <string>Copy left</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_4">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>40</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video2_find">
+              <property name="text">
+               <string>Find</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <spacer name="horizontalSpacer_5">
+              <property name="orientation">
+               <enum>Qt::Horizontal</enum>
+              </property>
+              <property name="sizeType">
+               <enum>QSizePolicy::Fixed</enum>
+              </property>
+              <property name="sizeHint" stdset="0">
+               <size>
+                <width>16</width>
+                <height>20</height>
+               </size>
+              </property>
+             </spacer>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video2_playbackward">
+              <property name="text">
+               <string>&lt;&lt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video2_backstep">
+              <property name="text">
+               <string>&lt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video2_pause">
+              <property name="text">
+               <string>||</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video2_forwardstep">
+              <property name="text">
+               <string>&gt;</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="pushbutton_video2_playforward">
+              <property name="text">
+               <string>&gt;&gt;</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="verticalLayout_4">
+          <property name="spacing">
+           <number>6</number>
+          </property>
+          <item>
+           <spacer name="verticalSpacer">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>280</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_distance">
+            <property name="text">
+             <string>Distance meters</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLineEdit" name="lineEdit_distance"/>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_3">
+            <property name="topMargin">
+             <number>0</number>
+            </property>
+            <item>
+             <widget class="QCheckBox" name="checkBox_motion_track">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="text">
+               <string>Realtime Anouncements</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <widget class="QListView" name="listView_anouncements">
+            <property name="minimumSize">
+             <size>
+              <width>0</width>
+              <height>300</height>
+             </size>
+            </property>
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>400</height>
+             </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>280</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_flightnumber">
+            <property name="text">
+             <string>Flight number</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QGridLayout" name="gridLayout_flights">
+            <property name="horizontalSpacing">
+             <number>6</number>
+            </property>
+            <property name="verticalSpacing">
+             <number>15</number>
+            </property>
+            <item row="2" column="1">
+             <widget class="QRadioButton" name="radioButton_flight_7">
+              <property name="text">
+               <string>7</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QRadioButton" name="radioButton_flight_1">
+              <property name="text">
+               <string>1</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="4">
+             <widget class="QRadioButton" name="radioButton_flight_15">
+              <property name="text">
+               <string>15</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="0">
+             <widget class="QRadioButton" name="radioButton_flight_16">
+              <property name="text">
+               <string>16</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QRadioButton" name="radioButton_flight_9">
+              <property name="text">
+               <string>9</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="3">
+             <widget class="QRadioButton" name="radioButton_flight_19">
+              <property name="text">
+               <string>19</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <widget class="QRadioButton" name="radioButton_flight_17">
+              <property name="text">
+               <string>17</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="4">
+             <widget class="QRadioButton" name="radioButton_flight_5">
+              <property name="text">
+               <string>5</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QRadioButton" name="radioButton_flight_11">
+              <property name="text">
+               <string>11</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QRadioButton" name="radioButton_flight_6">
+              <property name="text">
+               <string>6</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="4">
+             <widget class="QRadioButton" name="radioButton_flight_20">
+              <property name="text">
+               <string>20</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QRadioButton" name="radioButton_flight_4">
+              <property name="text">
+               <string>4</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="2">
+             <widget class="QRadioButton" name="radioButton_flight_3">
+              <property name="text">
+               <string>3</string>
+              </property>
+             </widget>
+            </item>
+            <item row="4" column="2">
+             <widget class="QRadioButton" name="radioButton_flight_18">
+              <property name="text">
+               <string>18</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QRadioButton" name="radioButton_flight_2">
+              <property name="text">
+               <string>2</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="3">
+             <widget class="QRadioButton" name="radioButton_flight_14">
+              <property name="text">
+               <string>14</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="2">
+             <widget class="QRadioButton" name="radioButton_flight_13">
+              <property name="text">
+               <string>13</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <widget class="QRadioButton" name="radioButton_flight_12">
+              <property name="text">
+               <string>12</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="4">
+             <widget class="QRadioButton" name="radioButton_flight_10">
+              <property name="text">
+               <string>10</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <widget class="QRadioButton" name="radioButton_flight_8">
+              <property name="text">
+               <string>8</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_5">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>80</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_bottom" stretch="0,0,1,0">
+        <property name="leftMargin">
+         <number>0</number>
+        </property>
+        <property name="topMargin">
+         <number>0</number>
+        </property>
+        <property name="bottomMargin">
+         <number>1</number>
+        </property>
+        <item>
+         <widget class="QPushButton" name="pushbutton_start">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>60</height>
+           </size>
+          </property>
+          <property name="baseSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Start cameras</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="pushbutton_stop">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>60</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Stop Cameras</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <layout class="QGridLayout" name="gridLayout" rowstretch="0,0" columnstretch="1,0">
+          <property name="rightMargin">
+           <number>20</number>
+          </property>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_speed_label">
+            <property name="styleSheet">
+             <string notr="true">font-size: 24px;</string>
+            </property>
+            <property name="text">
+             <string>Speed:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="label_time">
+            <property name="styleSheet">
+             <string notr="true">font-size: 24px;</string>
+            </property>
+            <property name="text">
+             <string>1.423 sec</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_time_label">
+            <property name="styleSheet">
+             <string notr="true">font-size: 24px;</string>
+            </property>
+            <property name="text">
+             <string>Time:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="label_speed">
+            <property name="styleSheet">
+             <string notr="true">font-size: 24px;</string>
+            </property>
+            <property name="text">
+             <string>888.88 kmh</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>280</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
   </widget>
  </widget>
  <resources/>
