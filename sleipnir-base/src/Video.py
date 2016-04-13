@@ -214,8 +214,10 @@ class Video:
                self.timer.stop()
                self.update(image)
 
-      if self.current_frame_number & 1 == 1:
+      if self.find and self.current_frame_number & 7 == 1:
          self.update(image)
+      elif not self.find:
+         self.update(image)         
 
    def have_motion(self, image_cv):
 
@@ -274,10 +276,7 @@ class Video:
       cv.rectangle(frame["image"], (160, 0), (160, 480), (0, 0, 0), 1)
 
       image_qt = QtGui.QImage(frame["image"], frame["image"].shape[1], frame["image"].shape[0], frame["image"].strides[0], QtGui.QImage.Format_Indexed8)
-      pixmap_qt = QtGui.QPixmap.fromImage(image_qt)
-
-      pixmapQscaled = pixmap_qt.scaled(480, 720, QtCore.Qt.KeepAspectRatio)
-      self.widgetVideo.setPixmap(pixmapQscaled)
+      self.widgetVideo.setPixmap(QtGui.QPixmap.fromImage(image_qt))
 
    def __format_time(self, ms):
       return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)

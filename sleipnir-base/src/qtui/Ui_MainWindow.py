@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'qtui/main_window.ui'
 #
-# Created: Wed Apr 13 15:50:38 2016
+# Created: Wed Apr 13 16:01:29 2016
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -266,6 +266,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addLayout(self.gridLayout_flights)
         spacerItem8 = QtGui.QSpacerItem(20, 80, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.verticalLayout_4.addItem(spacerItem8)
+        self.verticalLayout_4.setStretch(8, 1)
         self.horizontalLayout_top.addLayout(self.verticalLayout_4)
         self.horizontalLayout_top.setStretch(0, 1)
         self.horizontalLayout_top.setStretch(2, 1)
