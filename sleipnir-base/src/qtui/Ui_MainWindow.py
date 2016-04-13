@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'qtui/main_window.ui'
 #
-# Created: Wed Apr 13 16:01:29 2016
+# Created: Wed Apr 13 16:06:12 2016
 #      by: pyside-uic 0.2.15 running on PySide 1.2.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -177,6 +177,10 @@ class Ui_MainWindow(object):
         self.lineEdit_distance = QtGui.QLineEdit(self.centralwidget)
         self.lineEdit_distance.setObjectName("lineEdit_distance")
         self.verticalLayout_4.addWidget(self.lineEdit_distance)
+        self.checkBox_live = QtGui.QCheckBox(self.centralwidget)
+        self.checkBox_live.setChecked(True)
+        self.checkBox_live.setObjectName("checkBox_live")
+        self.verticalLayout_4.addWidget(self.checkBox_live)
         self.horizontalLayout_3 = QtGui.QHBoxLayout()
         self.horizontalLayout_3.setContentsMargins(-1, 0, -1, -1)
         self.horizontalLayout_3.setObjectName("horizontalLayout_3")
@@ -186,6 +190,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(self.checkBox_motion_track.sizePolicy().hasHeightForWidth())
         self.checkBox_motion_track.setSizePolicy(sizePolicy)
+        self.checkBox_motion_track.setChecked(True)
         self.checkBox_motion_track.setObjectName("checkBox_motion_track")
         self.horizontalLayout_3.addWidget(self.checkBox_motion_track)
         self.verticalLayout_4.addLayout(self.horizontalLayout_3)
@@ -266,7 +271,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_4.addLayout(self.gridLayout_flights)
         spacerItem8 = QtGui.QSpacerItem(20, 80, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.verticalLayout_4.addItem(spacerItem8)
-        self.verticalLayout_4.setStretch(8, 1)
+        self.verticalLayout_4.setStretch(9, 1)
         self.horizontalLayout_top.addLayout(self.verticalLayout_4)
         self.horizontalLayout_top.setStretch(0, 1)
         self.horizontalLayout_top.setStretch(2, 1)
@@ -341,6 +346,7 @@ class Ui_MainWindow(object):
         self.pushbutton_video2_forwardstep.setText(QtGui.QApplication.translate("MainWindow", ">", None, QtGui.QApplication.UnicodeUTF8))
         self.pushbutton_video2_playforward.setText(QtGui.QApplication.translate("MainWindow", ">>", None, QtGui.QApplication.UnicodeUTF8))
         self.label_distance.setText(QtGui.QApplication.translate("MainWindow", "Distance meters", None, QtGui.QApplication.UnicodeUTF8))
+        self.checkBox_live.setText(QtGui.QApplication.translate("MainWindow", "Live preview", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBox_motion_track.setText(QtGui.QApplication.translate("MainWindow", "Realtime Anouncements", None, QtGui.QApplication.UnicodeUTF8))
         self.label_flightnumber.setText(QtGui.QApplication.translate("MainWindow", "Flight number", None, QtGui.QApplication.UnicodeUTF8))
         self.radioButton_flight_7.setText(QtGui.QApplication.translate("MainWindow", "7", None, QtGui.QApplication.UnicodeUTF8))

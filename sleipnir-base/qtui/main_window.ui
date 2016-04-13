@@ -399,7 +399,7 @@
          </layout>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0,0,0,0,0,0,1">
+         <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0,0,0,0,0,0,0,1">
           <property name="spacing">
            <number>6</number>
           </property>
@@ -430,6 +430,16 @@
            <widget class="QLineEdit" name="lineEdit_distance"/>
           </item>
           <item>
+           <widget class="QCheckBox" name="checkBox_live">
+            <property name="text">
+             <string>Live preview</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <layout class="QHBoxLayout" name="horizontalLayout_3">
             <property name="topMargin">
              <number>0</number>
@@ -444,6 +454,9 @@
               </property>
               <property name="text">
                <string>Realtime Anouncements</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>

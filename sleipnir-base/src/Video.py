@@ -242,7 +242,7 @@ class Video:
       self.current_frame_number = frame_number
       self.update()
 
-   def view_frame_motion_track(self, frame_number):
+   def view_frame_motion_track(self, frame_number, live_preview = True):
       self.current_frame_number = frame_number
       frame = self.getFrame(self.current_frame_number)
       if not frame:
@@ -251,7 +251,7 @@ class Video:
       motion = self.have_motion(image_cv)
       image = motion["image"]
       # Only show every other frame
-      if self.current_frame_number & 1 == 1:
+      if live_preview and self.current_frame_number & 1 == 1:
          self.update(image)
       if motion["motion"]:
          return { "frame_number": motion["frame_number"], "direction": self.direction / abs(self.direction) }
