@@ -6,6 +6,10 @@ import time
 import pygame
 import ConfigParser
 
+
+import util
+import globals
+
 import CameraServer
 from Video import Video
 
@@ -65,9 +69,9 @@ class WindowMain(QtGui.QMainWindow):
       self.aligning_cam2 = False
 
       self.sound_effects = { 
-         "gate-1" : pygame.mixer.Sound("../assets/sounds/gate-1.ogg"),
-         "gate-2" : pygame.mixer.Sound("../assets/sounds/gate-2.ogg"),
-         "error"  : pygame.mixer.Sound("../assets/sounds/error.ogg")
+         "gate-1" : pygame.mixer.Sound(util.resource_path("sounds/gate-1.ogg")),
+         "gate-2" : pygame.mixer.Sound(util.resource_path("sounds/gate-2.ogg")),
+         "error"  : pygame.mixer.Sound(util.resource_path("sounds/error.ogg"))
       }
 
 
@@ -207,6 +211,8 @@ class WindowMain(QtGui.QMainWindow):
          if self.radio_buttons_flights[i].isChecked():
             break
       self.load_flight(i + 1)
+      self.sound_effects["error"].play()
+
 
    def __on_distance_changed(self, value):
       try:
@@ -343,7 +349,7 @@ class WindowMain(QtGui.QMainWindow):
             self.sound_effects["error"].play()
 
          if self.run_tell_speed != 0 and self.run_tell_speed_timestamp < int(round(time.time() * 1000)):
-            source = pygame.mixer.Sound("../assets/sounds/numbers/" + str(self.run_tell_speed) + ".ogg")
+            source = pygame.mixer.Sound(util.resource_path("sounds/numbers/" + str(self.run_tell_speed) + ".ogg"))
             source.play()
             self.run_tell_speed = 0
 
