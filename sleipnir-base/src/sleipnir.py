@@ -6,23 +6,23 @@ import time
 import pygame
 import ConfigParser
 
-
 import util
 import globals
-
 import CameraServer
 from Video import Video
-
-from qtui.Ui_MainWindow import Ui_MainWindow
-
 import CamerasData
 import CameraServer
 
+from qtui.Ui_MainWindow import Ui_MainWindow
+
+# Try to get rid of sound lag
 pygame.mixer.pre_init(44100, -16, 1, 512)
 pygame.mixer.init()
 
 class Anouncement:
-
+   """
+   Announcements
+   """
    def __init__(self):
       self.cam1_frame_number = 0
       self.cam2_frame_number = 0
@@ -31,19 +31,21 @@ class Anouncement:
       self.direction = 0
 
 class WindowMain(QtGui.QMainWindow):
-
+   """
+   Main window
+   """
    def __init__(self):
+      # Init config
       self.config = ConfigParser.ConfigParser()
       if not self.read_config():
          exit(0)
 
+      # Set cameras_directory_base for the server
       CameraServer.ServerData.cameras_directory_base = self.cameras_directory_base
 
-      self.cameras_data = None
+      # Data for the cameras
       self.cameras_data = CamerasData.CamerasData()
 
-      self.videos = {}
-      self.radio_buttons_flights = {}
 
       # none / "Left" / "Right"
       self.run_direction = None
@@ -52,22 +54,37 @@ class WindowMain(QtGui.QMainWindow):
       # time to abort run
       self.run_abort_timestamp = 0 
 
+      # Camera 1/2 online
       self.online_cam1 = False
       self.online_cam2 = False
+
+      # Both cameras online
       self.online = False
+
+      # Everything ready to start cameras
       self.ready = False
+
+      # Currently shooting
       self.shooting = False
+
+      # Frame number from shooting cameras
       self.shooting_frame_number_cam1 = 0
       self.shooting_frame_number_cam2 = 0
+
+      # Waiting for cameras to stop
       self.stop_camera_wait = False
+
+      # Distance
       self.distance = 100
 
       self.run_tell_speed_timestamp = 0
       self.run_tell_speed = 0
 
+      # Aligning cameras 1/2
       self.aligning_cam1 = False
       self.aligning_cam2 = False
 
+      # Sound effects
       self.sound_effects = { 
          "gate-1" : pygame.mixer.Sound(util.resource_path("sounds/gate-1.ogg")),
          "gate-2" : pygame.mixer.Sound(util.resource_path("sounds/gate-2.ogg")),
@@ -89,6 +106,8 @@ class WindowMain(QtGui.QMainWindow):
 
       self.ui.verticalSlider_groundlevel.sliderMoved.connect(self.__on_groundlevel_changed)
 
+      # Initiate the flight number buttons
+      self.radio_buttons_flights = {}
       self.radio_buttons_flights[0] = self.ui.radioButton_flight_1
       self.radio_buttons_flights[1] = self.ui.radioButton_flight_2
       self.radio_buttons_flights[2] = self.ui.radioButton_flight_3
@@ -112,7 +131,9 @@ class WindowMain(QtGui.QMainWindow):
       for i in xrange(0,20):
          self.radio_buttons_flights[i].clicked.connect(self.__flight_number_clicked)
 
-
+      # [0] - left [1] - right video
+      # Init the videos
+      self.videos = {}
       self.videos[0] = Video(
          "cam1",
          os.path.join(self.cameras_directory_base, "1", "cam1"), 
@@ -142,30 +163,41 @@ class WindowMain(QtGui.QMainWindow):
       self.videos[0].set_sibling_video(self.videos[1])
       self.videos[1].set_sibling_video(self.videos[0])
 
+      # Load flight number 1
       self.load_flight(1)
 
       self.ui.label_speed.setText("")
 
+      # Start / Stop connects
       self.ui.pushbutton_start.clicked.connect(self.startCameras)
       self.ui.pushbutton_stop.clicked.connect(self.stopCameras)
 
+      # Align cameras connects
       self.ui.pushButton_video1_align.clicked.connect(self.align_cam1)
       self.ui.pushButton_video2_align.clicked.connect(self.align_cam2)
 
+      # distance connect
       self.ui.lineEdit_distance.setText(str(self.distance))
       self.ui.lineEdit_distance.textChanged.connect(self.__on_distance_changed)
 
       self.ui.listView_anouncements.clicked.connect(self.__on_anouncement_changed)
 
+      # Show GUI
       self.show()
       self.raise_()
+
+      # Start camera server
       CameraServer.start_server()
 
+      # Run Gui
       self.timer = QtCore.QTimer(self)
       self.timer.timeout.connect(self.__timerGui)
       self.timer.start(20)
 
    def load_flight(self, flight_number):
+      """
+      Load a flight
+      """
       self.radio_buttons_flights[flight_number - 1].setChecked(True)
 
       filename = os.path.join(self.cameras_directory_base, str(flight_number), "anouncements.csv")
@@ -207,14 +239,19 @@ class WindowMain(QtGui.QMainWindow):
       self.videos[1].update();
 
    def __flight_number_clicked(self):
+      """
+      Flight number clicked
+      """
       for i in xrange(0,20):
          if self.radio_buttons_flights[i].isChecked():
             break
       self.load_flight(i + 1)
-      self.sound_effects["error"].play()
 
 
    def __on_distance_changed(self, value):
+      """
+      Distance changed
+      """
       try:
          value = int(value)
       except:
@@ -222,6 +259,10 @@ class WindowMain(QtGui.QMainWindow):
       self.distance = value
 
    def __on_groundlevel_changed(self, value):
+      """
+      Ground level changed
+      """
+      # Forward ground level to videos
       self.videos[0].groundlevel = value
       self.videos[1].groundlevel = value
 
@@ -232,6 +273,9 @@ class WindowMain(QtGui.QMainWindow):
       self.videos[1].set_current_frame_number(anouncement.cam2_frame_number)
 
    def __timerGui(self):
+      """
+      Gui is basically a state machine
+      """
       self.online_cam1 = CameraServer.is_online("cam1")
       self.online_cam2 = CameraServer.is_online("cam2")
       self.online = CameraServer.is_online("cam1") and CameraServer.is_online("cam2")
@@ -258,7 +302,6 @@ class WindowMain(QtGui.QMainWindow):
          # Camera lost?
          self.shooting = False;
          CameraServer.stop_shooting()
-
 
       if not self.online:
          self.ui.pushbutton_start.setEnabled(False)
@@ -303,7 +346,6 @@ class WindowMain(QtGui.QMainWindow):
                self.videos[1].set_shooting(False)
                self.timer.start(20)
                self.enable_all_gui_elements(True)
-
 
       # Update the video view
       if CameraServer.is_shooting():
@@ -361,6 +403,9 @@ class WindowMain(QtGui.QMainWindow):
          self.set_speed(cam1_frame_number, cam2_frame_number)
 
    def set_speed(self, cam1_frame_number, cam2_frame_number):
+      """
+      Set speed from camera frame numbers
+      """
       cam1_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam1", cam1_frame_number)
       cam2_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam2", cam2_frame_number)
       milliseconds = abs(cam1_timestamp - cam2_timestamp)
@@ -384,6 +429,9 @@ class WindowMain(QtGui.QMainWindow):
       return int(kmh)
 
    def align_cam1(self):
+      """
+      Align camera one
+      """
       if (self.aligning_cam1):
          self.stop_camera_wait = True
          CameraServer.stop_shooting()         
@@ -397,6 +445,9 @@ class WindowMain(QtGui.QMainWindow):
          self.ui.pushButton_video1_align.setText("Stop")
 
    def align_cam2(self):
+      """
+      Align camera two
+      """
       if (self.aligning_cam2):
          self.stop_camera_wait = True
          CameraServer.stop_shooting()         
@@ -410,6 +461,9 @@ class WindowMain(QtGui.QMainWindow):
          self.ui.pushButton_video2_align.setText("Stop")
 
    def startCameras(self):
+      """
+      Start cameras
+      """
       if not CameraServer.is_ready():
          return False
 
@@ -442,11 +496,17 @@ class WindowMain(QtGui.QMainWindow):
       CameraServer.start_shooting(self.cameras_data, flight_number)
  
    def stopCameras(self):
+      """
+      Stop cameras
+      """
       self.stop_camera_wait = True
       CameraServer.stop_shooting()
       self.save_anouncements()
 
    def enable_all_gui_elements(self, enabled):
+      """
+      Enable or disable GUI elements
+      """
       self.ui.pushbutton_video1_playforward.setEnabled(enabled)
       self.ui.pushbutton_video1_playbackward.setEnabled(enabled)
       self.ui.pushbutton_video1_pause.setEnabled(enabled)
@@ -477,6 +537,9 @@ class WindowMain(QtGui.QMainWindow):
          self.radio_buttons_flights[i].setEnabled(enabled)
 
    def check_run(self, cam, motion):
+      """
+      Checking the motion tracking
+      """
       # Check right run
       if cam == "cam1" and self.run_direction == None and motion["direction"] == 1:
          # Starting run from cam 1
@@ -534,6 +597,9 @@ class WindowMain(QtGui.QMainWindow):
       self.update_anouncements()
 
    def update_anouncements(self):
+      """
+      Update announcements box
+      """
       self.model_anouncements.clear()
 
       for anouncement in self.anouncements:
@@ -552,6 +618,9 @@ class WindowMain(QtGui.QMainWindow):
       self.ui.listView_anouncements.setModel(self.model_anouncements)
 
    def save_anouncements(self):
+      """
+      Save announcements
+      """
       for flight_number in xrange(0,20):
          if self.radio_buttons_flights[flight_number].isChecked():
             break
@@ -567,6 +636,9 @@ class WindowMain(QtGui.QMainWindow):
             f.write(out)
 
    def read_config(self):
+      """
+      Reading config file
+      """
       filename = self.get_config_filename()
       if self.config.read(filename) == None:
          print "No config file: " + filename
@@ -576,6 +648,9 @@ class WindowMain(QtGui.QMainWindow):
 
 
    def get_config_filename(self):
+      """
+      Find config file on different OSes
+      """
       if sys.platform.startswith("win32"):
          from win32com.shell import shell,shellcon
          home = shell.SHGetFolderPath(0, shellcon.CSIDL_PROFILE, None, 0)
