@@ -14,6 +14,7 @@ for data in content:
 
 minjitter = 1000000
 maxjitter = 0
+first = 0
 last = 0
 
 j = {}
@@ -22,7 +23,7 @@ for i in xrange(0,1000):
 while True:
 	if image % 10000 == 0:
 		print image, minjitter, maxjitter
-
+	
 	if not image in tt:
 		break;
 	timestamp = tt[image];
@@ -46,6 +47,8 @@ while True:
 
 	j[jitter] += 1
 
+	if first == 0:
+		first = timestamp
 	last = timestamp
 	image += 1
 
@@ -58,4 +61,6 @@ for i in xrange(minjitter, maxjitter + 1):
 	print i,j[i]
 	t += i * j[i]
 
-print str(image / t * 1000) + "fps"
+
+print "standard fps:" + str(float(image) / (last-first) * 1000) + "fps"
+print "jitter fps:  " + str(image / t * 1000) + "fps"
