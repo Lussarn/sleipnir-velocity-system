@@ -3,7 +3,7 @@ from PySide import QtCore, QtGui
 import os
 import cv2 as cv
 import numpy
-import time
+import time as time
 
 class Video:
 
@@ -329,7 +329,7 @@ class FrameProcessingWorker(QtCore.QThread):
             frame_delta = cv.absdiff(self.comparison_image_cv, image_blur_cv)
             threshold = cv.threshold(frame_delta, 2, 255, cv.THRESH_BINARY)[1]
             threshold = cv.dilate(threshold, None, iterations=3)
-            (self.motion_boxes[self.current_frame_number], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+            (_,self.motion_boxes[self.current_frame_number], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 #            print len(self.motion_boxes[self.current_frame_number])
 
             #DEBUG  MOTION TRACK
