@@ -52,7 +52,8 @@ class WindowMain(QtGui.QMainWindow):
       self.run_frame_number_cam1 = None
       self.run_frame_number_cam2 = None
       # time to abort run
-      self.run_abort_timestamp = 0 
+      self.run_abort_timestamp = 0
+      self.max_time_run = 6000
 
       # Camera 1/2 online
       self.online_cam1 = False
@@ -86,11 +87,12 @@ class WindowMain(QtGui.QMainWindow):
 
       # Sound effects
       self.sound_effects = { 
-         "gate-1" : pygame.mixer.Sound(util.resource_path("sounds/gate-1.ogg")),
-         "gate-2" : pygame.mixer.Sound(util.resource_path("sounds/gate-2.ogg")),
-         "error"  : pygame.mixer.Sound(util.resource_path("sounds/error.ogg"))
+         "gate-1" : pygame.mixer.Sound(os.path.join(self.base_path,"assets/sounds/gate-1.ogg")),
+         "gate-2" : pygame.mixer.Sound(os.path.join(self.base_path,"assets/sounds/gate-2.ogg")),
+         "error"  : pygame.mixer.Sound(os.path.join(self.base_path,"assets/sounds/error.ogg"))
       }
 
+      print os.path.join(self.base_path,"assets/sounds/gate-1.ogg")
 
       QtGui.QMainWindow.__init__(self)
       self.ui = Ui_MainWindow()
@@ -391,7 +393,7 @@ class WindowMain(QtGui.QMainWindow):
             self.sound_effects["error"].play()
 
          if self.run_tell_speed != 0 and self.run_tell_speed_timestamp < int(round(time.time() * 1000)):
-            source = pygame.mixer.Sound(util.resource_path("sounds/numbers/" + str(self.run_tell_speed) + ".ogg"))
+            source = pygame.mixer.Sound(self.base_path("assets/sounds/numbers/" + str(self.run_tell_speed) + ".ogg"))
             source.play()
             self.run_tell_speed = 0
 
@@ -547,7 +549,7 @@ class WindowMain(QtGui.QMainWindow):
          self.run_frame_number_cam2 = 0
          self.run_direction = "RIGHT"
          # Max 6 second run
-         self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
+         self.run_abort_timestamp = int(round(time.time() * 1000)) + self.max_time_run
          self.sound_effects["gate-1"].play()
 
       if cam == "cam2" and self.run_direction == "RIGHT" and motion["direction"] == 1:
@@ -568,7 +570,7 @@ class WindowMain(QtGui.QMainWindow):
          self.run_frame_number_cam1 = 0
          self.run_direction = "LEFT"
          # Max 6 second run
-         self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
+         self.run_abort_timestamp = int(round(time.time() * 1000)) + self.max_time_run
          self.sound_effects["gate-1"].play()
 
 
@@ -644,6 +646,8 @@ class WindowMain(QtGui.QMainWindow):
          print "No config file: " + filename
          return False
       self.cameras_directory_base = self.config.get("Files", "save_path")
+      self.base_path = self.config.get("Files", "base_path")
+      self.max_time_run = int(self.config.get("Config", "max_time_run")) * 1000
       return True
 
 
