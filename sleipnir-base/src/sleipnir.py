@@ -92,8 +92,6 @@ class WindowMain(QtGui.QMainWindow):
          "error"  : pygame.mixer.Sound(os.path.join(self.base_path,"assets/sounds/error.ogg"))
       }
 
-      print os.path.join(self.base_path,"assets/sounds/gate-1.ogg")
-
       QtGui.QMainWindow.__init__(self)
       self.ui = Ui_MainWindow()
       self.ui.setupUi(self)
