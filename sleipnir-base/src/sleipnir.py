@@ -390,8 +390,8 @@ class WindowMain(QtGui.QMainWindow):
             self.run_direction = None
             self.sound_effects["error"].play()
 
-         if self.run_tell_speed != 0 and self.run_tell_speed_timestamp < int(round(time.time() * 1000)):
-            source = pygame.mixer.Sound(self.base_path("assets/sounds/numbers/" + str(self.run_tell_speed) + ".ogg"))
+         if self.run_tell_speed != 0 and self.run_tell_speed_timestamp < int(round(time.time() * 1000)): 
+            source = pygame.mixer.Sound(os.path.join(self.base_path,"assets/sounds/numbers/" + str(self.run_tell_speed) + ".ogg"))
             source.play()
             self.run_tell_speed = 0
 
