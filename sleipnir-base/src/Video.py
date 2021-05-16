@@ -302,7 +302,7 @@ class FrameProcessingWorker(QtCore.QThread):
       # Found motion returned
       self.found_motion = False
 
-      self.last_frame_number = None
+      self.last_frame_number = 0
 
       QtCore.QThread.__init__(self)
 
