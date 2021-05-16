@@ -14,12 +14,13 @@ class CamerasData:
       self.frame_data = {}
       self.frame_data["cam1"] = FrameData()
       self.frame_data["cam2"] = FrameData()
+      self.last_served_frame = {}
+      self.last_served_frame["cam1"] = 0
+      self.last_served_frame["cam2"] = 0
 
    def add_frame(self, cam, frame_number, timestamp):
       self.mutex.acquire()
-
       self.frame_data[cam].frames_2_timestamps[frame_number] = timestamp
-
       self.mutex.release()
 
    def get_start_timestamp(self):
@@ -32,6 +33,16 @@ class CamerasData:
          timestamp_cam2 = self.frame_data["cam2"].frames_2_timestamps[1]
       self.mutex.release()
       return max(timestamp_cam1, timestamp_cam2)
+
+   def get_next_frame(self, cam):
+      self.mutex.acquire()
+      last_frame = len(self.frame_data[cam].frames_2_timestamps)
+      self.mutex.release()
+      next_frame = self.last_served_frame[cam] + 1
+      if abs(last_frame - self.last_served_frame[cam]) > 10:
+         next_frame = last_frame
+      self.last_served_frame[cam] = next_frame
+      return next_frame
 
    def get_last_frame(self, cam):
       self.mutex.acquire()

@@ -361,14 +361,14 @@ class WindowMain(QMainWindow):
                if self.shooting_frame_number_cam1 <= CameraServer.get_last_image("cam1"):
                   start = CameraServer.get_start_timestamp()
                   self.videos[0].setStartTimestamp(start)
-                  motion = self.videos[0].view_frame_motion_track(CameraServer.get_last_image("cam1"))
+                  motion = self.videos[0].view_frame_motion_track(CameraServer.get_next_image("cam1"))
                   if motion is not None:
                      self.check_run("cam1", motion)
                   self.shooting_frame_number_cam1 += 1
                if self.shooting_frame_number_cam2 <= CameraServer.get_last_image("cam2"):
                   start = CameraServer.get_start_timestamp()
                   self.videos[1].setStartTimestamp(start)
-                  motion = self.videos[1].view_frame_motion_track(CameraServer.get_last_image("cam2"))
+                  motion = self.videos[1].view_frame_motion_track(CameraServer.get_next_image("cam2"))
                   if motion is not None:
                      self.check_run("cam2", motion)
                   self.shooting_frame_number_cam2 += 1

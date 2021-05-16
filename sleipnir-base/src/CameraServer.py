@@ -215,6 +215,10 @@ def is_online(cam):
    global ServerData
    return ServerData.online[cam]
 
+def get_next_image(cam):
+   global ServerData
+   return ServerData.cameras_data.get_next_frame(cam)
+
 def get_last_image(cam):
    global ServerData
    return ServerData.cameras_data.get_last_frame(cam)
