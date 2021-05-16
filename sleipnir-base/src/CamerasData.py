@@ -39,8 +39,9 @@ class CamerasData:
       last_frame = len(self.frame_data[cam].frames_2_timestamps)
       self.mutex.release()
       next_frame = self.last_served_frame[cam] + 1
-      if abs(last_frame - self.last_served_frame[cam]) > 10:
+      if abs(last_frame - self.last_served_frame[cam]) > 10:         
          next_frame = last_frame
+         print("WARNING: get_next_frame() reseting next_frame to last_frame")
       self.last_served_frame[cam] = min(last_frame, next_frame)
       return self.last_served_frame[cam]
 
