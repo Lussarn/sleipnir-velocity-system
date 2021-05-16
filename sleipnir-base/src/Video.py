@@ -262,6 +262,7 @@ class Video:
       self.frame_processing_worker.wait()
       image = self.frame_processing_worker.image
       found_motion = self.frame_processing_worker.found_motion
+      found_motion_frame_number = self.frame_processing_worker.found_motion_frame_number
 
       if self.direction < 0:
          self.direction +=1
@@ -272,13 +273,11 @@ class Video:
       self.frame_processing_worker.current_frame_number = self.current_frame_number
       self.frame_processing_worker.start()
 
-      return { "motion": found_motion, "image": image, "frame_number": self.frame_processing_worker.found_motion_frame_number }
+      return { "motion": found_motion, "image": image, "frame_number": found_motion_frame_number }
 
 
 class FrameProcessingWorker(QtCore.QThread):
    def __init__(self, video):
-      self.processing = False
-
       # Video instance
       self.video = video
 
@@ -303,74 +302,76 @@ class FrameProcessingWorker(QtCore.QThread):
       # Found motion returned
       self.found_motion = False
 
+      self.last_frame_number = None
+
       QtCore.QThread.__init__(self)
 
 
    def run(self):
-         print (self.video.cam + " : " + str(self.current_frame_number))
+#      print (self.video.cam + " : " + str(self.current_frame_number))
 
-         image = None
-         image_gray_cv = self.image_cv
-         image_blur_cv = cv.GaussianBlur(image_gray_cv, (13, 13), 0)
-         found_motion = False
+      if self.current_frame_number == self.last_frame_number:
+         return
+      self.last_frame_number = self.current_frame_number
 
-         if self.comparison_image_cv is not None:
+      image = None
+      image_gray_cv = self.image_cv
+      image_blur_cv = cv.GaussianBlur(image_gray_cv, (13, 13), 0)
+      found_motion = False
 
-            frame_delta = cv.absdiff(self.comparison_image_cv, image_blur_cv)
-            threshold = cv.threshold(frame_delta, 2, 255, cv.THRESH_BINARY)[1]
-            threshold = cv.dilate(threshold, None, iterations=3)
-            (self.motion_boxes[self.current_frame_number], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+      if self.comparison_image_cv is not None:
+
+         frame_delta = cv.absdiff(self.comparison_image_cv, image_blur_cv)
+         threshold = cv.threshold(frame_delta, 2, 255, cv.THRESH_BINARY)[1]
+         threshold = cv.dilate(threshold, None, iterations=3)
+         (self.motion_boxes[self.current_frame_number], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 #            print len(self.motion_boxes[self.current_frame_number])
 
-            #DEBUG  MOTION TRACK
+         #DEBUG  MOTION TRACK
 #            if len(self.motion_boxes[self.current_frame_number]) > 30:
-            if False:
-               if (self.video.direction == 0):
+         if False:
+            if (self.video.direction == 0):
+               found_motion = True
+               self.video.direction = 90 * 6
+         else:
+            for c in self.motion_boxes[self.current_frame_number]:
+               found_motion = False
+               (x, y, w, h) = cv.boundingRect(c)
+
+               # Set ground level
+               if y > self.video.groundlevel:
+                  continue
+
+
+               if cv.contourArea(c) < 15:
+                  continue
+               if cv.contourArea(c) > 10000:
+                  continue
+               if x < 160 and x + w > 160:
                   found_motion = True
-                  self.video.direction = 90 * 6
-            else:
-               for c in self.motion_boxes[self.current_frame_number]:
-                  found_motion = False
-                  (x, y, w, h) = cv.boundingRect(c)
 
-                  # Set ground level
-                  if y > self.video.groundlevel:
-                     continue
+               cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
 
+               if found_motion and self.current_frame_number > 4 and self.video.direction == 0:
+                  # Check previous motion boxes
+                  direction = self.__check_overlap_previous(x, y, w, h, x, w, self.current_frame_number - 1, 10)
 
-                  if cv.contourArea(c) < 15:
-                     continue
-                  if cv.contourArea(c) > 10000:
-                     continue
-                  if x < 160 and x + w > 160:
-                     found_motion = True
-
-                  cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
-
-                  if found_motion and self.current_frame_number > 4 and self.video.direction == 0:
-                     # Check previous motion boxes
-                     direction = self.__check_overlap_previous(x, y, w, h, x, w, self.current_frame_number - 1, 10)
-
-                     self.video.direction = direction * 90 * 6
+                  self.video.direction = direction * 90 * 6
 #                     if self.video.direction != 0:
 #                        print self.video.direction
 
-                     if (self.video.direction != 0):
-                        found_motion = True
-                        break
-                     else:
-                        found_motion = False
+                  if (self.video.direction != 0):
+                     found_motion = True
+                     break
                   else:
                      found_motion = False
+               else:
+                  found_motion = False
 
-         self.comparison_image_cv = image_blur_cv
-         self.image = image_gray_cv
-         self.found_motion = found_motion
-         self.found_motion_frame_number = self.current_frame_number
-
-#         time.sleep(0.4)
-         # Close processing
-         self.processing = False
+      self.comparison_image_cv = image_blur_cv
+      self.image = image_gray_cv
+      self.found_motion = found_motion
+      self.found_motion_frame_number = self.current_frame_number
 
    def __check_overlap_previous(self, x, y, w, h, x1, w1, frame_number, iterations):
 #      print "check overlap: " + str(frame_number) + " iteration: " + str(iterations)
@@ -428,8 +429,3 @@ class FrameProcessingWorker(QtCore.QThread):
       else:
          return 1   
    
-   def start_processing(self):
-      self.processing = True
-
-   def is_processing(self):
-      return self.processing

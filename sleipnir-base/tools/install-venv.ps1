@@ -12,6 +12,7 @@ if (Test-Path -Path .\venv) {
     exit 0
 }
 
+Write-Output "Creating virtual environment..."
 python3 -m venv .\venv
 .\venv\Scripts\Activate.ps1
 
