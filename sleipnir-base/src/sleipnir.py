@@ -1,10 +1,11 @@
-import PySide
-from PySide import QtCore, QtGui
+import PySide2
+from PySide2 import QtCore, QtGui
+from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
+
 import os
 import datetime
 import time
-import pygame
-import ConfigParser
+import configparser
 
 import util
 import globals
@@ -15,9 +16,8 @@ import CameraServer
 
 from qtui.Ui_MainWindow import Ui_MainWindow
 
-# Try to get rid of sound lag
-pygame.mixer.pre_init(44100, -16, 1, 512)
-pygame.mixer.init()
+import pyglet 
+pyglet.options['audio'] = ('directsound', 'openal', 'pulse',  'silent')
 
 class Anouncement:
    """
@@ -30,13 +30,13 @@ class Anouncement:
       self.speed = 0
       self.direction = 0
 
-class WindowMain(QtGui.QMainWindow):
+class WindowMain(QMainWindow):
    """
    Main window
    """
    def __init__(self):
       # Init config
-      self.config = ConfigParser.ConfigParser()
+      self.config = configparser.ConfigParser()
       if not self.read_config():
          exit(0)
 
@@ -86,13 +86,12 @@ class WindowMain(QtGui.QMainWindow):
 
       # Sound effects
       self.sound_effects = { 
-         "gate-1" : pygame.mixer.Sound(util.resource_path("sounds/gate-1.ogg")),
-         "gate-2" : pygame.mixer.Sound(util.resource_path("sounds/gate-2.ogg")),
-         "error"  : pygame.mixer.Sound(util.resource_path("sounds/error.ogg"))
+         "gate-1" : pyglet.media.StaticSource(pyglet.media.load(util.resource_path("sounds/gate-1.ogg"))),
+         "gate-2" : pyglet.media.StaticSource(pyglet.media.load(util.resource_path("sounds/gate-2.ogg"))),
+         "error"  : pyglet.media.StaticSource(pyglet.media.load(util.resource_path("sounds/error.ogg")))
       }
 
-
-      QtGui.QMainWindow.__init__(self)
+      QMainWindow.__init__(self)
       self.ui = Ui_MainWindow()
       self.ui.setupUi(self)
       self.setWindowTitle("Sleipnir Velocity")
@@ -128,7 +127,7 @@ class WindowMain(QtGui.QMainWindow):
       self.radio_buttons_flights[17] = self.ui.radioButton_flight_18
       self.radio_buttons_flights[18] = self.ui.radioButton_flight_19
       self.radio_buttons_flights[19] = self.ui.radioButton_flight_20
-      for i in xrange(0,20):
+      for i in range(0,20):
          self.radio_buttons_flights[i].clicked.connect(self.__flight_number_clicked)
 
       # [0] - left [1] - right video
@@ -146,7 +145,7 @@ class WindowMain(QtGui.QMainWindow):
          self.ui.pushbutton_video1_backstep,
          self.ui.slider_video1,
          self.ui.pushbutton_video1_copy,
-         self.ui.label_time_video1);
+         self.ui.label_time_video1)
       self.videos[1] = Video(
          "cam2",
          os.path.join(self.cameras_directory_base, "1", "cam2"),
@@ -159,7 +158,7 @@ class WindowMain(QtGui.QMainWindow):
          self.ui.pushbutton_video2_backstep, 
          self.ui.slider_video2,
          self.ui.pushbutton_video2_copy,
-         self.ui.label_time_video2);
+         self.ui.label_time_video2)
       self.videos[0].set_sibling_video(self.videos[1])
       self.videos[1].set_sibling_video(self.videos[0])
 
@@ -235,14 +234,14 @@ class WindowMain(QtGui.QMainWindow):
       self.videos[0].found_motion = False
       self.videos[1].found_motion = False
       
-      self.videos[0].update();
-      self.videos[1].update();
+      self.videos[0].update()
+      self.videos[1].update()
 
    def __flight_number_clicked(self):
       """
       Flight number clicked
       """
-      for i in xrange(0,20):
+      for i in range(0,20):
          if self.radio_buttons_flights[i].isChecked():
             break
       self.load_flight(i + 1)
@@ -276,6 +275,8 @@ class WindowMain(QtGui.QMainWindow):
       """
       Gui is basically a state machine
       """
+      pyglet.clock.tick()
+
       self.online_cam1 = CameraServer.is_online("cam1")
       self.online_cam2 = CameraServer.is_online("cam2")
       self.online = CameraServer.is_online("cam1") and CameraServer.is_online("cam2")
@@ -391,7 +392,7 @@ class WindowMain(QtGui.QMainWindow):
             self.sound_effects["error"].play()
 
          if self.run_tell_speed != 0 and self.run_tell_speed_timestamp < int(round(time.time() * 1000)):
-            source = pygame.mixer.Sound(util.resource_path("sounds/numbers/" + str(self.run_tell_speed) + ".ogg"))
+            source= pyglet.media.StaticSource(pyglet.media.load(util.resource_path("sounds/numbers/" + str(self.run_tell_speed) + ".ogg")))
             source.play()
             self.run_tell_speed = 0
 
@@ -464,10 +465,11 @@ class WindowMain(QtGui.QMainWindow):
       """
       Start cameras
       """
+      print("Starting cameras")
       if not CameraServer.is_ready():
          return False
 
-      for flight_number in xrange(0,20):
+      for flight_number in range(0,20):
          if self.radio_buttons_flights[flight_number].isChecked():
             break
       flight_number += 1
@@ -499,6 +501,7 @@ class WindowMain(QtGui.QMainWindow):
       """
       Stop cameras
       """
+      print("Stopping cameras")
       self.stop_camera_wait = True
       CameraServer.stop_shooting()
       self.save_anouncements()
@@ -533,7 +536,7 @@ class WindowMain(QtGui.QMainWindow):
       self.ui.listView_anouncements.setEnabled(enabled)
       self.ui.verticalSlider_groundlevel.setEnabled(enabled)
 
-      for i in xrange(0,20):
+      for i in range(0,20):
          self.radio_buttons_flights[i].setEnabled(enabled)
 
    def check_run(self, cam, motion):
@@ -621,7 +624,7 @@ class WindowMain(QtGui.QMainWindow):
       """
       Save announcements
       """
-      for flight_number in xrange(0,20):
+      for flight_number in range(0,20):
          if self.radio_buttons_flights[flight_number].isChecked():
             break
       flight_number += 1
@@ -640,9 +643,12 @@ class WindowMain(QtGui.QMainWindow):
       Reading config file
       """
       filename = self.get_config_filename()
+      print("Config file: " + filename)
       if self.config.read(filename) == None:
-         print "No config file: " + filename
+         print ("No config file: " + filename)
          return False
+
+      print(self.config)   
       self.cameras_directory_base = self.config.get("Files", "save_path")
       return True
 
@@ -661,15 +667,15 @@ class WindowMain(QtGui.QMainWindow):
 if __name__ == '__main__':
 
    import sys
-   app = QtGui.QApplication(sys.argv)
+   app = QApplication(sys.argv)
    try:
       window = WindowMain()
       sys.exit(app.exec_())
    except Exception:
       import traceback
       var = traceback.format_exc()
-      msg_box = QtGui.QMessageBox()
-      msg_box.setIcon(QtGui.QMessageBox.Critical)
+      msg_box = QMessageBox()
+      msg_box.setIcon(QMessageBox.Critical)
       msg_box.setWindowTitle("Sleipnir message")
       msg_box.setText("UNRECOVERABLE ERROR!\n\n" + var)
       msg_box.exec_()

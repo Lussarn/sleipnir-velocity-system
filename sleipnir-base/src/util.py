@@ -2,8 +2,8 @@
 Various Util functions
 """
 
-import PySide
-from PySide import QtCore, QtGui
+import PySide2
+from PySide2 import QtCore, QtGui
 import math
 import os
 import sys

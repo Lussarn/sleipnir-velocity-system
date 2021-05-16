@@ -17,5 +17,5 @@ elif sys.platform.startswith("darwin"):
 elif sys.platform.startswith("win32"):
     OS = "windows"
 else:
-    print "Unknown OS"
+    print ("Unknown OS")
     exit

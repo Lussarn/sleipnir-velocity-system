@@ -1,8 +1,7 @@
-import PySide
-from PySide import QtCore, QtGui
+import PySide2
+from PySide2 import QtCore, QtGui
 import os
 import cv2 as cv
-import numpy
 import time
 
 class Video:
@@ -40,7 +39,6 @@ class Video:
       self.groundlevel = 400
 
       self.last_motion_view_frame = 0
-
 
       # Lots of widgets
       self.widgetVideo = widgetVideo
@@ -119,14 +117,14 @@ class Video:
 
    # Returns a video frame as a cv image and it's timestamp
    def getFrame(self, frame_number, use_image = None):
-      file = self.flight_directory + "/" + str((frame_number / 100) *100).zfill(6)
+      file = self.flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6)
       if not os.path.exists(file):
          return None
       timestamp = self.cameras_data.get_timestamp_from_frame_number(self.cam, frame_number)
       if use_image is not None:
          image_cv = use_image
       else:
-         picture_filename = self.flight_directory + "/" + str((frame_number / 100) *100).zfill(6) + "/image" + str(frame_number).zfill(9) + ".jpg"
+         picture_filename = self.flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6) + "/image" + str(frame_number).zfill(9) + ".jpg"
          image_cv = cv.imread(picture_filename, 0)
       return { "timestamp": int(timestamp), "image": image_cv }
 
@@ -415,7 +413,7 @@ class FrameProcessingWorker(QtCore.QThread):
          # if iterations is zero or object is coming to close to the side
          if iterations == 0 or x2 < 20 or x2 + w2 > 300:
             if x1 + w1 < x2 + w2:
-               return -1;
+               return -1
             else:
                return 1
          return self.check_overlap_previous(x2, y2, w2, h2, x1, w1, frame_number - 1, iterations -1)
@@ -434,7 +432,7 @@ class FrameProcessingWorker(QtCore.QThread):
 
       # Find direction from first frame
       if x + w < x2 + w2:
-         return -1;
+         return -1
       else:
          return 1   
    

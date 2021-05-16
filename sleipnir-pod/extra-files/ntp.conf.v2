@@ -20,8 +20,7 @@ filegen clockstats file clockstats type day enable
 #server 1.debian.pool.ntp.org iburst
 #server 2.debian.pool.ntp.org iburst
 #server 3.debian.pool.ntp.org iburst
-server [CAMERA1_IP_ADDRESS] prefer
-
+server 192.168.1.200 prefer
 
 # Access control configuration; see /usr/share/doc/ntp-doc/html/accopt.html for
 # details.  The web page <http://support.ntp.org/bin/view/Support/AccessRestrictions>

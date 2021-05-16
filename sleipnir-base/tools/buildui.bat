@@ -1,0 +1,1 @@
+pyside2-uic.exe qtui/main_window.ui -o src/qtui/Ui_MainWindow.py

@@ -1,11 +1,12 @@
 #!/bin/env python
 
-from SocketServer import ThreadingMixIn
-from SimpleHTTPServer import SimpleHTTPRequestHandler
-from BaseHTTPServer import HTTPServer
-import SimpleHTTPServer
-import urlparse
-import thread
+from socketserver import ThreadingMixIn
+from http.server import SimpleHTTPRequestHandler
+from http.server import HTTPServer
+import http.server
+from urllib.parse import urlparse
+import urllib
+import _thread
 import time
 import cgi
 import logging
@@ -48,7 +49,7 @@ else:
 if sys.argv[2:]:
    os.chdir(sys.argv[2])
 
-class MySimpleHTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class MySimpleHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
    def log_message(self, format, *args):
       pass
 
@@ -58,23 +59,23 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
       global ServerData
       flight_dir = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number))
       if not os.path.exists(flight_dir):
-         os.mkdir(flight_dir);
+         os.mkdir(flight_dir)
 
       cam_dir = os.path.join(flight_dir, cam)
       if not os.path.exists(cam_dir):
-         os.mkdir(cam_dir);
+         os.mkdir(cam_dir)
 
 
    def saveFrame(self, cam, frame, data, timestamp):
       global ServerData
       cam_dir = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), str(cam))
 
-      picture_directory = os.path.join(cam_dir, str((frame / 100) *100).zfill(6))
+      picture_directory = os.path.join(cam_dir, str(int(frame / 100) *100).zfill(6))
       if not os.path.exists(picture_directory):
-         os.mkdir(picture_directory);
+         os.mkdir(picture_directory)
 
       picture_filename = os.path.join(picture_directory, "image" + str(frame).zfill(9) + ".jpg")
-      file = open(picture_filename, "w")
+      file = open(picture_filename, "wb")
       file.write(data)
       file.close()
 
@@ -85,39 +86,42 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
       parsedParams = urlparse.urlparse(self.path)
       queryParsed = urlparse.parse_qs(parsedParams.query)
 
-      print parsedParams.path
-      print queryParsed["t"]
+      print (parsedParams.path)
+      print (queryParsed["t"])
 
       self.send_response(200)
       self.send_header('Content-Type', 'application/xm')
       self.end_headers()
 
-      self.wfile.write("<?xml version='1.0'?>");
-      self.wfile.write("<sample>Some XML</sample>");
-      self.wfile.close();
+      self.wfile.write("<?xml version='1.0'?>")
+      self.wfile.write("<sample>Some XML</sample>")
+      self.wfile.flush()
+      self.wfile.close()
 
    def do_POST(self):
       global ServerData
+      start = time.time()
 
-      ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+#      ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
+      ctype, pdict = cgi.parse_header(self.headers['content-type'])
       if ctype == 'multipart/form-data':
-         print self.rfile
+#         print (self.rfile)
          postvars = cgi.parse_multipart(self.rfile, pdict)
       elif ctype == 'application/x-www-form-urlencoded':
-         length = int(self.headers.getheader('content-length'))
-         postvars = cgi.parse_qs(self.rfile.read(length), keep_blank_values=1)
+         length = int(self.headers['content-length'])
+         postvars = urllib.parse.parse_qs(self.rfile.read(length), keep_blank_values=1)
       else:
          postvars = {}
 
-      action = postvars["action"][0]
+      action = postvars[b'action'][0].decode('utf-8')
 
       if (action == "startcamera"):
-         id = postvars["id"][0]
+         id = postvars[b'id'][0].decode('utf-8')
          if id == "cam1" or id == "cam2":
             ServerData.camera_last_transmission_timestamp[id] = time.time()
             ServerData.online[id] = True
 
-#         print "Camera " + id + " asking to start"
+#         print ("Camera " + id + " asking to start")
          if (ServerData.taking_pictures):
             self.send200("OK-START")
          else:
@@ -129,14 +133,13 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
             self.send200("OK-STOP")
             return
 
-         id = postvars["id"][0]
+         id = postvars[b"id"][0].decode('utf-8')
          if id == "cam1" or id == "cam2":
             ServerData.camera_last_transmission_timestamp[id] = time.time()
             ServerData.online[id] = True
 
-
-         imageNum = int(postvars["framenumber"][0])
-         timestamp = int(postvars["timestamp"][0])
+         imageNum = int(postvars[b"framenumber"][0].decode('utf-8'))
+         timestamp = int(postvars[b"timestamp"][0].decode('utf-8'))
          ServerData.last_picture_timestamp = time.time()
          ServerData.fetching_pictures = True
 
@@ -147,24 +150,28 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
             ServerData.timestamp_file[id] = open(filename_timestamp, "w")
 
          if ServerData.debug:
-            print "uploadpictures", id, imageNum, timestamp;
-         data = base64.b64decode(postvars["data"][0])
+            print ("uploadpictures", id, imageNum, timestamp)
+         data = base64.b64decode(postvars[b"data"][0].decode('ASCII'))
          self.saveFrame(id, imageNum, data, timestamp)
          ServerData.timestamp_file[id].write(str(imageNum) + " " + str(timestamp) + "\n")
          ServerData.cameras_data.add_frame(id, imageNum, timestamp)
-         
+
          if (ServerData.taking_pictures):
             self.send200("OK-CONTINUE")
          else:
             self.send200("OK-STOP")
+
+         end = time.time()
+#         print (end-start)
 
    def send200(self, msg):
       self.send_response(200)
       self.send_header('Content-Type', 'text/plain')
       self.end_headers()
 
-      self.wfile.write(msg);
-      self.wfile.close();      
+      self.wfile.write(msg.encode('ASCII'))
+#      self.wfile.flush()
+#      self.wfile.close()      
 
 def __startHTTP(threadName, delay):
    server = ThreadingSimpleServer(('', port), MyRequestHandler)
@@ -244,6 +251,6 @@ def __run_camera(threadName, delay):
 def start_server():
    global ServerData
    if ServerData.debug:
-      print "Starting up camera server"
-   thread.start_new_thread(__startHTTP, ("HTTP", 1))
-   thread.start_new_thread(__run_camera, ("HTTP", 1))
+      print ("Starting up camera server")
+   _thread.start_new_thread(__startHTTP, ("HTTP", 0.001))
+   _thread.start_new_thread(__run_camera, ("HTTP", 0.001))
