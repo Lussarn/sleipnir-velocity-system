@@ -259,6 +259,10 @@ class Video:
 
    # Find if an image have motion
    def have_motion(self, image_cv):
+      if (image_cv is None):
+         print("Warning have_motion() image_cv == None")
+         return
+         
       self.frame_processing_worker.wait()
       image = self.frame_processing_worker.image
       found_motion = self.frame_processing_worker.found_motion
