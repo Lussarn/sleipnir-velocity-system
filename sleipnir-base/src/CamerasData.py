@@ -35,6 +35,7 @@ class CamerasData:
       return max(timestamp_cam1, timestamp_cam2)
 
    def get_next_frame(self, cam):
+      print ("get next frame")
       self.mutex.acquire()
       last_frame = len(self.frame_data[cam].frames_2_timestamps)
       self.mutex.release()
