@@ -202,7 +202,7 @@ class Video:
       frame = self.getFrame(self.current_frame_number)
       if not frame:
          return
-      image_cv = frame["image"];
+      image_cv = frame["image"]
 
       if self.forward:
          motion = self.have_motion(image_cv)
@@ -220,7 +220,7 @@ class Video:
    def have_motion(self, image_cv):
 
       while self.frame_processing_worker.is_processing():
-         time.sleep(0.001)
+         time.sleep(0)
 
       if self.direction < 0:
          self.direction +=1
@@ -314,8 +314,10 @@ class FrameProcessingWorker(QtCore.QThread):
    def run(self):
       while True:
          if not self.processing:
-            time.sleep(0.001)
+            time.sleep(0)
             continue
+
+         print (self.video.cam + " : " + str(self.current_frame_number))
 
          image = None
          image_gray_cv = self.image_cv

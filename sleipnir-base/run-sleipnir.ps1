@@ -5,4 +5,5 @@ if (-Not (Test-Path -Path .\venv)) {
     exit 0
 }
 
+.\venv\Scripts\activate.ps1
 python .\src\sleipnir.py
