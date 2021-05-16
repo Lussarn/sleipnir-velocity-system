@@ -225,6 +225,9 @@ class Video:
       if not frame:
          return
       motion = self.have_motion(frame["image"])
+      if (motion is None):
+         return None
+
       image = motion["image"]
       # Only show every other frame
       if live_preview and self.current_frame_number & 1 == 1:
@@ -262,7 +265,7 @@ class Video:
       if (image_cv is None):
          print("Warning have_motion() image_cv == None")
          return
-         
+
       self.frame_processing_worker.wait()
       image = self.frame_processing_worker.image
       found_motion = self.frame_processing_worker.found_motion
