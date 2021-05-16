@@ -42,7 +42,7 @@ class CamerasData:
       if abs(last_frame - self.last_served_frame[cam]) > 10:
          next_frame = last_frame
       self.last_served_frame[cam] = min(last_frame, next_frame)
-      return next_frame
+      return self.last_served_frame[cam]
 
    def get_last_frame(self, cam):
       self.mutex.acquire()
