@@ -41,7 +41,7 @@ class CamerasData:
       next_frame = self.last_served_frame[cam] + 1
       if abs(last_frame - self.last_served_frame[cam]) > 10:
          next_frame = last_frame
-      self.last_served_frame[cam] = next_frame
+      self.last_served_frame[cam] = min(last_frame, next_frame)
       return next_frame
 
    def get_last_frame(self, cam):
