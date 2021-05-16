@@ -263,7 +263,7 @@ class Video:
    # Find if an image have motion
    def have_motion(self, image_cv):
       if (image_cv is None):
-         print("Warning have_motion() image_cv == None")
+         print("ERROR: Video.have_motion() " + self.cam + " image_cv == None")
          return
 
       self.frame_processing_worker.wait()
@@ -320,7 +320,7 @@ class FrameProcessingWorker(QtCore.QThread):
       if self.current_frame_number == self.last_frame_number:
          return
       if self.last_frame_number + 1 != self.current_frame_number:
-         print("warning " + self.video.cam + ": missed frame: " + str(self.current_frame_number))
+         print("WARNING: FrameProcessingWorker.run() " + self.video.cam + " missed frame: " + str(self.current_frame_number))
 
       self.last_frame_number = self.current_frame_number
 
