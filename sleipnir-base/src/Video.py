@@ -312,6 +312,9 @@ class FrameProcessingWorker(QtCore.QThread):
 
       if self.current_frame_number == self.last_frame_number:
          return
+      if self.last_frame_number + 1 != self.current_frame_number:
+         print("warning " + self.video.cam + ": missed frame: " + str(self.current_frame_number))
+
       self.last_frame_number = self.current_frame_number
 
       image = None
