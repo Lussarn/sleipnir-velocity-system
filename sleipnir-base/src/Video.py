@@ -207,9 +207,9 @@ class Video:
             if motion["motion"]:
                self.timer.stop()
 
-#      if self.find and self.current_frame_number & 7 == 1:
-#         self.update(image)
-#      elif not self.find:
+      if self.find and self.current_frame_number & 7 == 1:
+         self.update(image)
+      elif not self.find:
          self.update(image)         
 
    def view_frame(self, frame_number):
