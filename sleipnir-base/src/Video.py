@@ -115,6 +115,8 @@ class Video:
 
    # Returns a video frame as a cv image and it's timestamp
    def getFrame(self, frame_number, use_image = None):
+      if (self.cam == "cam1"):
+         print("getFrame framenumber: " + str(frame_number))
       file = self.__flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6)
       if not os.path.exists(file):
          return None
