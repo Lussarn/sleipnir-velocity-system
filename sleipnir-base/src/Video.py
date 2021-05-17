@@ -211,12 +211,10 @@ class Video:
             if motion["motion"]:
                self.timer.stop()
 
-      if self.current_frame_number & 7 == 1:
-         self.update()
-#      if self.find and self.current_frame_number & 7 == 1:
-#         self.update(image)
-#      elif not self.find:
-#         self.update(image)         
+      if self.find and self.current_frame_number & 7 == 1:
+         self.update(image)
+      elif not self.find:
+         self.update(image)         
 
    def view_frame(self, frame_number):
       self.current_frame_number = frame_number
@@ -232,8 +230,8 @@ class Video:
          return None
 
       image = motion["image"]
-      # Only show every other frame
-      if live_preview and self.current_frame_number & 1 == 1:
+      # Only show 10 frame
+      if live_preview and self.current_frame_number % 10 == 0:
          self.update(image)
       if motion["motion"]:
          return { "frame_number": motion["frame_number"], "direction": self.direction / abs(self.direction) }
