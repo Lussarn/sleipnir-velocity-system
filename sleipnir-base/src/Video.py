@@ -272,10 +272,8 @@ class Video:
       found_motion = self.frame_processing_worker.found_motion
       found_motion_frame_number = self.frame_processing_worker.found_motion_frame_number
 
-      if self.direction < 0:
-         self.direction +=1
-      if self.direction > 0:
-         self.direction -=1
+      if self.direction < 0: self.direction +=1
+      if self.direction > 0: self.direction -=1
 
       self.frame_processing_worker.do_processing(image_cv, self.current_frame_number)
 
@@ -395,7 +393,7 @@ class FrameProcessingWorker(QtCore.QThread):
       self.__stat_accumulated_time += (time.time() - start)
       self.__stat_number_of_frames += 1
       if self.__stat_number_of_frames % 1000 == 0:
-         print("INFO: FrameProcessingWorker.run() Time to analyze: " + str(int(self.__stat_accumulated_time / self.__stat_number_of_frames * 1000000)/1000) + "ms")
+         print("INFO: FrameProcessingWorker.run() Time to analyze " + self.video.cam + ": " + str(int(self.__stat_accumulated_time / self.__stat_number_of_frames * 1000000)/1000) + "ms")
          self.__stat_accumulated_time = 0
          self.__stat_number_of_frames = 0
 
