@@ -207,9 +207,9 @@ class Video:
             if motion["motion"]:
                self.timer.stop()
 
-      if self.find and self.current_frame_number & 7 == 1:
-         self.update(image)
-      elif not self.find:
+#      if self.find and self.current_frame_number & 7 == 1:
+#         self.update(image)
+#      elif not self.find:
          self.update(image)         
 
    def view_frame(self, frame_number):
@@ -397,7 +397,7 @@ class FrameProcessingWorker(QtCore.QThread):
          print("INFO: FrameProcessingWorker.run() Time to analyze: " + str(int(self.__stat_accumulated_time / self.__stat_number_of_frames * 1000000)/1000) + "ms")
          self.__stat_accumulated_time = 0
          self.__stat_number_of_frames = 0
-         
+
    def __check_overlap_previous(self, x, y, w, h, x1, w1, frame_number, iterations):
 #      print "check overlap: " + str(frame_number) + " iteration: " + str(iterations)
       if not frame_number in self.__motion_boxes:
