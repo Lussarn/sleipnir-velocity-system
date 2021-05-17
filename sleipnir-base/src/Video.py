@@ -64,6 +64,10 @@ class Video:
       # Setup worker thread (reason to have this is to utilize multicore)
       self.frame_processing_worker = FrameProcessingWorker(self)
 
+      # performance statistics
+      self.__stat_jpeg_read_number_of_frames = 0
+      self.__stat_jpeg_read_accumulated_time = 0
+
    # Sibling video is the Video instance of the other camera
    def set_sibling_video(self, sibling_video):
       self.sibling_video = sibling_video
@@ -113,10 +117,11 @@ class Video:
    def set_flight_directory(self, directory):
       self.__flight_directory = directory
 
+   # performance jpeg read
+   
+
    # Returns a video frame as a cv image and it's timestamp
    def getFrame(self, frame_number, use_image = None):
-      if (self.cam == "cam1"):
-         print("getFrame framenumber: " + str(frame_number))
       file = self.__flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6)
       if not os.path.exists(file):
          return None
@@ -124,8 +129,17 @@ class Video:
       if use_image is not None:
          image_cv = use_image
       else:
+         start = time.time()
          picture_filename = self.__flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6) + "/image" + str(frame_number).zfill(9) + ".jpg"
          image_cv = cv.imread(picture_filename, 0)
+         # statistics logging
+         self.__stat_jpeg_read_accumulated_time += (time.time() - start)
+         self.__stat_jpeg_read_number_of_frames += 1
+         if self.__stat_jpeg_read_number_of_frames % 1000 == 0:
+            print("INFO: Video.getFrame() Time to read jpeg " + self.cam + ": " + str(int(self.__stat_jpeg_read_accumulated_time / self.__stat_jpeg_read_number_of_frames * 1000000)/1000) + "ms")
+            self.__stat_jpeg_read_accumulated_time = 0
+            self.__stat_jpeg_read_number_of_frames = 0
+
       return {"frame_number": frame_number, "timestamp": int(timestamp), "image": image_cv }
 
    # Set the start timestamp
