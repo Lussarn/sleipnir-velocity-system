@@ -37,6 +37,11 @@ class ServerData:
    camera_last_transmission_timestamp = {"cam1": 0, "cam2": 0}
    online = {"cam1": False, "cam2": False}
 
+   # performance statistics
+   stat_number_of_requests = 0
+   stat_accumulated_time = 0
+
+
 
 class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
    pass
@@ -65,7 +70,6 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
       if not os.path.exists(cam_dir):
          os.mkdir(cam_dir)
 
-
    def saveFrame(self, cam, frame, data, timestamp):
       global ServerData
       cam_dir = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), str(cam))
@@ -78,25 +82,6 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
       file = open(picture_filename, "wb")
       file.write(data)
       file.close()
-
-
-   def do_GET(self):
-
-      # Parse query data & params to find out what was passed
-      parsedParams = urlparse.urlparse(self.path)
-      queryParsed = urlparse.parse_qs(parsedParams.query)
-
-      print (parsedParams.path)
-      print (queryParsed["t"])
-
-      self.send_response(200)
-      self.send_header('Content-Type', 'application/xm')
-      self.end_headers()
-
-      self.wfile.write("<?xml version='1.0'?>")
-      self.wfile.write("<sample>Some XML</sample>")
-      self.wfile.flush()
-      self.wfile.close()
 
    def do_POST(self):
       global ServerData
@@ -161,17 +146,21 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
          else:
             self.send200("OK-STOP")
 
-         end = time.time()
-#         print (end-start)
+
+               # statistics logging
+      ServerData.stat_accumulated_time += (time.time() - start)
+      ServerData.stat_number_of_requests += 1
+      if ServerData.stat_number_of_requests % 1000 == 0:
+         print("INFO: CameraServer.do_POST() Time to POST: " + str(int(ServerData.stat_accumulated_time / ServerData.stat_number_of_requests * 1000000)/1000) + "ms")
+         ServerData.stat_accumulated_time = 0
+         ServerData.stat_number_of_requests = 0
+
 
    def send200(self, msg):
       self.send_response(200)
       self.send_header('Content-Type', 'text/plain')
       self.end_headers()
-
       self.wfile.write(msg.encode('ASCII'))
-#      self.wfile.flush()
-#      self.wfile.close()      
 
 def __startHTTP(threadName, delay):
    server = ThreadingSimpleServer(('', port), MyRequestHandler)
