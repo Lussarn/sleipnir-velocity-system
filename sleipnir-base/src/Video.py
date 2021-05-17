@@ -247,7 +247,7 @@ class Video:
 
       image = motion["image"]
       # Only show 10 frame
-      if live_preview and self.current_frame_number % 10 == 0:
+      if live_preview and self.current_frame_number % 3 == 0:
          self.update(image)
       if motion["motion"]:
          return { "frame_number": motion["frame_number"], "direction": self.direction / abs(self.direction) }
