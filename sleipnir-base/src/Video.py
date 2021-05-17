@@ -191,12 +191,14 @@ class Video:
             self.current_frame_number = self.cameras_data.get_last_frame(self.cam)
             self.find = False
             self.timer.stop()
+            self.update(image)
       else:
          self.current_frame_number -= 1
          if (self.current_frame_number < 1):
             self.current_frame_number  =1
             self.find = False
             self.timer.stop()
+            self.update(image)
 
       # Find motion when playing video
       frame = self.getFrame(self.current_frame_number)
@@ -209,10 +211,12 @@ class Video:
             if motion["motion"]:
                self.timer.stop()
 
-      if self.find and self.current_frame_number & 7 == 1:
-         self.update(image)
-      elif not self.find:
-         self.update(image)         
+      if self.current_frame_number & 7 == 1:
+         self.update()
+#      if self.find and self.current_frame_number & 7 == 1:
+#         self.update(image)
+#      elif not self.find:
+#         self.update(image)         
 
    def view_frame(self, frame_number):
       self.current_frame_number = frame_number
