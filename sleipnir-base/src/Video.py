@@ -309,22 +309,27 @@ class FrameProcessingWorker(QtCore.QThread):
       # Found motion returned
       self.found_motion = False
 
-      self.last_frame_number = 0
+      # Last frame analyzed
+      self.__last_frame_number = 0
+
+      #
+      self.__stat_number_of_frames = 0
+      self.__stat_accumulated_time = 0
 
       QtCore.QThread.__init__(self)
 
-
    def run(self):
-#      print (self.video.cam + " : " + str(self.current_frame_number))
-
-      if self.current_frame_number == self.last_frame_number:
+      # We do not want to analyze the same frame twice
+      if self.current_frame_number == self.__last_frame_number:
          return
-      if self.last_frame_number + 1 != self.current_frame_number:
+
+      # Check to see if we are lagging behind
+      if self.__last_frame_number + 1 != self.current_frame_number:
          print("WARNING: FrameProcessingWorker.run() " + self.video.cam + " missed frame: " + str(self.current_frame_number))
+      self.__last_frame_number = self.current_frame_number
 
-      self.last_frame_number = self.current_frame_number
+      start = time.time()
 
-      image = None
       image_gray_cv = self.image_cv
       image_blur_cv = cv.GaussianBlur(image_gray_cv, (13, 13), 0)
       found_motion = False
@@ -382,6 +387,11 @@ class FrameProcessingWorker(QtCore.QThread):
       self.image = image_gray_cv
       self.found_motion = found_motion
       self.found_motion_frame_number = self.current_frame_number
+
+      self.__stat_accumulated_time += (start - time.time())
+      self.__stat_number_of_frames += 1
+      if self.__stat_number_of_frames % 1000 == 0:
+         print("INFO: FrameProcessingWorker.run() Time to analyze: " + str(self.__stat_accumulated_time / self.__stat_number_of_frames * 1000) + "ms")
 
    def __check_overlap_previous(self, x, y, w, h, x1, w1, frame_number, iterations):
 #      print "check overlap: " + str(frame_number) + " iteration: " + str(iterations)
