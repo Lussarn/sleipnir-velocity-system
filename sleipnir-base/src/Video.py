@@ -190,11 +190,13 @@ class Video:
          if self.current_frame_number > self.cameras_data.get_last_frame(self.cam):
             self.current_frame_number = self.cameras_data.get_last_frame(self.cam)
             self.find = False
+            self.timer.stop()
       else:
          self.current_frame_number -= 1
          if (self.current_frame_number < 1):
             self.current_frame_number  =1
             self.find = False
+            self.timer.stop()
 
       # Find motion when playing video
       frame = self.getFrame(self.current_frame_number)
@@ -273,9 +275,6 @@ class Video:
       if self.direction > 0:
          self.direction -=1
 
-#      self.frame_processing_worker.image_cv = image_cv
-#      self.frame_processing_worker.set_current_frame_number(self.current_frame_number)
-#      self.frame_processing_worker.start()
       self.frame_processing_worker.do_processing(image_cv, self.current_frame_number)
 
       return { "motion": found_motion, "image": image, "frame_number": found_motion_frame_number }
