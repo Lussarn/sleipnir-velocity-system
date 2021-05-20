@@ -232,8 +232,8 @@ class WindowMain(QMainWindow):
       self.videos[0].comparison_image_cv = None
       self.videos[1].comparison_image_cv = None
       
-      self.videos[0].update()
-      self.videos[1].update()
+      self.videos[0].view_frame(1)
+      self.videos[1].view_frame(1)
 
    def __flight_number_clicked(self):
       """

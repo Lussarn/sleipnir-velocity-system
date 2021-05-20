@@ -111,34 +111,29 @@ class Video:
    # Sets current frame number of video
    def set_current_frame_number(self, frame_number):
       self.current_frame_number = frame_number
-      self.update()
+      self.__update(self.__get_frame(self.current_frame_number))
 
    # Set directory of images
    def set_flight_directory(self, directory):
       self.__flight_directory = directory
 
-   # performance jpeg read
-   
-
    # Returns a video frame as a cv image and it's timestamp
-   def getFrame(self, frame_number, use_image = None):
+   def __get_frame(self, frame_number):
       file = self.__flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6)
       if not os.path.exists(file):
          return None
       timestamp = self.cameras_data.get_timestamp_from_frame_number(self.cam, frame_number)
-      if use_image is not None:
-         image_cv = use_image
-      else:
-         start = time.time()
-         picture_filename = self.__flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6) + "/image" + str(frame_number).zfill(9) + ".jpg"
-         image_cv = cv.imread(picture_filename, 0)
-         # statistics logging
-         self.__stat_jpeg_read_accumulated_time += (time.time() - start)
-         self.__stat_jpeg_read_number_of_frames += 1
-         if self.__stat_jpeg_read_number_of_frames % 1000 == 0:
-            print("INFO: Video.getFrame() Time to read jpeg " + self.cam + ": " + str(int(self.__stat_jpeg_read_accumulated_time / self.__stat_jpeg_read_number_of_frames * 1000000)/1000) + "ms")
-            self.__stat_jpeg_read_accumulated_time = 0
-            self.__stat_jpeg_read_number_of_frames = 0
+
+      start = time.time()
+      picture_filename = self.__flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6) + "/image" + str(frame_number).zfill(9) + ".jpg"
+      image_cv = cv.imread(picture_filename, 0)
+      # statistics logging
+      self.__stat_jpeg_read_accumulated_time += (time.time() - start)
+      self.__stat_jpeg_read_number_of_frames += 1
+      if self.__stat_jpeg_read_number_of_frames % 1000 == 0:
+         print("INFO: Video.__get_frame() Time to read jpeg " + self.cam + ": " + str(int(self.__stat_jpeg_read_accumulated_time / self.__stat_jpeg_read_number_of_frames * 1000000)/1000) + "ms")
+         self.__stat_jpeg_read_accumulated_time = 0
+         self.__stat_jpeg_read_number_of_frames = 0
 
       return {"frame_number": frame_number, "timestamp": int(timestamp), "image": image_cv }
 
@@ -153,13 +148,13 @@ class Video:
          timestamp_sibling = self.cameras_data.get_timestamp_from_frame_number(self.sibling_video.cam, i)
          if timestamp_sibling >= timestamp_this:
             break
-      self.sibling_video.set_current_frame_number(i)
+      self.sibling_video.view_frame(i)
       self.sibling_video.direction = 0
 
    def __onSliderChanged(self, value):
       self.direction = 0
       self.current_frame_number = value
-      self.update()
+      self.__update(self.__get_frame(self.current_frame_number))
       self.timer.stop()
 
    def __onPlayForward(self):
@@ -177,7 +172,7 @@ class Video:
    def __onPause(self):
       self.direction = 0
       self.timer.stop()
-      self.update()
+      self.__update(self.__get_frame(self.current_frame_number))
 
    def __onFind(self):
       self.find = True
@@ -189,72 +184,69 @@ class Video:
       if self.current_frame_number < self.cameras_data.get_last_frame(self.cam):
          self.current_frame_number += 1
       self.timer.stop()
-      self.update()
+      self.__update(self.__get_frame(self.current_frame_number))
 
    def __onBackStep(self):
       self.direction = 0
       if self.current_frame_number > 1:
          self.current_frame_number -= 1
       self.timer.stop()
-      self.update()
+      self.__update(self.__get_frame(self.current_frame_number))
 
    def __timerplay(self):
-      image = None
-
       if self.forward:
          self.current_frame_number += 1
          if self.current_frame_number > self.cameras_data.get_last_frame(self.cam):
             self.current_frame_number = self.cameras_data.get_last_frame(self.cam)
             self.find = False
             self.timer.stop()
-            self.update(image)
+            self.__update(self.__get_frame(self.current_frame_number))
       else:
          self.current_frame_number -= 1
          if (self.current_frame_number < 1):
             self.current_frame_number  =1
             self.find = False
             self.timer.stop()
-            self.update(image)
+            self.__update(self.__get_frame(self.current_frame_number))
 
       # Find motion when playing video
-      frame = self.getFrame(self.current_frame_number)
+      frame = self.__get_frame(self.current_frame_number)
       if not frame:
          return
       if self.forward:
-         motion = self.have_motion(frame["image"])
+         motion = self.have_motion(frame['image'])
          if self.find:
-            image = motion["image"]
+            frame['image'] = motion["image"]
             if motion["motion"]:
                self.timer.stop()
 
       if self.find and self.current_frame_number & 7 == 1:
-         self.update(image)
+         self.__update(frame)
       elif not self.find:
-         self.update(image)         
+         self.__update(frame)         
 
    def view_frame(self, frame_number):
       self.current_frame_number = frame_number
-      self.update()
+      self.__update(self.__get_frame(self.current_frame_number))
 
    def view_frame_motion_track(self, frame_number, live_preview = True):
       self.current_frame_number = frame_number
-      frame = self.getFrame(self.current_frame_number)
+      frame = self.__get_frame(self.current_frame_number)
       if not frame:
          return
       motion = self.have_motion(frame["image"])
       if (motion is None):
          return None
 
-      image = motion["image"]
-      # Only show 10 frame
+      frame['image'] = motion["image"]
+      # Only show every 3 frame
       if live_preview and self.current_frame_number % 3 == 0:
-         self.update(image)
+         self.__update(frame)
       if motion["motion"]:
          return { "frame_number": motion["frame_number"], "direction": self.direction / abs(self.direction) }
       return None
 
-   def update(self, use_image = None):
-      frame = self.getFrame(self.current_frame_number, use_image = use_image)
+   def __update(self, frame):
       if not frame:
          return
 
