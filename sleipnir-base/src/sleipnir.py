@@ -263,8 +263,8 @@ class WindowMain(QMainWindow):
    def __on_anouncement_changed(self, event):
       row = event.row()
       anouncement = self.anouncements[row]
-      self.videos[0].set_current_frame_number(anouncement.cam1_frame_number)
-      self.videos[1].set_current_frame_number(anouncement.cam2_frame_number)
+      self.videos[0].view_frame(anouncement.cam1_frame_number)
+      self.videos[1].view_frame(anouncement.cam2_frame_number)
 
    def __timerGui(self):
       """
@@ -336,8 +336,8 @@ class WindowMain(QMainWindow):
                self.shooting = False
                self.ui.pushbutton_stop.setText("Stop cameras")
                self.ui.pushbutton_start.setEnabled(True)
-               self.videos[0].set_current_frame_number(1)
-               self.videos[1].set_current_frame_number(1)
+               self.videos[0].view_frame(1)
+               self.videos[1].view_frame(1)
                self.videos[0].set_shooting(False)
                self.videos[1].set_shooting(False)
                self.timer.start(20)
