@@ -258,6 +258,8 @@ class Video:
 
       # Draw center line
       cv.rectangle(frame["image"], (160, 0), (160, 480), (0, 0, 0), 1)
+      # Draw ground level
+      cv.rectangle(frame["image"], (0, self.groundlevel), (320, self.groundlevel), (0, 0, 0), 1)
 
       image_qt = QtGui.QImage(frame["image"], frame["image"].shape[1], frame["image"].shape[0], frame["image"].strides[0], QtGui.QImage.Format_Indexed8)
       self.widgetVideo.setPixmap(QtGui.QPixmap.fromImage(image_qt))

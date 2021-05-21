@@ -259,6 +259,8 @@ class WindowMain(QMainWindow):
       # Forward ground level to videos
       self.videos[0].groundlevel = value
       self.videos[1].groundlevel = value
+      self.videos[0].view_frame(self.videos[0].get_current_frame_number())
+      self.videos[1].view_frame(self.videos[1].get_current_frame_number())
 
    def __on_anouncement_changed(self, event):
       row = event.row()
