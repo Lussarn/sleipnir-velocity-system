@@ -108,11 +108,6 @@ class Video:
    def get_current_frame_number(self):
       return self.current_frame_number
 
-   # Sets current frame number of video
-   def set_current_frame_number(self, frame_number):
-      self.current_frame_number = frame_number
-      self.__update(self.__get_frame(self.current_frame_number))
-
    # Set directory of images
    def set_flight_directory(self, directory):
       self.__flight_directory = directory
@@ -219,6 +214,7 @@ class Video:
             frame['image'] = motion["image"]
             if motion["motion"]:
                self.timer.stop()
+               self.__update(frame)
 
       if self.find and self.current_frame_number & 7 == 1:
          self.__update(frame)
