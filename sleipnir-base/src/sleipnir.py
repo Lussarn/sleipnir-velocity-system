@@ -46,7 +46,6 @@ class WindowMain(QMainWindow):
       # Data for the cameras
       self.cameras_data = CamerasData.CamerasData()
 
-
       # none / "Left" / "Right"
       self.run_direction = None
       self.run_frame_number_cam1 = None
@@ -227,8 +226,6 @@ class WindowMain(QMainWindow):
       self.videos[1].slider.setMaximum(self.cameras_data.get_last_frame("cam2"))
       self.videos[0].setStartTimestamp(self.cameras_data.get_start_timestamp())
       self.videos[1].setStartTimestamp(self.cameras_data.get_start_timestamp())
-      self.videos[0].set_current_frame_number(1)
-      self.videos[1].set_current_frame_number(1)
       self.videos[0].comparison_image_cv = None
       self.videos[1].comparison_image_cv = None
       
