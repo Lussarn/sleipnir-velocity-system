@@ -478,7 +478,7 @@ class WindowMain(QMainWindow):
 
       self.shooting_frame_number_cam1 = 1
       self.shooting_frame_number_cam2 = 1
-      self.timer.start(0)
+      self.timer.start(6)
 
       self.ui.label_speed.setText("")
       self.stop_camera_wait = False
@@ -493,7 +493,7 @@ class WindowMain(QMainWindow):
       CameraServer.ServerData.flight_number = flight_number
       CameraServer.ServerData.camera_directory_base = self.cameras_directory_base
       CameraServer.start_shooting(self.cameras_data, flight_number)
- 
+
    def stopCameras(self):
       """
       Stop cameras
