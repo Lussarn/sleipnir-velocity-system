@@ -7,33 +7,62 @@ import datetime
 import time
 import configparser
 
+from SleipnirWindow import SleipnirWindow
 import util
-import globals
 import CameraServer
 from Video import Video
 import CamerasData
 import CameraServer
 
-from qtui.Ui_MainWindow import Ui_MainWindow
-
 import pyglet 
 pyglet.options['audio'] = ('directsound', 'openal', 'pulse',  'silent')
 
-class Anouncement:
-   """
-   Announcements
-   """
+class Announcement:
+   def __init__(self,
+      cam1_frame_number,
+      cam2_frame_number,
+      time,
+      speed,
+      direction):
+
+      self.__cam1_frame_number = cam1_frame_number
+      self.__cam2_frame_number = cam2_frame_number
+      self.__time = time
+      self.__speed = speed
+      self.__direction = direction 
+
+   def get_cam1_frame_number(self):
+      return self.__cam1_frame_number
+
+   def get_cam2_frame_number(self):
+      return self.__cam2_frame_number
+
+   def get_time(self):
+      return self.__time
+
+   def get_speed(self):
+      return self.__speed
+
+   def get_direction(self):
+      return self.__direction
+
+class Announcements:
    def __init__(self):
-      self.cam1_frame_number = 0
-      self.cam2_frame_number = 0
-      self.time = 0
-      self.speed = 0
-      self.direction = 0
+      self.__announcements = []
+
+   def clear(self):
+      self.__announcements = []
+
+   def append(self, announcement: Announcement):
+      self.__announcements.append(announcement)
+
+   def get_announcement_by_index(self, index):
+      return self.__announcements[index]
+
+   def get_announcements(self):
+      return self.__announcements
 
 class WindowMain(QMainWindow):
-   """
-   Main window
-   """
    def __init__(self):
       # Init config
       self.config = configparser.ConfigParser()
@@ -91,43 +120,22 @@ class WindowMain(QMainWindow):
       }
 
       QMainWindow.__init__(self)
-      self.ui = Ui_MainWindow()
+      self.ui = SleipnirWindow()
       self.ui.setupUi(self)
-      self.setWindowTitle("Sleipnir Velocity")
-
-      self.anouncements = []
-      self.model_anouncements = QtGui.QStandardItemModel(self.ui.listView_anouncements)
-      self.update_anouncements()
+      self.setWindowTitle("Sleipnir Velocity - Go Fast!")
 
       self.ui.label_video1_online.setText("Cam1: Offline")
       self.ui.label_video2_online.setText("Cam2: Offline")
 
+      self.announcements = Announcements()
+      self.model_announcements = QtGui.QStandardItemModel()
+      self.ui.listView_anouncements.setModel(self.model_announcements)
+      self.__update_announcements_gui()
+
       self.ui.verticalSlider_groundlevel.sliderMoved.connect(self.__on_groundlevel_changed)
 
-      # Initiate the flight number buttons
-      self.radio_buttons_flights = {}
-      self.radio_buttons_flights[0] = self.ui.radioButton_flight_1
-      self.radio_buttons_flights[1] = self.ui.radioButton_flight_2
-      self.radio_buttons_flights[2] = self.ui.radioButton_flight_3
-      self.radio_buttons_flights[3] = self.ui.radioButton_flight_4
-      self.radio_buttons_flights[4] = self.ui.radioButton_flight_5
-      self.radio_buttons_flights[5] = self.ui.radioButton_flight_6
-      self.radio_buttons_flights[6] = self.ui.radioButton_flight_7
-      self.radio_buttons_flights[7] = self.ui.radioButton_flight_8
-      self.radio_buttons_flights[8] = self.ui.radioButton_flight_9
-      self.radio_buttons_flights[9] = self.ui.radioButton_flight_10
-      self.radio_buttons_flights[10] = self.ui.radioButton_flight_11
-      self.radio_buttons_flights[11] = self.ui.radioButton_flight_12
-      self.radio_buttons_flights[12] = self.ui.radioButton_flight_13
-      self.radio_buttons_flights[13] = self.ui.radioButton_flight_14
-      self.radio_buttons_flights[14] = self.ui.radioButton_flight_15
-      self.radio_buttons_flights[15] = self.ui.radioButton_flight_16
-      self.radio_buttons_flights[16] = self.ui.radioButton_flight_17
-      self.radio_buttons_flights[17] = self.ui.radioButton_flight_18
-      self.radio_buttons_flights[18] = self.ui.radioButton_flight_19
-      self.radio_buttons_flights[19] = self.ui.radioButton_flight_20
-      for i in range(0,20):
-         self.radio_buttons_flights[i].clicked.connect(self.__flight_number_clicked)
+      for radio_buttons_flight in self.ui.radio_buttons_flights:
+         radio_buttons_flight.clicked.connect(self.__flight_number_clicked)
 
       # [0] - left [1] - right video
       # Init the videos
@@ -178,7 +186,7 @@ class WindowMain(QMainWindow):
       self.ui.lineEdit_distance.setText(str(self.distance))
       self.ui.lineEdit_distance.textChanged.connect(self.__on_distance_changed)
 
-      self.ui.listView_anouncements.clicked.connect(self.__on_anouncement_changed)
+      self.ui.listView_anouncements.clicked.connect(self.__on_announcement_changed)
 
       # Show GUI
       self.show()
@@ -196,23 +204,23 @@ class WindowMain(QMainWindow):
       """
       Load a flight
       """
-      self.radio_buttons_flights[flight_number - 1].setChecked(True)
+      self.ui.radio_buttons_flights[flight_number - 1].setChecked(True)
 
-      filename = os.path.join(self.cameras_directory_base, str(flight_number), "anouncements.csv")
-      self.anouncements = []
+      filename = os.path.join(self.cameras_directory_base, str(flight_number), "announcements.csv")
+      self.announcements.clear()
       if self.cameras_data.load(self.cameras_directory_base, flight_number):
          if os.path.exists(filename):
             with open(filename, 'r') as f:
                for row in f:
                   row = row.split()
-                  anouncement = Anouncement()
-                  anouncement.cam1_frame_number = int(row[0])
-                  anouncement.cam2_frame_number = int(row[1])
-                  anouncement.time = int(row[2])
-                  anouncement.speed = int(row[3])
-                  anouncement.direction = int(row[4])
-                  self.anouncements.append(anouncement)
-      self.update_anouncements()
+                  self.announcements.append(Announcement(
+                     int(row[0]),
+                     int(row[1]),
+                     int(row[2]),
+                     int(row[3]),
+                     int(row[4])
+                  ))
+      self.__update_announcements_gui()
 
 
       # FIXME: Clean this shit up to some kind of API
@@ -233,19 +241,13 @@ class WindowMain(QMainWindow):
       self.videos[1].view_frame(1)
 
    def __flight_number_clicked(self):
-      """
-      Flight number clicked
-      """
       for i in range(0,20):
-         if self.radio_buttons_flights[i].isChecked():
+         if self.ui.radio_buttons_flights[i].isChecked():
             break
       self.load_flight(i + 1)
 
 
    def __on_distance_changed(self, value):
-      """
-      Distance changed
-      """
       try:
          value = int(value)
       except:
@@ -253,20 +255,15 @@ class WindowMain(QMainWindow):
       self.distance = value
 
    def __on_groundlevel_changed(self, value):
-      """
-      Ground level changed
-      """
       # Forward ground level to videos
       self.videos[0].groundlevel = value
       self.videos[1].groundlevel = value
       self.videos[0].view_frame(self.videos[0].get_current_frame_number())
       self.videos[1].view_frame(self.videos[1].get_current_frame_number())
 
-   def __on_anouncement_changed(self, event):
-      row = event.row()
-      anouncement = self.anouncements[row]
-      self.videos[0].view_frame(anouncement.cam1_frame_number)
-      self.videos[1].view_frame(anouncement.cam2_frame_number)
+   def __on_announcement_changed(self, event):
+      self.videos[0].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam1_frame_number())
+      self.videos[1].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam2_frame_number())
 
    def __timerGui(self):
       """
@@ -467,14 +464,14 @@ class WindowMain(QMainWindow):
          return False
 
       for flight_number in range(0,20):
-         if self.radio_buttons_flights[flight_number].isChecked():
+         if self.ui.radio_buttons_flights[flight_number].isChecked():
             break
       flight_number += 1
 
       self.enable_all_gui_elements(False)
 
-      self.anouncements = []
-      self.update_anouncements()
+      self.announcements.clear()
+      self.__update_announcements_gui()
 
       self.shooting_frame_number_cam1 = 1
       self.shooting_frame_number_cam2 = 1
@@ -495,13 +492,10 @@ class WindowMain(QMainWindow):
       CameraServer.start_shooting(self.cameras_data, flight_number)
 
    def stopCameras(self):
-      """
-      Stop cameras
-      """
       print("Stopping cameras")
       self.stop_camera_wait = True
       CameraServer.stop_shooting()
-      self.save_anouncements()
+      self.save_announcements()
 
    def enable_all_gui_elements(self, enabled):
       """
@@ -533,8 +527,8 @@ class WindowMain(QMainWindow):
       self.ui.listView_anouncements.setEnabled(enabled)
       self.ui.verticalSlider_groundlevel.setEnabled(enabled)
 
-      for i in range(0,20):
-         self.radio_buttons_flights[i].setEnabled(enabled)
+      for i in range(0, len(self.ui.radio_buttons_flights)):
+         self.ui.radio_buttons_flights[i].setEnabled(enabled)
 
    def check_run(self, cam, motion):
       """
@@ -559,7 +553,7 @@ class WindowMain(QMainWindow):
          if (kmh < 500):
             self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
             self.run_tell_speed = kmh
-         self.add_anouncement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, 1)
+         self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, 1)
 
       # Check left run
       if cam == "cam2" and self.run_direction == None and motion["direction"] == -1:
@@ -581,64 +575,47 @@ class WindowMain(QMainWindow):
          if (kmh < 500):
             self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
             self.run_tell_speed = kmh
-         self.add_anouncement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, -1)
+         self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, -1)
 
-   def add_anouncement(self, cam1_frame_number, cam2_frame_number, kmh, direction):
+   def add_announcement(self, cam1_frame_number, cam2_frame_number, speed, direction):
       cam1_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam1", cam1_frame_number)
       cam2_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam2", cam2_frame_number)
       milliseconds = abs(cam1_timestamp - cam2_timestamp)
-      anouncement = Anouncement()
-      anouncement.cam1_frame_number = cam1_frame_number
-      anouncement.cam2_frame_number = cam2_frame_number
-      anouncement.time = milliseconds
-      anouncement.speed = kmh
-      anouncement.direction = direction
-      self.anouncements.append(anouncement)
-      self.update_anouncements()
 
-   def update_anouncements(self):
-      """
-      Update announcements box
-      """
-      self.model_anouncements.clear()
+      self.announcements.append(Announcement(
+         cam1_frame_number,
+         cam2_frame_number,
+         milliseconds,
+         speed,
+         direction
+      ))
+      self.__update_announcements_gui()
 
-      for anouncement in self.anouncements:
-         out = ""
-         if (anouncement.direction == 1):
-            out += "--> "
-         else:
-            out += "<-- "
+   def __update_announcements_gui(self):
+      self.model_announcements.clear()
+      for announcement in self.announcements.get_announcements():
+         out = ("--> " if (announcement.get_direction() == 1) else "<-- ") + \
+            "%.3f" % (float(announcement.get_time()) / 1000) + "s " + \
+            str(announcement.get_speed()) + " km/h "
+         self.model_announcements.appendRow(QtGui.QStandardItem(out))
 
-         out += "%.3f" % (float(anouncement.time) / 1000) + "s "
-         out += str(anouncement.speed) + "Kmh "
-         item = QtGui.QStandardItem()
-         item.setText(out)
-         self.model_anouncements.appendRow(item)
-
-      self.ui.listView_anouncements.setModel(self.model_anouncements)
-
-   def save_anouncements(self):
-      """
-      Save announcements
-      """
-      for flight_number in range(0,20):
-         if self.radio_buttons_flights[flight_number].isChecked():
+   def save_announcements(self):
+      for flight_number in range(0, len(self.ui.radio_buttons_flights)):
+         if self.ui.radio_buttons_flights[flight_number].isChecked():
             break
+
       flight_number += 1
-      filename = os.path.join(self.cameras_directory_base, str(flight_number), "anouncements.csv")
+      filename = os.path.join(self.cameras_directory_base, str(flight_number), "announcements.csv")
 
       with open(filename, 'w') as f:
-         for anouncement in self.anouncements:
-            out = str(anouncement.cam1_frame_number) + "  " + str(anouncement.cam2_frame_number) + " "
-            out += str(anouncement.time) + " "
-            out += str(anouncement.speed) + " "
-            out += str(anouncement.direction) + "\n"
+         for announcement in self.announcements.get_announcements():
+            out = str(announcement.get_cam1_frame_number()) + "  " + str(announcement.get_cam2_frame_number()) + " "
+            out += str(announcement.get_time()) + " "
+            out += str(announcement.get_speed()) + " "
+            out += str(announcement.get_direction()) + "\n"
             f.write(out)
 
    def read_config(self):
-      """
-      Reading config file
-      """
       filename = self.get_config_filename()
       print("Config file: " + filename)
       if self.config.read(filename) == None:
@@ -651,9 +628,6 @@ class WindowMain(QMainWindow):
 
 
    def get_config_filename(self):
-      """
-      Find config file on different OSes
-      """
       if sys.platform.startswith("win32"):
          from win32com.shell import shell,shellcon
          home = shell.SHGetFolderPath(0, shellcon.CSIDL_PROFILE, None, 0)

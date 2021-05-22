@@ -254,7 +254,8 @@ class Video:
       if (self.shooting):
          self.slider.setSliderPosition(1)
       else:
-         self.slider.setSliderPosition(self.current_frame_number)
+#         self.slider.setSliderPosition(self.current_frame_number)
+         self.slider.setSliderPosition(frame["frame_number"])
 
       # Draw center line
       cv.rectangle(frame["image"], (160, 0), (160, 480), (0, 0, 0), 1)
