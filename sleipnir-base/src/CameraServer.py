@@ -28,9 +28,6 @@ class ServerData:
 
    # Frames key, timestamps value
    cameras_data = None
-
-   debug = False
-
    camera_last_transmission_timestamp = {"cam1": 0, "cam2": 0}
 
    # performance statistics and logs
@@ -83,10 +80,8 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
       global ServerData
       start = time.time()
 
-#      ctype, pdict = cgi.parse_header(self.headers.getheader('content-type'))
       ctype, pdict = cgi.parse_header(self.headers['content-type'])
       if ctype == 'multipart/form-data':
-#         print (self.rfile)
          postvars = cgi.parse_multipart(self.rfile, pdict)
       elif ctype == 'application/x-www-form-urlencoded':
          length = int(self.headers['content-length'])
@@ -112,31 +107,31 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
          pass
 
       if (action == "uploadframe"):
+         cam = postvars[b"id"][0].decode('utf-8')
+         if cam != "cam1" and cam != "cam2":
+            print("INFO: CameraServer.do_POST() uploadframe unknown camera id: " + cam)
+            return
 
-         id = postvars[b"id"][0].decode('utf-8')
-         if id == "cam1" or id == "cam2":
-            ServerData.camera_last_transmission_timestamp[id] = time.time()
+         ServerData.camera_last_transmission_timestamp[cam] = time.time()
 
          imageNum = int(postvars[b"framenumber"][0].decode('utf-8'))
          timestamp = int(postvars[b"timestamp"][0].decode('utf-8'))
          ServerData.last_picture_timestamp = time.time()
 
-         filename_timestamp = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), id, "timestamps.txt")
+         filename_timestamp = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), cam, "timestamps.txt")
 
          # First frame create dir and open timestamp file
          if (imageNum == 1): 
-            self.mkdir(id)
+            self.mkdir(cam)
             
          file_timestamp = open(filename_timestamp, "a")
          file_timestamp.write(str(imageNum) + " " + str(timestamp) + "\n")
          file_timestamp.close()
 
-         if ServerData.debug: print ("uploadpictures", id, imageNum, timestamp)
-
          data = base64.b64decode(postvars[b"data"][0].decode('ASCII'))
-         self.saveFrame(id, imageNum, data, timestamp)
+         self.saveFrame(cam, imageNum, data, timestamp)
 
-         ServerData.cameras_data.add_frame(id, imageNum, timestamp)
+         ServerData.cameras_data.add_frame(cam, imageNum, timestamp)
 
          if (ServerData.request_pictures_from_camera):
             self.send200("OK-CONTINUE")

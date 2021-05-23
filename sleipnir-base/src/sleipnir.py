@@ -108,6 +108,8 @@ class WindowMain(QMainWindow):
          "gate-2" : pyglet.media.StaticSource(pyglet.media.load(util.resource_path("sounds/gate-2.ogg"))),
          "error"  : pyglet.media.StaticSource(pyglet.media.load(util.resource_path("sounds/error.ogg")))
       }
+      # Play a sound to initialize sound system
+      self.sound_effects["error"].play()
 
       QMainWindow.__init__(self)
       self.ui = SleipnirWindow()
