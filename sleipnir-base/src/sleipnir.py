@@ -301,6 +301,7 @@ class WindowMain(QMainWindow):
                self.videos[0].set_shooting(False)
                self.ui.pushButton_video1_align.setText("Align Camera")
          elif self.aligning_cam2:
+            print("aligning 2 stop")
             self.ui.pushButton_video2_align.setEnabled(False)
             if not CameraServer.is_shooting():
                self.aligning_cam2 = False
