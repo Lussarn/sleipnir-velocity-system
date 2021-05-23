@@ -195,9 +195,6 @@ class WindowMain(QMainWindow):
       self.timer.start(20)
 
    def load_flight(self, flight_number):
-      """
-      Load a flight
-      """
       self.ui.radio_buttons_flights[flight_number - 1].setChecked(True)
 
       filename = os.path.join(self.cameras_directory_base, str(flight_number), "announcements.csv")
@@ -215,7 +212,6 @@ class WindowMain(QMainWindow):
                      int(row[4])
                   ))
       self.__update_announcements_gui()
-
 
       # FIXME: Clean this shit up to some kind of API
       self.videos[0].cameras_data = self.cameras_data
