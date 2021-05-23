@@ -197,20 +197,7 @@ class WindowMain(QMainWindow):
    def load_flight(self, flight_number):
       self.ui.radio_buttons_flights[flight_number - 1].setChecked(True)
 
-      filename = os.path.join(self.cameras_directory_base, str(flight_number), "announcements.csv")
-      self.announcements.clear()
-      if self.cameras_data.load(self.cameras_directory_base, flight_number):
-         if os.path.exists(filename):
-            with open(filename, 'r') as f:
-               for row in f:
-                  row = row.split()
-                  self.announcements.append(Announcement(
-                     int(row[0]),
-                     int(row[1]),
-                     int(row[2]),
-                     int(row[3]),
-                     int(row[4])
-                  ))
+      self.__load_announcements(flight_number)
       self.__update_announcements_gui()
 
       # FIXME: Clean this shit up to some kind of API
@@ -593,6 +580,22 @@ class WindowMain(QMainWindow):
             out += str(announcement.get_speed()) + " "
             out += str(announcement.get_direction()) + "\n"
             f.write(out)
+
+   def __load_announcements(self, flight_number):
+      filename = os.path.join(self.cameras_directory_base, str(flight_number), "announcements.csv")
+      self.announcements.clear()
+      if self.cameras_data.load(self.cameras_directory_base, flight_number):
+         if os.path.exists(filename):
+            with open(filename, 'r') as f:
+               for row in f:
+                  row = row.split()
+                  self.announcements.append(Announcement(
+                     int(row[0]),
+                     int(row[1]),
+                     int(row[2]),
+                     int(row[3]),
+                     int(row[4])
+                  ))
 
 
 if __name__ == '__main__':
