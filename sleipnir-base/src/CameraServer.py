@@ -37,21 +37,11 @@ class ServerData:
 
 
 class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
-   pass
+   """Handle requests in a separate thread."""
 
-if sys.argv[1:]:
-   port = int(sys.argv[1])
-else:
-   port = 8000
-
-if sys.argv[2:]:
-   os.chdir(sys.argv[2])
-
-class MySimpleHTTPRequestHandler(http.server.SimpleHTTPRequestHandler):
+class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
    def log_message(self, format, *args):
       pass
-
-class MyRequestHandler(MySimpleHTTPRequestHandler):
 
    def mkdir(self, cam):
       global ServerData
@@ -154,7 +144,7 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
       self.wfile.write(msg.encode('ASCII'))
 
 def __startHTTP(threadName, delay):
-   server = ThreadingSimpleServer(('', port), MyRequestHandler)
+   server = ThreadingSimpleServer(('', 8000), SleipnirRequestHandler)
    while True:
       sys.stdout.flush()
       server.handle_request()
