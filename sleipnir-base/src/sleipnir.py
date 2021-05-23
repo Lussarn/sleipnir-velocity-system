@@ -22,7 +22,6 @@ pyglet.options['audio'] = ('directsound', 'openal', 'pulse',  'silent')
 
 class WindowMain(QMainWindow):
    def __init__(self):
-      self.__db = DB()
 
       # Set cameras_directory_base for the server
       try:
@@ -30,6 +29,8 @@ class WindowMain(QMainWindow):
       except IOError as e:
          print ("ERROR: Unable to open configuration file: " + str(e))
          exit(1)
+
+      self.__db = DB(self.configuration.get_or_throw('save_path'))
 
       self.cameras_directory_base = self.configuration.get_or_throw("save_path")
       CameraServer.ServerData.cameras_directory_base = self.cameras_directory_base
@@ -95,7 +96,9 @@ class WindowMain(QMainWindow):
       # Init the videos
       self.videos = {}
       self.videos[0] = Video(
+         self.__db,
          "cam1",
+         1,
          os.path.join(self.cameras_directory_base, "1", "cam1"), 
          self.ui.label_video1,  
          self.ui.pushbutton_video1_playforward, 
@@ -108,7 +111,9 @@ class WindowMain(QMainWindow):
          self.ui.pushbutton_video1_copy,
          self.ui.label_time_video1)
       self.videos[1] = Video(
+         self.__db,
          "cam2",
+         1,
          os.path.join(self.cameras_directory_base, "1", "cam2"),
          self.ui.label_video2, 
          self.ui.pushbutton_video2_playforward, 
@@ -147,7 +152,7 @@ class WindowMain(QMainWindow):
       self.raise_()
 
       # Start camera server
-      CameraServer.start_server()
+      CameraServer.start_server(self.__db)
 
       # Run Gui
       self.timer = QtCore.QTimer(self)
@@ -164,7 +169,9 @@ class WindowMain(QMainWindow):
       self.videos[0].cameras_data = self.cameras_data
       self.videos[1].cameras_data = self.cameras_data
       self.videos[0].set_flight_directory(os.path.join(self.cameras_directory_base, str(flight_number), "cam1"))
+      self.videos[0].set_flight(flight_number)
       self.videos[1].set_flight_directory(os.path.join(self.cameras_directory_base, str(flight_number), "cam2"))
+      self.videos[1].set_flight(flight_number)
       self.videos[0].slider.setMinimum(1)
       self.videos[0].slider.setMaximum(self.cameras_data.get_last_frame("cam1"))
       self.videos[1].slider.setMinimum(1)
@@ -199,8 +206,8 @@ class WindowMain(QMainWindow):
       self.videos[1].view_frame(self.videos[1].get_current_frame_number())
 
    def __on_announcement_changed(self, event):
-      self.videos[0].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam1_frame_number())
-      self.videos[1].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam2_frame_number())
+      self.videos[0].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam1_position())
+      self.videos[1].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam2_position())
 
    def __timerGui(self):
       pyglet.clock.tick()
@@ -521,11 +528,12 @@ class WindowMain(QMainWindow):
       self.model_announcements.clear()
       for announcement in self.announcements.get_announcements():
          out = ("--> " if (announcement.get_direction() == 1) else "<-- ") + \
-            "%.3f" % (float(announcement.get_time()) / 1000) + "s " + \
+            "%.3f" % (float(announcement.get_duration()) / 1000) + "s " + \
             str(announcement.get_speed()) + " km/h "
          self.model_announcements.appendRow(QtGui.QStandardItem(out))
 
    def __save_announcements(self):
+      print("INFO: MainWindow.__save_announcements: Saving announcements")
       for flight_number in range(0, len(self.ui.radio_buttons_flights)):
          if self.ui.radio_buttons_flights[flight_number].isChecked():
             break
@@ -534,7 +542,8 @@ class WindowMain(QMainWindow):
       announcement_dao.store(self.__db, flight_number, self.announcements)
 
    def __load_announcements(self, flight_number):
-      if self.cameras_data.load(self.cameras_directory_base, flight_number):
+      print("INFO: MainWindow.__load_announcements: Loading announcements")
+      if self.cameras_data.load(self.__db, self.cameras_directory_base, flight_number):
          self.announcements = announcement_dao.fetch(self.__db, flight_number)
 
 if __name__ == '__main__':

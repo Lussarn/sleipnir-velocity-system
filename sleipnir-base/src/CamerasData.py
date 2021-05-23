@@ -1,6 +1,8 @@
 from threading import Thread, Lock
 import os
 
+from database.DB import DB
+import database.frame_dao as frame_dao
 
 class FrameData():
 
@@ -60,21 +62,24 @@ class CamerasData:
    def is_data_ok(self):
       return len(self.frame_data["cam1"].frames_2_timestamps) >= 90 and len(self.frame_data["cam2"].frames_2_timestamps) >= 90
 
-   def load(self, camdir_base, flight_number):
-      for cam in ["cam1", "cam2"]:
-         self.frame_data[cam].frames_2_timestamps = {}
+   def load(self, db: DB, camdir_base, flight_number):
+      for cam in [1, 2]:
+         for row in frame_dao.load_flight_timestammps(db, flight_number, cam):
+            self.frame_data['cam' + str(cam)].frames_2_timestamps[row[0]] = row[1]
 
-         filename = os.path.join(camdir_base, str(flight_number), cam, "timestamps.txt")
-         if not os.path.exists(filename):
-            self.frame_data["cam1"].frames_2_timestamps = {}
-            self.frame_data["cam2"].frames_2_timestamps = {}
-            return False
+#         self.frame_data[cam].frames_2_timestamps = {}
 
-         with open(filename) as f:
-            content = f.readlines()
+#         filename = os.path.join(camdir_base, str(flight_number), cam, "timestamps.txt")
+#         if not os.path.exists(filename):
+#            self.frame_data["cam1"].frames_2_timestamps = {}
+#            self.frame_data["cam2"].frames_2_timestamps = {}
+#            return False
 
-         for data in content:
-            data = data.split()
-            self.frame_data[cam].frames_2_timestamps[int(data[0])] = int(data[1])
+#         with open(filename) as f:
+#            content = f.readlines()
+
+#         for data in content:
+#            data = data.split()
+#            self.frame_data[cam].frames_2_timestamps[int(data[0])] = int(data[1])
 
       return True

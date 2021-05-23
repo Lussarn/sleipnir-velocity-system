@@ -1,25 +1,25 @@
 ''' One Announcement row '''
 class Announcement:
    def __init__(self,
-      cam1_frame_number,
-      cam2_frame_number,
-      time,
+      cam1_position,
+      cam2_position,
+      duration,
       speed,
       direction):
 
-      self.__cam1_frame_number = cam1_frame_number
-      self.__cam2_frame_number = cam2_frame_number
-      self.__time = time
+      self.__cam1_position = cam1_position
+      self.__cam2_position = cam2_position
+      self.__time = duration
       self.__speed = speed
       self.__direction = direction 
 
-   def get_cam1_frame_number(self):
-      return self.__cam1_frame_number
+   def get_cam1_position(self):
+      return self.__cam1_position
 
-   def get_cam2_frame_number(self):
-      return self.__cam2_frame_number
+   def get_cam2_position(self):
+      return self.__cam2_position
 
-   def get_time(self):
+   def get_duration(self):
       return self.__time
 
    def get_speed(self):

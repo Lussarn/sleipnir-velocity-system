@@ -1,14 +1,36 @@
+from threading import Lock
 import sqlite3
 from sqlite3.dbapi2 import OperationalError, connect
+import os
 
 class DB:
-    def __init__(self):
+    __write_lock = Lock()
+
+    def __init__(self, save_path):
         self.__db_version = 1
-        self.__conn = sqlite3.connect("sleipnir.db")
+        print("INFO: DB.__init__: Opening database" + os.path.join(save_path, 'sleipnir.db'))
+        self.__conn = sqlite3.connect(os.path.join(save_path, 'sleipnir.db'), check_same_thread = False)
+
+        ''' Disable auto vacuum '''
+        cur = self.__conn.cursor()
+        cur.execute('PRAGMA auto_vacuum = NONE')
+#        cur.execute('PRAGMA JOURNAL_MODE = MEMORY')
+        cur.execute('PRAGMA JOURNAL_MODE = WAL')
+#        cur.execute('PRAGMA SYNCHRONOUS = OFF')
+        cur.execute('PRAGMA SYNCHRONOUS = NORMAL')
+        self.__conn.commit()
+        cur.close()
+
         self.__check_database()
 
     def __del__(self):
         self.__conn.close()
+
+    def acquire_write_lock(self):
+        self.__write_lock.acquire()
+
+    def release_write_lock(self):
+        self.__write_lock.release()
 
     def __check_database(self):
         current_version = self.__current_database_version()
@@ -26,7 +48,7 @@ class DB:
             row = cur.execute('SELECT version from version').fetchone()
             if (row is None): return None
             return row[0]
-        except OperationalError as e:
+        except sqlite3.Error as e:
             if str(e) == 'no such table: version':
                 return None
             print ("ERROR: DB.__current_database_version: " + str(e))
@@ -35,38 +57,39 @@ class DB:
             cur.close()
 
     def __create_tables(self):
+        self.acquire_write_lock()
         cur = self.__conn.cursor()
         try:
             ''' DROP tables '''
             cur.execute('DROP TABLE IF EXISTS version')
-            cur.execute('DROP INDEX IF EXISTS image_frame_idx')
-            cur.execute('DROP INDEX IF EXISTS image_flight_idx')
-            cur.execute('DROP TABLE IF EXISTS image')
+            cur.execute('DROP INDEX IF EXISTS frame_position_idx')
+            cur.execute('DROP INDEX IF EXISTS frame_flight_idx')
+            cur.execute('DROP TABLE IF EXISTS frame')
             cur.execute('DROP TABLE IF EXISTS announcement')
 
             ''' CREATE image table '''
             cur.execute('''
-                CREATE TABLE image (
+                CREATE TABLE frame (
                     id INTEGER PRIMARY KEY,
                     flight INTEGER,
                     camera INTEGER,
-                    frame INTEGER,
+                    position INTEGER,
                     timestamp INTEGER,
                     image BLOB
                 )
             ''')
             ''' Index needed for retrieval of image '''
-            cur.execute('CREATE INDEX image_frame_idx ON image (frame, flight, camera)')
+            cur.execute('CREATE INDEX frame_position_idx ON frame (position, flight, camera)')
             ''' Index needed for deleting flight '''
-            cur.execute('CREATE INDEX image_flight_idx ON image (flight)')
+            cur.execute('CREATE INDEX frame_flight_idx ON frame (flight)')
 
             ''' CREATE announcement table '''
             cur.execute('''
                 CREATE TABLE announcement (
                     id INTEGER PRIMARY KEY,
                     flight INTEGER,
-                    cam1_frame INTEGER,
-                    cam2_frame INTEGER,
+                    cam1_position INTEGER,
+                    cam2_position INTEGER,
                     duration INTEGER,
                     speed INTEGER,
                     direction INTEGER
@@ -81,13 +104,14 @@ class DB:
                 ''')
             cur.execute('INSERT INTO version (version) VALUES(?)', str(self.__db_version))
             self.__conn.commit()
-        except OperationalError as e:
+        except sqlite3.Error as e:
             if str(e) == 'no such table: version':
                 return None
             print ("ERROR: DB.__current_database_version: " + str(e))
             raise e
         finally:
             cur.close()
+            self.release_write_lock()
 
     def get_conn(self):
         return self.__conn

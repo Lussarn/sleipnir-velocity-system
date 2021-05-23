@@ -3,10 +3,17 @@ from PySide2 import QtCore, QtGui
 import os
 import cv2 as cv
 import time
+from database.DB import DB
+import database.frame_dao as frame_dao
+import numpy as np
+import simplejpeg
 
 class Video:
 
-   def __init__(self, cam, flight_directory, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
+   def __init__(self, db: DB, cam, flight, flight_directory, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
+
+      self.__db = db
+      self.__flight = flight
 
       # Frame number in video
       self.current_frame_number = 0
@@ -111,17 +118,20 @@ class Video:
    # Set directory of images
    def set_flight_directory(self, directory):
       self.__flight_directory = directory
+   def set_flight(self, flight):
+      self.__flight = flight
 
    # Returns a video frame as a cv image and it's timestamp
    def __get_frame(self, frame_number):
-      file = self.__flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6)
-      if not os.path.exists(file):
-         return None
       timestamp = self.cameras_data.get_timestamp_from_frame_number(self.cam, frame_number)
 
       start = time.time()
       picture_filename = self.__flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6) + "/image" + str(frame_number).zfill(9) + ".jpg"
-      image_cv = cv.imread(picture_filename, 0)
+
+      frame = frame_dao.load(self.__db, self.__flight, 1 if self.cam == 'cam1' else 2, frame_number)
+      if frame is None: return
+      image_cv = simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
+
       # statistics logging
       self.__stat_jpeg_read_accumulated_time += (time.time() - start)
       self.__stat_jpeg_read_number_of_frames += 1

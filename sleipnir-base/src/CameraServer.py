@@ -15,12 +15,15 @@ import sys
 import os
 import shutil
 
-import CamerasData
+from Frame import Frame
+from database.DB import DB
+import database.frame_dao as frame_dao
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 class ServerData:
+   db = None
    cameras_directory_base = ""
    flight_number = 1
    request_pictures_from_camera = False
@@ -42,29 +45,6 @@ class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
 class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
    def log_message(self, format, *args):
       pass
-
-   def mkdir(self, cam):
-      global ServerData
-      flight_dir = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number))
-      if not os.path.exists(flight_dir):
-         os.mkdir(flight_dir)
-
-      cam_dir = os.path.join(flight_dir, cam)
-      if not os.path.exists(cam_dir):
-         os.mkdir(cam_dir)
-
-   def saveFrame(self, cam, frame_number, data):
-      global ServerData
-      cam_dir = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), str(cam))
-
-      picture_directory = os.path.join(cam_dir, str(int(frame_number / 100) *100).zfill(6))
-      if not os.path.exists(picture_directory):
-         os.mkdir(picture_directory)
-
-      picture_filename = os.path.join(picture_directory, "image" + str(frame_number).zfill(9) + ".jpg")
-      file = open(picture_filename, "wb")
-      file.write(data)
-      file.close()
 
    def do_POST(self):
       global ServerData
@@ -108,18 +88,16 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
          timestamp = int(postvars[b"timestamp"][0].decode('utf-8'))
          ServerData.last_picture_timestamp = time.time()
 
-         filename_timestamp = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), cam, "timestamps.txt")
+         image = base64.b64decode(postvars[b"data"][0].decode('ASCII'))
 
-         # First frame create dir and open timestamp file
-         if (imageNum == 1): 
-            self.mkdir(cam)
-            
-         file_timestamp = open(filename_timestamp, "a")
-         file_timestamp.write(str(imageNum) + " " + str(timestamp) + "\n")
-         file_timestamp.close()
-
-         data = base64.b64decode(postvars[b"data"][0].decode('ASCII'))
-         self.saveFrame(cam, imageNum, data)
+         frame = Frame(
+            ServerData.flight_number,
+            1 if cam == 'cam1' else 2,
+            imageNum,
+            timestamp,
+            image
+         )
+         frame_dao.store(ServerData.db, frame)
 
          ServerData.cameras_data.add_frame(cam, imageNum, timestamp)
 
@@ -166,10 +144,10 @@ def start_shooting(cameras_data, flight_number):
    try:
       start = time.time()
       print("INFO: CameraServer.start_shooting() Removing old flight pictures in " + ServerData.flight_directory)
-      shutil.rmtree(ServerData.flight_directory)
+      frame_dao.delete_flight(ServerData.db, flight_number)
       print("INFO: CameraServer.start_shooting() Time to remove pictures: " + str((int(time.time() - start)*100)/100) + "s")
-   except:
-      pass
+   except Exception as e:
+      print("ERROR: CAmeraServer.start_shooting: " + str(e))
 
    ServerData.cameras_data = cameras_data
    ServerData.request_pictures_from_camera = True
@@ -209,6 +187,8 @@ def get_time_from_image(cam, frame_number):
    global ServerData
    return self.cameras_data.get_timestamp_from_Frame(cam, frame_number)
 
-def start_server():
+def start_server(db: DB):
+   global ServerData
+   ServerData.db = db
    print("INFO: CameraServer.start_server() Starting Camera Server")
    _thread.start_new_thread(__startHTTP, ("HTTP", 0.001))
