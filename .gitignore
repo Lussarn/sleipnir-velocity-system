@@ -4,3 +4,4 @@ sleipnir
 record
 sleipnir-base/venv/*
 sleipnir.yml
+sleipnir.db

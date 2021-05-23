@@ -13,57 +13,17 @@ from Video import Video
 import CamerasData
 import CameraServer
 from Configuration import Configuration
+from database.DB import DB
+from Announcements import Announcements, Announcement
+import database.announcement_dao as announcement_dao
 
 import pyglet 
 pyglet.options['audio'] = ('directsound', 'openal', 'pulse',  'silent')
 
-class Announcement:
-   def __init__(self,
-      cam1_frame_number,
-      cam2_frame_number,
-      time,
-      speed,
-      direction):
-
-      self.__cam1_frame_number = cam1_frame_number
-      self.__cam2_frame_number = cam2_frame_number
-      self.__time = time
-      self.__speed = speed
-      self.__direction = direction 
-
-   def get_cam1_frame_number(self):
-      return self.__cam1_frame_number
-
-   def get_cam2_frame_number(self):
-      return self.__cam2_frame_number
-
-   def get_time(self):
-      return self.__time
-
-   def get_speed(self):
-      return self.__speed
-
-   def get_direction(self):
-      return self.__direction
-
-class Announcements:
-   def __init__(self):
-      self.__announcements = []
-
-   def clear(self):
-      self.__announcements = []
-
-   def append(self, announcement: Announcement):
-      self.__announcements.append(announcement)
-
-   def get_announcement_by_index(self, index):
-      return self.__announcements[index]
-
-   def get_announcements(self):
-      return self.__announcements
-
 class WindowMain(QMainWindow):
    def __init__(self):
+      self.__db = DB()
+
       # Set cameras_directory_base for the server
       try:
          self.configuration = Configuration("sleipnir.yml")
@@ -461,7 +421,7 @@ class WindowMain(QMainWindow):
       print("INFO: WindowMain.stopCameras() Stoping Cameras")
       self.stop_camera_wait = True
       CameraServer.stop_shooting()
-      self.save_announcements()
+      self.__save_announcements()
 
    def enable_all_gui_elements(self, enabled):
       """
@@ -565,38 +525,17 @@ class WindowMain(QMainWindow):
             str(announcement.get_speed()) + " km/h "
          self.model_announcements.appendRow(QtGui.QStandardItem(out))
 
-   def save_announcements(self):
+   def __save_announcements(self):
       for flight_number in range(0, len(self.ui.radio_buttons_flights)):
          if self.ui.radio_buttons_flights[flight_number].isChecked():
             break
-
       flight_number += 1
-      filename = os.path.join(self.cameras_directory_base, str(flight_number), "announcements.csv")
 
-      with open(filename, 'w') as f:
-         for announcement in self.announcements.get_announcements():
-            out = str(announcement.get_cam1_frame_number()) + "  " + str(announcement.get_cam2_frame_number()) + " "
-            out += str(announcement.get_time()) + " "
-            out += str(announcement.get_speed()) + " "
-            out += str(announcement.get_direction()) + "\n"
-            f.write(out)
+      announcement_dao.store(self.__db, flight_number, self.announcements)
 
    def __load_announcements(self, flight_number):
-      filename = os.path.join(self.cameras_directory_base, str(flight_number), "announcements.csv")
-      self.announcements.clear()
       if self.cameras_data.load(self.cameras_directory_base, flight_number):
-         if os.path.exists(filename):
-            with open(filename, 'r') as f:
-               for row in f:
-                  row = row.split()
-                  self.announcements.append(Announcement(
-                     int(row[0]),
-                     int(row[1]),
-                     int(row[2]),
-                     int(row[3]),
-                     int(row[4])
-                  ))
-
+         self.announcements = announcement_dao.fetch(self.__db, flight_number)
 
 if __name__ == '__main__':
 
@@ -604,7 +543,8 @@ if __name__ == '__main__':
    app = QApplication(sys.argv)
    try:
       window = WindowMain()
-      sys.exit(app.exec_())
+      ret = app.exec_()
+      sys.exit(ret)
    except Exception:
       import traceback
       var = traceback.format_exc()
