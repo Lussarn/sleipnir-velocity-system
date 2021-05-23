@@ -53,15 +53,15 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
       if not os.path.exists(cam_dir):
          os.mkdir(cam_dir)
 
-   def saveFrame(self, cam, frame, data, timestamp):
+   def saveFrame(self, cam, frame_number, data):
       global ServerData
       cam_dir = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), str(cam))
 
-      picture_directory = os.path.join(cam_dir, str(int(frame / 100) *100).zfill(6))
+      picture_directory = os.path.join(cam_dir, str(int(frame_number / 100) *100).zfill(6))
       if not os.path.exists(picture_directory):
          os.mkdir(picture_directory)
 
-      picture_filename = os.path.join(picture_directory, "image" + str(frame).zfill(9) + ".jpg")
+      picture_filename = os.path.join(picture_directory, "image" + str(frame_number).zfill(9) + ".jpg")
       file = open(picture_filename, "wb")
       file.write(data)
       file.close()
@@ -119,7 +119,7 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
          file_timestamp.close()
 
          data = base64.b64decode(postvars[b"data"][0].decode('ASCII'))
-         self.saveFrame(cam, imageNum, data, timestamp)
+         self.saveFrame(cam, imageNum, data)
 
          ServerData.cameras_data.add_frame(cam, imageNum, timestamp)
 
