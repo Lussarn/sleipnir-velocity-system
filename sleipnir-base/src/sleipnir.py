@@ -5,7 +5,6 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 import os
 import datetime
 import time
-import configparser
 
 from SleipnirWindow import SleipnirWindow
 import util
@@ -13,6 +12,7 @@ import CameraServer
 from Video import Video
 import CamerasData
 import CameraServer
+from Configuration import Configuration
 
 import pyglet 
 pyglet.options['audio'] = ('directsound', 'openal', 'pulse',  'silent')
@@ -64,12 +64,14 @@ class Announcements:
 
 class WindowMain(QMainWindow):
    def __init__(self):
-      # Init config
-      self.config = configparser.ConfigParser()
-      if not self.read_config():
-         exit(0)
-
       # Set cameras_directory_base for the server
+      try:
+         self.configuration = Configuration("sleipnir.yml")
+      except IOError as e:
+         print ("ERROR: Unable to open configuration file: " + str(e))
+         exit(1)
+
+      self.cameras_directory_base = self.configuration.get_or_throw("save_path")
       CameraServer.ServerData.cameras_directory_base = self.cameras_directory_base
 
       # Data for the cameras
@@ -596,25 +598,6 @@ class WindowMain(QMainWindow):
             out += str(announcement.get_direction()) + "\n"
             f.write(out)
 
-   def read_config(self):
-      filename = self.get_config_filename()
-      print("Config file: " + filename)
-      if self.config.read(filename) == None:
-         print ("No config file: " + filename)
-         return False
-
-      print(self.config)   
-      self.cameras_directory_base = self.config.get("Files", "save_path")
-      return True
-
-
-   def get_config_filename(self):
-      if sys.platform.startswith("win32"):
-         from win32com.shell import shell,shellcon
-         home = shell.SHGetFolderPath(0, shellcon.CSIDL_PROFILE, None, 0)
-      else:
-         home = os.path.expanduser("~")
-      return os.path.join(home, "sleipnir.cfg")
 
 if __name__ == '__main__':
 

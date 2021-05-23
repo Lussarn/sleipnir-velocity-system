@@ -3,3 +3,4 @@ sleipnir
 *.pyc
 record
 sleipnir-base/venv/*
+sleipnir.yml

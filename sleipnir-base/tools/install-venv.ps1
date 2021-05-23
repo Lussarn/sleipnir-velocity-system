@@ -20,3 +20,4 @@ pip install pyside2
 pip install opencv-python
 pip install pyglet
 pip install pywin32
+pip install pyyaml
