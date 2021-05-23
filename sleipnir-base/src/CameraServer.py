@@ -26,11 +26,9 @@ class ServerData:
    taking_pictures = False
    last_picture_timestamp = 0
    fetching_pictures = False
-   ready = True
 
    # Frames key, timestamps value
    cameras_data = None
-   timestamp_file = {"cam1" : None, "cam2" : None}
 
    debug = False
 
@@ -41,6 +39,7 @@ class ServerData:
    stat_number_of_requests = 0
    stat_accumulated_time = 0
 
+   last_log_message_cam_asking_to_start = {'cam1': 0, 'cam2': 0}
 
 
 class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
@@ -107,6 +106,11 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
             ServerData.online[id] = True
 
 #         print ("Camera " + id + " asking to start")
+
+         if (time.time() -  ServerData.last_log_message_cam_asking_to_start[id] > 10):
+            print("INFO: CameraServer.do_POST() Camera " + id + " is asking to start")
+            ServerData.last_log_message_cam_asking_to_start[id] = time.time()
+
          if (ServerData.taking_pictures):
             self.send200("OK-START")
          else:
@@ -128,17 +132,21 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
          ServerData.last_picture_timestamp = time.time()
          ServerData.fetching_pictures = True
 
-         # First frame create dir and open timestamp file
-         if (imageNum == 1):
-            self.mkdir(id)
-            filename_timestamp = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), id, "timestamps.txt")
-            ServerData.timestamp_file[id] = open(filename_timestamp, "w")
+         filename_timestamp = os.path.join(ServerData.cameras_directory_base, str(ServerData.flight_number), id, "timestamps.txt")
 
-         if ServerData.debug:
-            print ("uploadpictures", id, imageNum, timestamp)
+         # First frame create dir and open timestamp file
+         if (imageNum == 1): 
+            self.mkdir(id)
+            
+         file_timestamp = open(filename_timestamp, "a")
+         file_timestamp.write(str(imageNum) + " " + str(timestamp) + "\n")
+         file_timestamp.close()
+
+         if ServerData.debug: print ("uploadpictures", id, imageNum, timestamp)
+
          data = base64.b64decode(postvars[b"data"][0].decode('ASCII'))
          self.saveFrame(id, imageNum, data, timestamp)
-         ServerData.timestamp_file[id].write(str(imageNum) + " " + str(timestamp) + "\n")
+
          ServerData.cameras_data.add_frame(id, imageNum, timestamp)
 
          if (ServerData.taking_pictures):
@@ -147,7 +155,7 @@ class MyRequestHandler(MySimpleHTTPRequestHandler):
             self.send200("OK-STOP")
 
 
-               # statistics logging
+      # statistics logging
       ServerData.stat_accumulated_time += (time.time() - start)
       ServerData.stat_number_of_requests += 1
       if ServerData.stat_number_of_requests % 1000 == 0:
@@ -174,17 +182,18 @@ def is_shooting():
 
 def start_shooting(cameras_data, flight_number):
    global ServerData
-   if not ServerData.ready:
-      return False
+   if not is_ready_to_shoot(): return False
 
    ServerData.flight_directory = os.path.join(ServerData.cameras_directory_base, str(flight_number))
    try:
+      start = time.time()
+      print("INFO: CameraServer.start_shooting() Removing old flight pictures in " + ServerData.flight_directory)
       shutil.rmtree(ServerData.flight_directory)
+      print("INFO: CameraServer.start_shooting() Time to remove pictures: " + str((int(time.time() - start)*100)/100) + "s")
    except:
       pass
 
    ServerData.cameras_data = cameras_data
-   ServerData.ready = False
    ServerData.taking_pictures = True
    return True
 
@@ -192,13 +201,14 @@ def stop_shooting():
    global ServerData
    ServerData.taking_pictures = False
 
-def is_ready():
+# Both cameras online and not currently taking pictures
+def is_ready_to_shoot():
    global ServerData
-   if not ServerData.online["cam1"]:
+   if not is_online("cam1"):
       return False
-   if not ServerData.online["cam2"]:
+   if not is_online("cam2"):
       return False
-   return ServerData.ready
+   return not ServerData.taking_pictures
 
 def is_online(cam):
    global ServerData
@@ -225,15 +235,8 @@ def __run_camera(threadName, delay):
    global ServerData
    while True:
       if time.time() - ServerData.last_picture_timestamp > 5:
+#         print("INFO: CameraServer.__run_camera() Setting fetching pictures to false...")
          ServerData.fetching_pictures = False
-         ServerData.ready = True
-         # Close timestamp files
-         if (ServerData.timestamp_file["cam1"]):
-            ServerData.timestamp_file["cam1"].close()
-            ServerData.timestamp_file["cam1"] = None
-         if (ServerData.timestamp_file["cam2"]):
-            ServerData.timestamp_file["cam2"].close()
-            ServerData.timestamp_file["cam2"] = None
 
       if time.time() - ServerData.camera_last_transmission_timestamp["cam1"] > 5:
          ServerData.online["cam1"] = False
@@ -242,8 +245,6 @@ def __run_camera(threadName, delay):
       time.sleep(1)
 
 def start_server():
-   global ServerData
-   if ServerData.debug:
-      print ("Starting up camera server")
+   print("INFO: CameraServer.start_server() Starting Cameras")
    _thread.start_new_thread(__startHTTP, ("HTTP", 0.001))
    _thread.start_new_thread(__run_camera, ("HTTP", 0.001))
