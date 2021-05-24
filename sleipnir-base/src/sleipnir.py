@@ -17,8 +17,7 @@ from database.DB import DB
 from Announcements import Announcements, Announcement
 import database.announcement_dao as announcement_dao
 
-import pyglet 
-pyglet.options['audio'] = ('directsound', 'openal', 'pulse',  'silent')
+from Sound import Sound
 
 class WindowMain(QMainWindow):
    def __init__(self):
@@ -62,13 +61,7 @@ class WindowMain(QMainWindow):
       self.aligning_cam2 = False
 
       # Sound effects
-      self.sound_effects = { 
-         "gate-1" : pyglet.media.StaticSource(pyglet.media.load(util.resource_path("sounds/gate-1.ogg"))),
-         "gate-2" : pyglet.media.StaticSource(pyglet.media.load(util.resource_path("sounds/gate-2.ogg"))),
-         "error"  : pyglet.media.StaticSource(pyglet.media.load(util.resource_path("sounds/error.ogg")))
-      }
-      # Play a sound to initialize sound system
-      self.sound_effects["error"].play()
+      self.__sound = Sound()
 
       QMainWindow.__init__(self)
       self.ui = SleipnirWindow()
@@ -203,8 +196,6 @@ class WindowMain(QMainWindow):
       self.videos[1].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam2_position())
 
    def __timerGui(self):
-      pyglet.clock.tick()
-
       online = CameraServer.is_online("cam1") and CameraServer.is_online("cam2")
 
       if CameraServer.is_online("cam1"):
@@ -312,11 +303,10 @@ class WindowMain(QMainWindow):
          if self.run_direction is not None and self.run_abort_timestamp < int(round(time.time() * 1000)):
             # Abort run
             self.run_direction = None
-            self.sound_effects["error"].play()
+            self.__sound.play_error()
 
          if self.run_tell_speed != 0 and self.run_tell_speed_timestamp < int(round(time.time() * 1000)):
-            source= pyglet.media.StaticSource(pyglet.media.load(util.resource_path("sounds/numbers/" + str(self.run_tell_speed) + ".ogg")))
-            source.play()
+            self.__sound.play_number(self.run_tell_speed)
             self.run_tell_speed = 0
 
 
@@ -467,14 +457,14 @@ class WindowMain(QMainWindow):
          self.run_direction = "RIGHT"
          # Max 6 second run
          self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
-         self.sound_effects["gate-1"].play()
+         self.__sound.play_gate_1()
 
       if cam == "cam2" and self.run_direction == "RIGHT" and motion["direction"] == 1:
          # Ending run on Cam 2
          self.run_frame_number_cam2 = motion["frame_number"]
          self.run_direction = None
          kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
-         self.sound_effects["gate-2"].play()
+         self.__sound.play_gate_2()
          if (kmh < 500):
             self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
             self.run_tell_speed = kmh
@@ -488,15 +478,14 @@ class WindowMain(QMainWindow):
          self.run_direction = "LEFT"
          # Max 6 second run
          self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
-         self.sound_effects["gate-1"].play()
-
+         self.__sound.play_gate_1()
 
       if cam == "cam1" and self.run_direction == "LEFT" and motion["direction"] == -1:
          # Ending run on Cam 1
          self.run_frame_number_cam1 = motion["frame_number"]
          self.run_direction = None
          kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
-         self.sound_effects["gate-2"].play()
+         self.__sound.play_gate_2()
          if (kmh < 500):
             self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
             self.run_tell_speed = kmh
