@@ -23,7 +23,6 @@ pyglet.options['audio'] = ('directsound', 'openal', 'pulse',  'silent')
 class WindowMain(QMainWindow):
    def __init__(self):
 
-      # Set cameras_directory_base for the server
       try:
          self.configuration = Configuration("sleipnir.yml")
       except IOError as e:
@@ -31,9 +30,6 @@ class WindowMain(QMainWindow):
          exit(1)
 
       self.__db = DB(self.configuration.get_or_throw('save_path'))
-
-      self.cameras_directory_base = self.configuration.get_or_throw("save_path")
-      CameraServer.ServerData.cameras_directory_base = self.cameras_directory_base
 
       # Data for the cameras
       self.cameras_data = CamerasData.CamerasData()
@@ -99,7 +95,6 @@ class WindowMain(QMainWindow):
          self.__db,
          "cam1",
          1,
-         os.path.join(self.cameras_directory_base, "1", "cam1"), 
          self.ui.label_video1,  
          self.ui.pushbutton_video1_playforward, 
          self.ui.pushbutton_video1_playbackward, 
@@ -114,7 +109,6 @@ class WindowMain(QMainWindow):
          self.__db,
          "cam2",
          1,
-         os.path.join(self.cameras_directory_base, "1", "cam2"),
          self.ui.label_video2, 
          self.ui.pushbutton_video2_playforward, 
          self.ui.pushbutton_video2_playbackward, 
@@ -162,15 +156,14 @@ class WindowMain(QMainWindow):
    def load_flight(self, flight_number):
       self.ui.radio_buttons_flights[flight_number - 1].setChecked(True)
 
-      self.__load_announcements(flight_number)
+      self.cameras_data.load(self.__db, flight_number)
+      self.__load_announcements(flight_number)     
       self.__update_announcements_gui()
 
       # FIXME: Clean this shit up to some kind of API
       self.videos[0].cameras_data = self.cameras_data
       self.videos[1].cameras_data = self.cameras_data
-      self.videos[0].set_flight_directory(os.path.join(self.cameras_directory_base, str(flight_number), "cam1"))
       self.videos[0].set_flight(flight_number)
-      self.videos[1].set_flight_directory(os.path.join(self.cameras_directory_base, str(flight_number), "cam2"))
       self.videos[1].set_flight(flight_number)
       self.videos[0].slider.setMinimum(1)
       self.videos[0].slider.setMaximum(self.cameras_data.get_last_frame("cam1"))
@@ -421,7 +414,6 @@ class WindowMain(QMainWindow):
       self.videos[0].cameras_data = self.cameras_data
       self.videos[1].cameras_data = self.cameras_data
       CameraServer.ServerData.flight_number = flight_number
-      CameraServer.ServerData.camera_directory_base = self.cameras_directory_base
       CameraServer.start_shooting(self.cameras_data, flight_number)
 
    def stopCameras(self):
@@ -543,8 +535,7 @@ class WindowMain(QMainWindow):
 
    def __load_announcements(self, flight_number):
       print("INFO: MainWindow.__load_announcements: Loading announcements")
-      if self.cameras_data.load(self.__db, self.cameras_directory_base, flight_number):
-         self.announcements = announcement_dao.fetch(self.__db, flight_number)
+      self.announcements = announcement_dao.fetch(self.__db, flight_number)
 
 if __name__ == '__main__':
 

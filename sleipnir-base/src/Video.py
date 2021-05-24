@@ -10,7 +10,7 @@ import simplejpeg
 
 class Video:
 
-   def __init__(self, db: DB, cam, flight, flight_directory, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
+   def __init__(self, db: DB, cam, flight, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
 
       self.__db = db
       self.__flight = flight
@@ -34,7 +34,7 @@ class Video:
       self.cam = cam
 
       # Directory of flight
-      self.__flight_directory = flight_directory
+      self.__flight_directory = None
 
       # Timestamp to start video on, this is the higest number of the two cameras
       self.start_timestamp = 0
@@ -115,19 +115,14 @@ class Video:
    def get_current_frame_number(self):
       return self.current_frame_number
 
-   # Set directory of images
-   def set_flight_directory(self, directory):
-      self.__flight_directory = directory
+   # Set flight number
    def set_flight(self, flight):
       self.__flight = flight
 
    # Returns a video frame as a cv image and it's timestamp
    def __get_frame(self, frame_number):
-      timestamp = self.cameras_data.get_timestamp_from_frame_number(self.cam, frame_number)
-
       start = time.time()
-      picture_filename = self.__flight_directory + "/" + str(int(frame_number / 100) *100).zfill(6) + "/image" + str(frame_number).zfill(9) + ".jpg"
-
+      timestamp = self.cameras_data.get_timestamp_from_frame_number(self.cam, frame_number)
       frame = frame_dao.load(self.__db, self.__flight, 1 if self.cam == 'cam1' else 2, frame_number)
       if frame is None: return
       image_cv = simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
