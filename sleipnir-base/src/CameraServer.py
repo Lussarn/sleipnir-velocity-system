@@ -24,7 +24,6 @@ logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 class ServerData:
    db = None
-   cameras_directory_base = ""
    flight_number = 1
    request_pictures_from_camera = False
    last_picture_timestamp = 0
@@ -140,7 +139,6 @@ def start_shooting(cameras_data, flight_number):
       print("ERROR: CameraServer.start_shooting() Unable to start shooting because camera is not online")
       return False
 
-   ServerData.flight_directory = os.path.join(ServerData.cameras_directory_base, str(flight_number))
    try:
       start = time.time()
       print("INFO: CameraServer.start_shooting() Removing old flight pictures in " + ServerData.flight_directory)
