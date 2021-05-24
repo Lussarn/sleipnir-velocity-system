@@ -35,7 +35,7 @@ def fetch(db: DB, flight_number: int):
     announcements = Announcements()
     try:
         for row in cur.execute(
-            '''SELECT flight, cam1_position, cam2_position, duration, speed, direction FROM announcement WHERE flight=?''',
+            '''SELECT cam1_position, cam2_position, duration, speed, direction FROM announcement WHERE flight=?''',
             str(flight_number)):
                   announcements.append(Announcement(
                      int(row[0]),
