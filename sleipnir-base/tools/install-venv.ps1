@@ -13,10 +13,11 @@ if (Test-Path -Path .\venv) {
 }
 
 Write-Output "Creating virtual environment..."
-python3 -m venv .\venv
+python -m venv .\venv
 .\venv\Scripts\Activate.ps1
 
 pip install pyside2
+pip install pygame
 pip install opencv-python
 pip install pyglet
 pip install pywin32
