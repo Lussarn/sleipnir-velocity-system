@@ -183,7 +183,7 @@ def get_start_timestamp():
 
 def get_time_from_image(cam, frame_number):
    global ServerData
-   return self.cameras_data.get_timestamp_from_Frame(cam, frame_number)
+   return ServerData.cameras_data.get_timestamp_from_Frame(cam, frame_number)
 
 def start_server(db: DB):
    global ServerData
