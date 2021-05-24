@@ -1,9 +1,11 @@
 from threading import Lock
-import sqlite3
-from sqlite3.dbapi2 import OperationalError, connect
+import time
 import os
 
-class DB:
+import sqlite3
+from sqlite3.dbapi2 import OperationalError, connect
+
+class DB():
     __write_lock = Lock()
 
     def __init__(self, save_path):
@@ -20,11 +22,7 @@ class DB:
         cur.execute('PRAGMA SYNCHRONOUS = NORMAL')
         self.__conn.commit()
         cur.close()
-
         self.__check_database()
-
-    def __del__(self):
-        self.__conn.close()
 
     def acquire_write_lock(self):
         self.__write_lock.acquire()
@@ -115,3 +113,7 @@ class DB:
 
     def get_conn(self):
         return self.__conn
+
+    def stop(self):
+        print("INFO: BD.stop: closing database")
+        self.__conn.close()

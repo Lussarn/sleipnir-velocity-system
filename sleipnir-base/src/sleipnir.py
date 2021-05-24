@@ -537,6 +537,11 @@ class WindowMain(QMainWindow):
       print("INFO: MainWindow.__load_announcements: Loading announcements")
       self.announcements = announcement_dao.fetch(self.__db, flight_number)
 
+   def __del__(self):
+      print("INFO: MainWindow.__del__: MainWindow destructor")
+      self.__db.stop()
+
+
 if __name__ == '__main__':
 
    import sys
@@ -544,6 +549,7 @@ if __name__ == '__main__':
    try:
       window = WindowMain()
       ret = app.exec_()
+      del window
       sys.exit(ret)
    except Exception:
       import traceback
