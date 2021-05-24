@@ -64,6 +64,7 @@ class CamerasData:
 
    def load(self, db: DB, flight_number):
       for cam in [1, 2]:
+         self.frame_data['cam' + str(cam)].frames_2_timestamp = {}
          for row in frame_dao.load_flight_timestammps(db, flight_number, cam):
             self.frame_data['cam' + str(cam)].frames_2_timestamps[row[0]] = row[1]
       return True
