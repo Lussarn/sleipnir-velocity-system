@@ -46,7 +46,9 @@ def delete_flight(db: DB, flight: int):
     db.acquire_write_lock()
     cur = db.get_conn().cursor()
     try:
+        print ("DEBUG: frame_dao.delete_flight() Deleting frame")
         cur.execute('DELETE FROM frame WHERE flight=?', str(flight))
+        print ("DEBUG: frame_dao.delete_flight() Deleting announcement")
         cur.execute('DELETE FROM announcement WHERE flight=?', str(flight))
         db.get_conn().commit()
     except OperationalError as e:
