@@ -141,11 +141,11 @@ def start_shooting(cameras_data, flight_number):
 
    try:
       start = time.time()
-      print("INFO: CameraServer.start_shooting() Removing old flight pictures in " + ServerData.flight_directory)
+      print("INFO: CameraServer.start_shooting() Deleting old frames and announcements")
       frame_dao.delete_flight(ServerData.db, flight_number)
       print("INFO: CameraServer.start_shooting() Time to remove pictures: " + str((int(time.time() - start)*100)/100) + "s")
    except Exception as e:
-      print("ERROR: CAmeraServer.start_shooting: " + str(e))
+      print("ERROR: CameraServer.start_shooting: " + str(e))
 
    ServerData.cameras_data = cameras_data
    ServerData.request_pictures_from_camera = True
