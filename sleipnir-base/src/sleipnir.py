@@ -2,8 +2,6 @@ import PySide2
 from PySide2 import QtCore, QtGui
 from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 
-import os
-import datetime
 import time
 
 from SleipnirWindow import SleipnirWindow
@@ -19,13 +17,19 @@ import database.announcement_dao as announcement_dao
 
 from Sound import Sound
 
+import sys
+import logging
+import logger
+
+logger = logging.getLogger(__name__)
+
+
 class WindowMain(QMainWindow):
    def __init__(self):
-
       try:
          self.configuration = Configuration("sleipnir.yml")
       except IOError as e:
-         print ("ERROR: Unable to open configuration file: " + str(e))
+         logger.error("Unable to open configuration file: " + str(e))
          exit(1)
 
       self.__db = DB(self.configuration.get_or_throw('save_path'))
@@ -231,6 +235,7 @@ class WindowMain(QMainWindow):
 
       if (self.stop_camera_wait):
          if self.aligning_cam1:
+            logger.info("Stop aligning camera 1")
             self.ui.pushButton_video1_align.setEnabled(False)
             if not CameraServer.is_shooting():
                self.aligning_cam1 = False
@@ -239,7 +244,7 @@ class WindowMain(QMainWindow):
                self.videos[0].set_shooting(False)
                self.ui.pushButton_video1_align.setText("Align Camera")
          elif self.aligning_cam2:
-            print("aligning 2 stop")
+            logger.info("Stop aligning camera 2")
             self.ui.pushButton_video2_align.setEnabled(False)
             if not CameraServer.is_shooting():
                self.aligning_cam2 = False
@@ -375,7 +380,7 @@ class WindowMain(QMainWindow):
          self.ui.pushButton_video2_align.setText("Stop")
 
    def startCameras(self):
-      print("INFO: WindowMain.startCameras() Starting Cameras")
+      logger.info("Starting Cameras")
       if not CameraServer.is_ready_to_shoot():
          return False
 
@@ -407,15 +412,12 @@ class WindowMain(QMainWindow):
       CameraServer.start_shooting(self.cameras_data, flight_number)
 
    def stopCameras(self):
-      print("INFO: WindowMain.stopCameras() Stoping Cameras")
+      logger.info("Stoping Cameras")
       self.stop_camera_wait = True
       CameraServer.stop_shooting()
       self.__save_announcements()
 
    def enable_all_gui_elements(self, enabled):
-      """
-      Enable or disable GUI elements
-      """
       self.ui.pushbutton_video1_playforward.setEnabled(enabled)
       self.ui.pushbutton_video1_playbackward.setEnabled(enabled)
       self.ui.pushbutton_video1_pause.setEnabled(enabled)
@@ -514,7 +516,7 @@ class WindowMain(QMainWindow):
          self.model_announcements.appendRow(QtGui.QStandardItem(out))
 
    def __save_announcements(self):
-      print("INFO: MainWindow.__save_announcements: Saving announcements")
+      logger.info("Saving announcements")
       for flight_number in range(0, len(self.ui.radio_buttons_flights)):
          if self.ui.radio_buttons_flights[flight_number].isChecked():
             break
@@ -523,16 +525,15 @@ class WindowMain(QMainWindow):
       announcement_dao.store(self.__db, flight_number, self.announcements)
 
    def __load_announcements(self, flight_number):
-      print("INFO: MainWindow.__load_announcements: Loading announcements")
+      logger.info("Loading announcements")
       self.announcements = announcement_dao.fetch(self.__db, flight_number)
 
    def __del__(self):
-      print("INFO: MainWindow.__del__: MainWindow destructor")
+      logger.debug("Mainwindow destructor called")
       self.__db.stop()
 
 
 if __name__ == '__main__':
-
    import sys
    app = QApplication(sys.argv)
    try:

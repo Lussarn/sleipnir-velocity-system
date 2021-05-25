@@ -4,6 +4,9 @@ from sqlite3.dbapi2 import OperationalError
 from database.DB import DB
 from Frame import Frame
 
+import logging
+logger = logging.getLogger(__name__)
+
 def store(db: DB, frame: Frame):
     db.acquire_write_lock()
     cur = db.get_conn().cursor()
@@ -20,7 +23,7 @@ def store(db: DB, frame: Frame):
             ])
         db.get_conn().commit()
     except OperationalError as e:
-        print ("ERROR: announcement_dao.store: " + str(e))
+        logger.error(str(e))
         raise e
     finally:
         cur.close()
@@ -37,7 +40,7 @@ def load(db: DB, flight: int, cam: int, position: int):
         if row is None: return None
         return Frame(flight, cam, position, row[0], row[1])
     except sqlite3.Error as e:
-        print ("ERROR: announcement_dao.load: " + str(e))
+        logger.error(str(e))
         raise e
     finally:
         cur.close()
@@ -52,7 +55,7 @@ def delete_flight(db: DB, flight: int):
         cur.execute('DELETE FROM announcement WHERE flight=?', str(flight))
         db.get_conn().commit()
     except OperationalError as e:
-        print ("ERROR: announcement_dao.delete_flight: " + str(e))
+        logger.error(str(e))
         raise e
     finally:
         cur.close()
@@ -66,7 +69,7 @@ def load_flight_timestammps(db: DB, flight: int, camera: int):
             [str(flight),
             str(camera)]).fetchall()
     except sqlite3.Error as e:
-        print ("ERROR: announcement_dao.load_flight_timestammps: " + str(e))
+        logger.error(str(e))
         raise e
     finally:
         cur.close()

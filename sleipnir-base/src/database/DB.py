@@ -5,12 +5,15 @@ import os
 import sqlite3
 from sqlite3.dbapi2 import OperationalError, connect
 
+import logging
+logger = logging.getLogger(__name__)
+
 class DB():
     __write_lock = Lock()
 
     def __init__(self, save_path):
         self.__db_version = 1
-        print("INFO: DB.__init__: Opening database" + os.path.join(save_path, 'sleipnir.db'))
+        logger.info("Opening database" + os.path.join(save_path, 'sleipnir.db'))
         self.__conn = sqlite3.connect(os.path.join(save_path, 'sleipnir.db'), check_same_thread = False)
 
         ''' Disable auto vacuum '''
@@ -32,12 +35,12 @@ class DB():
 
     def __check_database(self):
         current_version = self.__current_database_version()
-        print ("INFO: DB.__check_database: Current version of DB: " + str(current_version))
+        logger.info("Current version of DB: " + str(current_version))
         if current_version is None or current_version != self.__db_version:
-            print ("WARNING: DB.__check_database: Upgrading DB to version " + str(self.__db_version) + ", this will remove all flight data")
+            logger.warning("Upgrading DB to version " + str(self.__db_version) + ", this will remove all flight data")
             self.__create_tables()
         else:
-            print ("INFO: DB.__check_database: DB Scheme is up to date")
+            logger.info("DB Scheme is up to date")
 
     def __current_database_version(self):
         ''' Do we have a version table at all '''
@@ -49,7 +52,7 @@ class DB():
         except sqlite3.Error as e:
             if str(e) == 'no such table: version':
                 return None
-            print ("ERROR: DB.__current_database_version: " + str(e))
+            logger.error(str(e))
             raise e
         finally:
             cur.close()
@@ -105,7 +108,7 @@ class DB():
         except sqlite3.Error as e:
             if str(e) == 'no such table: version':
                 return None
-            print ("ERROR: DB.__current_database_version: " + str(e))
+            logger.error(str(e))
             raise e
         finally:
             cur.close()
@@ -115,5 +118,5 @@ class DB():
         return self.__conn
 
     def stop(self):
-        print("INFO: BD.stop: closing database")
+        logger.info("Closing database")
         self.__conn.close()

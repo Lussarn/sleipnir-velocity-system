@@ -8,6 +8,9 @@ import database.frame_dao as frame_dao
 import numpy as np
 import simplejpeg
 
+import logging
+logger = logging.getLogger(__name__)
+
 class Video:
 
    def __init__(self, db: DB, cam, flight, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
@@ -131,7 +134,7 @@ class Video:
       self.__stat_jpeg_read_accumulated_time += (time.time() - start)
       self.__stat_jpeg_read_number_of_frames += 1
       if self.__stat_jpeg_read_number_of_frames % 1000 == 0:
-         print("INFO: Video.__get_frame() Time to read jpeg " + self.cam + ": " + str(int(self.__stat_jpeg_read_accumulated_time / self.__stat_jpeg_read_number_of_frames * 1000000)/1000) + "ms")
+         logger.info("Time to read jpeg " + self.cam + ": " + str(int(self.__stat_jpeg_read_accumulated_time / self.__stat_jpeg_read_number_of_frames * 1000000)/1000) + "ms")
          self.__stat_jpeg_read_accumulated_time = 0
          self.__stat_jpeg_read_number_of_frames = 0
 
@@ -276,7 +279,7 @@ class Video:
    # Find if an image have motion
    def have_motion(self, image_cv):
       if (image_cv is None):
-         print("ERROR: Video.have_motion() " + self.cam + " image_cv == None")
+         logger.error("Image lost on camera " + self.cam + " image_cv == None")
          return
 
       self.frame_processing_worker.wait()
@@ -290,6 +293,8 @@ class Video:
       self.frame_processing_worker.do_processing(image_cv, self.current_frame_number)
 
       return { "motion": found_motion, "image": image, "frame_number": found_motion_frame_number }
+
+
 
 
 class FrameProcessingWorker(QtCore.QThread):
@@ -326,6 +331,7 @@ class FrameProcessingWorker(QtCore.QThread):
       self.__stat_accumulated_time = 0
 
       QtCore.QThread.__init__(self)
+      self.setObjectName("Analyzer-" + self.video.cam + "-QThread")
 
    def do_processing(self, image_cv, processing_frame_number):
       self.__image_cv = image_cv
@@ -339,7 +345,7 @@ class FrameProcessingWorker(QtCore.QThread):
 
       # Check to see if we are lagging behind
       if self.__last_frame_number + 1 != self.__processing_frame_number:
-         print("WARNING: FrameProcessingWorker.run() " + self.video.cam + " missed frame: " + str(self.__processing_frame_number))
+         logger.warning("Missed frame on camera " + self.video.cam + ": " + str(self.__processing_frame_number))
       self.__last_frame_number = self.__processing_frame_number
 
       start = time.time()
@@ -405,7 +411,10 @@ class FrameProcessingWorker(QtCore.QThread):
       self.__stat_accumulated_time += (time.time() - start)
       self.__stat_number_of_frames += 1
       if self.__stat_number_of_frames % 1000 == 0:
-         print("INFO: FrameProcessingWorker.run() Time to analyze " + self.video.cam + ": " + str(int(self.__stat_accumulated_time / self.__stat_number_of_frames * 1000000)/1000) + "ms")
+         import threading
+         thread = threading.Thread()
+         thread.name="abc"
+         logger.info("Time to analyze " + self.video.cam + ": " + str(int(self.__stat_accumulated_time / self.__stat_number_of_frames * 1000000)/1000) + "ms")
          self.__stat_accumulated_time = 0
          self.__stat_number_of_frames = 0
 

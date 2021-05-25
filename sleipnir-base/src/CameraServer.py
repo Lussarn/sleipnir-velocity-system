@@ -21,6 +21,7 @@ import database.frame_dao as frame_dao
 
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
+logger = logging.getLogger(__name__)
 
 class ServerData:
    db = None
@@ -66,7 +67,7 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
             ServerData.camera_last_transmission_timestamp[id] = time.time()
 
          if (time.time() -  ServerData.last_log_message_cam_asking_to_start[id] > 10):
-            print("INFO: CameraServer.do_POST() Camera " + id + " is online and asking to start")
+            logger.info("Camera " + id + " is online and asking to start")
             ServerData.last_log_message_cam_asking_to_start[id] = time.time()
 
          if (ServerData.request_pictures_from_camera):
@@ -78,7 +79,7 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
       if (action == "uploadframe"):
          cam = postvars[b"id"][0].decode('utf-8')
          if cam != "cam1" and cam != "cam2":
-            print("INFO: CameraServer.do_POST() uploadframe unknown camera id: " + cam)
+            logger.info("Uploadframe unknown camera id: " + cam)
             return
 
          ServerData.camera_last_transmission_timestamp[cam] = time.time()
@@ -109,10 +110,9 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
       ServerData.stat_accumulated_time += (time.time() - start)
       ServerData.stat_number_of_requests += 1
       if ServerData.stat_number_of_requests % 1000 == 0:
-         print("INFO: CameraServer.do_POST() Time to POST: " + str(int(ServerData.stat_accumulated_time / ServerData.stat_number_of_requests * 1000000)/1000) + "ms")
+         logger.info("Time to POST: " + str(int(ServerData.stat_accumulated_time / ServerData.stat_number_of_requests * 1000000)/1000) + "ms")
          ServerData.stat_accumulated_time = 0
          ServerData.stat_number_of_requests = 0
-
 
    def send200(self, msg):
       self.send_response(200)
@@ -136,16 +136,16 @@ def start_shooting(cameras_data, flight_number):
       return False
 
    if not is_online('cam1') and not is_online('cam2'):
-      print("ERROR: CameraServer.start_shooting() Unable to start shooting because camera is not online")
+      logger.error("Unable to start shooting because camera is not online")
       return False
 
    try:
       start = time.time()
-      print("INFO: CameraServer.start_shooting() Deleting old frames and announcements")
+      logger.info("Deleting old frames and announcements...")
       frame_dao.delete_flight(ServerData.db, flight_number)
-      print("INFO: CameraServer.start_shooting() Time to remove pictures: " + str((int(time.time() - start)*100)/100) + "s")
+      logger.info("Time to remove pictures: " + str((int(time.time() - start)*100)/100) + "s")
    except Exception as e:
-      print("ERROR: CameraServer.start_shooting: " + str(e))
+      logger.error(str(e))
       return
 
    ServerData.cameras_data = cameras_data
@@ -153,6 +153,7 @@ def start_shooting(cameras_data, flight_number):
    return True
 
 def stop_shooting():
+   logger.info("Request to stop shooting")
    global ServerData
    ServerData.request_pictures_from_camera = False
 
@@ -189,5 +190,5 @@ def get_time_from_image(cam, frame_number):
 def start_server(db: DB):
    global ServerData
    ServerData.db = db
-   print("INFO: CameraServer.start_server() Starting Camera Server")
+   logger.info("Starting camera server")
    _thread.start_new_thread(__startHTTP, ("HTTP", 0.001))

@@ -4,6 +4,9 @@ import os
 from database.DB import DB
 import database.frame_dao as frame_dao
 
+import logging
+logger = logging.getLogger(__name__)
+
 class FrameData():
 
    def __init__(self):
@@ -44,7 +47,7 @@ class CamerasData:
       # How many frames are we allowed to lag
       if abs(last_frame - self.last_served_frame[cam]) > 30:         
          next_frame = last_frame
-         print("WARNING: CamerasData.get_next_frame() " + cam + " reseting next_frame to last_frame")
+         logger.warning("Camera " + cam + " lagging behind, reseting next_frame to last_frame")
       self.last_served_frame[cam] = min(last_frame, next_frame)
       return self.last_served_frame[cam]
 

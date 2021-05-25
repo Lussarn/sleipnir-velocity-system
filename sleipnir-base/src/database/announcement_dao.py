@@ -4,6 +4,9 @@ from sqlite3.dbapi2 import OperationalError
 from Announcements import Announcements, Announcement
 from database.DB import DB
 
+import logging
+logger = logging.getLogger(__name__)
+
 def store(db: DB, flight_number: int, announcements: Announcements):
     db.acquire_write_lock()
     cur = db.get_conn().cursor()
@@ -24,7 +27,7 @@ def store(db: DB, flight_number: int, announcements: Announcements):
                 ])
         db.get_conn().commit()
     except sqlite3.Error as e:
-        print ("ERROR: announcement_dao.store: " + str(e))
+        logger.error(str(e))
         raise e
     finally:
         cur.close()
@@ -45,7 +48,7 @@ def fetch(db: DB, flight_number: int):
                      int(row[4])
                   ))
     except sqlite3.Error as e:
-        print ("ERROR: announcement_dao.fetch: " + str(e))
+        logger.error(str(e))
         raise e
     finally:
         cur.close()
