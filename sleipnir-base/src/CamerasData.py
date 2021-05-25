@@ -72,6 +72,4 @@ class CamerasData:
          self.frame_data['cam' + str(cam)] = FrameData()
          self.frame_data['cam' + str(cam)].frames_2_timestamps = \
             [{row[0]: row[1]} for row in frame_dao.load_flight_timestammps(db, flight_number, cam)]
-      end = time.time()
-      logger.info("Loading flight done: " + format(end-start, ".3f") + "s")
-      return True
+      logger.info("Loading flight done: " + format(time.time()-start, ".3f") + "s")
