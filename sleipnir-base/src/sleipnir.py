@@ -5,7 +5,6 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 import time
 
 from SleipnirWindow import SleipnirWindow
-import util
 import CameraServer
 from Video import Video
 import CamerasData
