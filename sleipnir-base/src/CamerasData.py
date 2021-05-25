@@ -74,5 +74,4 @@ class CamerasData:
          f_2_ts = {}
          for row in rows: f_2_ts[row[0]] = row[1]
          self.frame_data['cam' + str(cam)].frames_2_timestamps = f_2_ts
-      end = time.time()
-      logger.info("Loading flight done: " + format(end-start, ".3f") + "s")
+      logger.info("Loading flight done: " + format(time.time() - start, ".3f") + "s")
