@@ -70,6 +70,9 @@ class CamerasData:
       logger.info("Loading flight number " + str(flight_number) + "...")
       for cam in [1, 2]:
          self.frame_data['cam' + str(cam)] = FrameData()
-         self.frame_data['cam' + str(cam)].frames_2_timestamps = \
-            [{row[0]: row[1]} for row in frame_dao.load_flight_timestammps(db, flight_number, cam)]
-      logger.info("Loading flight done: " + format(time.time()-start, ".3f") + "s")
+         rows = frame_dao.load_flight_timestammps(db, flight_number, cam)
+         f_2_ts = {}
+         for row in rows: f_2_ts[row[0]] = row[1]
+         self.frame_data['cam' + str(cam)].frames_2_timestamps = f_2_ts
+      end = time.time()
+      logger.info("Loading flight done: " + format(end-start, ".3f") + "s")
