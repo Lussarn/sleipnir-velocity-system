@@ -19,9 +19,7 @@ class DB():
         ''' Disable auto vacuum '''
         cur = self.__conn.cursor()
         cur.execute('PRAGMA auto_vacuum = NONE')
-#        cur.execute('PRAGMA JOURNAL_MODE = MEMORY')
         cur.execute('PRAGMA JOURNAL_MODE = WAL')
-#        cur.execute('PRAGMA SYNCHRONOUS = OFF')
         cur.execute('PRAGMA SYNCHRONOUS = NORMAL')
         self.__conn.commit()
         cur.close()
