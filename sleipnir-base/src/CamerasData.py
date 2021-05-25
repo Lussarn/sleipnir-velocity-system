@@ -1,5 +1,5 @@
-from threading import Thread, Lock
-import os
+from threading import Lock
+import time
 
 from database.DB import DB
 import database.frame_dao as frame_dao
@@ -66,8 +66,12 @@ class CamerasData:
       return len(self.frame_data["cam1"].frames_2_timestamps) >= 90 and len(self.frame_data["cam2"].frames_2_timestamps) >= 90
 
    def load(self, db: DB, flight_number):
+      start = time.time()
+      logger.info("Loading flight number " + str(flight_number) + "...")
       for cam in [1, 2]:
          self.frame_data['cam' + str(cam)] = FrameData()
          for row in frame_dao.load_flight_timestammps(db, flight_number, cam):
             self.frame_data['cam' + str(cam)].frames_2_timestamps[row[0]] = row[1]
+      end = time.time()
+      logger.info("Loading flight done: " + format(end-start, ".3f") + "s")
       return True
