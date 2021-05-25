@@ -146,6 +146,7 @@ def start_shooting(cameras_data, flight_number):
       print("INFO: CameraServer.start_shooting() Time to remove pictures: " + str((int(time.time() - start)*100)/100) + "s")
    except Exception as e:
       print("ERROR: CameraServer.start_shooting: " + str(e))
+      return
 
    ServerData.cameras_data = cameras_data
    ServerData.request_pictures_from_camera = True
