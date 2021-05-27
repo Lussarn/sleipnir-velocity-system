@@ -8,6 +8,8 @@ import database.frame_dao as frame_dao
 import numpy as np
 import simplejpeg
 
+from function_timer import timer
+
 import logging
 logger = logging.getLogger(__name__)
 
@@ -338,6 +340,10 @@ class FrameProcessingWorker(QtCore.QThread):
       self.start()
 
    def run(self):
+      self.analyze(self.video.cam)
+    
+   @timer("Time to analyze", logging.INFO, identifier='cam', average=1000)
+   def analyze(self, cam):
       # We do not want to analyze the same frame twice
       if self.__processing_frame_number == self.__last_frame_number:
          return
