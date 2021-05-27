@@ -76,10 +76,6 @@ class Video:
       # Setup worker thread (reason to have this is to utilize multicore)
       self.frame_processing_worker = FrameProcessingWorker(self)
 
-      # performance statistics
-      self.__stat_jpeg_read_number_of_frames = 0
-      self.__stat_jpeg_read_accumulated_time = 0
-
    # Sibling video is the Video instance of the other camera
    def set_sibling_video(self, sibling_video):
       self.sibling_video = sibling_video
@@ -350,7 +346,7 @@ class FrameProcessingWorker(QtCore.QThread):
 
       # Check to see if we are lagging behind
       if self.__last_frame_number + 1 != self.__processing_frame_number:
-         logger.warning("Missed frame on camera " + self.video.cam + ": " + str(self.__processing_frame_number))
+         logger.warning("Missed frame on camera " + cam + ": " + str(self.__processing_frame_number))
       self.__last_frame_number = self.__processing_frame_number
 
       start = time.time()
@@ -411,17 +407,6 @@ class FrameProcessingWorker(QtCore.QThread):
       self.image = image_gray_cv
       self.found_motion_frame_number = self.__processing_frame_number
       self.found_motion = found_motion
-
-      # statistics logging
-      self.__stat_accumulated_time += (time.time() - start)
-      self.__stat_number_of_frames += 1
-      if self.__stat_number_of_frames % 1000 == 0:
-         import threading
-         thread = threading.Thread()
-         thread.name="abc"
-         logger.info("Time to analyze " + self.video.cam + ": " + str(int(self.__stat_accumulated_time / self.__stat_number_of_frames * 1000000)/1000) + "ms")
-         self.__stat_accumulated_time = 0
-         self.__stat_number_of_frames = 0
 
    def __check_overlap_previous(self, x, y, w, h, x1, w1, frame_number, iterations):
 #      print "check overlap: " + str(frame_number) + " iteration: " + str(iterations)
