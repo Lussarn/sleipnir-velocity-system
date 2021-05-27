@@ -19,6 +19,8 @@ from Frame import Frame
 from database.DB import DB
 import database.frame_dao as frame_dao
 
+from function_timer import timer
+
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -34,8 +36,6 @@ class ServerData:
    camera_last_transmission_timestamp = {"cam1": 0, "cam2": 0}
 
    # performance statistics and logs
-   stat_number_of_requests = 0
-   stat_accumulated_time = 0
    last_log_message_cam_asking_to_start = {'cam1': 0, 'cam2': 0}
 
 
@@ -46,6 +46,7 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
    def log_message(self, format, *args):
       pass
 
+   @timer("Http POST", logging.INFO, identifier=None, average=1000)
    def do_POST(self):
       global ServerData
       start = time.time()
@@ -105,14 +106,6 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
             self.send200("OK-CONTINUE")
          else:
             self.send200("OK-STOP")
-
-      # statistics logging
-      ServerData.stat_accumulated_time += (time.time() - start)
-      ServerData.stat_number_of_requests += 1
-      if ServerData.stat_number_of_requests % 1000 == 0:
-         logger.info("Time to POST: " + str(int(ServerData.stat_accumulated_time / ServerData.stat_number_of_requests * 1000000)/1000) + "ms")
-         ServerData.stat_accumulated_time = 0
-         ServerData.stat_number_of_requests = 0
 
    def send200(self, msg):
       self.send_response(200)
