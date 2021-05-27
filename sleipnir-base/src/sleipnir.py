@@ -13,6 +13,7 @@ from Configuration import Configuration
 from database.DB import DB
 from Announcements import Announcements, Announcement
 import database.announcement_dao as announcement_dao
+from Frame import Frame
 
 from Sound import Sound
 
@@ -24,6 +25,8 @@ logger = logging.getLogger(__name__)
 
 
 class WindowMain(QMainWindow):
+   videos = {}  # type: dict[int, Video]
+
    def __init__(self):
       try:
          self.configuration = Configuration("sleipnir.yml")
@@ -84,9 +87,7 @@ class WindowMain(QMainWindow):
       for radio_buttons_flight in self.ui.radio_buttons_flights:
          radio_buttons_flight.clicked.connect(self.__flight_number_clicked)
 
-      # [0] - left [1] - right video
       # Init the videos
-      self.videos = {}
       self.videos[0] = Video(
          self.__db,
          "cam1",
@@ -278,17 +279,23 @@ class WindowMain(QMainWindow):
                self.videos[1].view_frame(frame_number)
          else:
             if self.ui.checkBox_motion_track.isChecked():
+
                if self.cameras_data.get_last_frame("cam1") and self.shooting_frame_number_cam1 <= self.cameras_data.get_last_frame("cam1").get_position():
                   start = self.cameras_data.get_start_timestamp()
                   self.videos[0].setStartTimestamp(start)
-                  motion = self.videos[0].view_frame_motion_track(self.cameras_data.serve_next_frame("cam1").get_position(), self.ui.checkBox_live.isChecked())
+                  motion = self.videos[0].view_frame_motion_track(
+                     self.get_frame_allow_lag("cam1", self.shooting_frame_number_cam1).get_position(),
+                     self.ui.checkBox_live.isChecked())                  
                   if motion is not None:
                      self.check_run("cam1", motion)
                   self.shooting_frame_number_cam1 += 1
+
                if self.cameras_data.get_last_frame("cam2") and self.shooting_frame_number_cam2 <= self.cameras_data.get_last_frame("cam2").get_position():
                   start = self.cameras_data.get_start_timestamp()
                   self.videos[1].setStartTimestamp(start)
-                  motion = self.videos[1].view_frame_motion_track(self.cameras_data.serve_next_frame("cam2").get_position(), self.ui.checkBox_live.isChecked())
+                  motion = self.videos[1].view_frame_motion_track(
+                     self.get_frame_allow_lag("cam2", self.shooting_frame_number_cam2).get_position(),
+                     self.ui.checkBox_live.isChecked())
                   if motion is not None:
                      self.check_run("cam2", motion)
                   self.shooting_frame_number_cam2 += 1
@@ -313,8 +320,6 @@ class WindowMain(QMainWindow):
             self.__sound.play_number(self.run_tell_speed)
             self.run_tell_speed = 0
 
-
-#      if self.cameras_data and not self.__shooting and self.cameras_data.is_data_ok() and not self.aligning_cam1 and not self.aligning_cam2:
       if self.cameras_data \
                and not self.__shooting \
                and self.cameras_data.get_frames_length('cam1') >= 90 \
@@ -324,6 +329,22 @@ class WindowMain(QMainWindow):
          cam1_frame_number = self.videos[0].get_current_frame_number()
          cam2_frame_number = self.videos[1].get_current_frame_number()
          self.set_speed(cam1_frame_number, cam2_frame_number)
+
+   __last_served_frame = {
+      'cam1': 0,
+      'cam2': 0
+   }
+   def get_frame_allow_lag(self, cam: str, position: int) -> Frame:
+      # Served frame can be larger than position if we stop and start camera, detect this
+      # and reset served frame
+      if self.__last_served_frame[cam] > position: self.__last_served_frame[cam] = 0
+      if self.__last_served_frame[cam] < position - 30:
+         # lag detected, jump
+         self.__last_served_frame[cam] = position
+         logger.warning("Lag detected when motion tracking " + cam + ": " + str(position))
+      else:
+         self.__last_served_frame[cam] += 1
+      return self.cameras_data.get_frame(cam, self.__last_served_frame[cam])
 
    def set_speed(self, cam1_frame_number, cam2_frame_number):
       """

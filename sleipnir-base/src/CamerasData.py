@@ -16,16 +16,9 @@ class CamerasData:
       'cam2': {}
    }
 
-   __last_served_frame = {
-      'cam1': 0,
-      'cam2': 0
-   }
-
    def __init__(self):
       self.__frames['cam1'] = {}
       self.__frames['cam2'] = {}
-      self.__last_served_frame['cam1'] = 0
-      self.__last_served_frame['cam2'] = 0
 
    def __acquire_lock(self):
       logger.debug("Acquire lock")
@@ -56,29 +49,6 @@ class CamerasData:
       self.__release_lock()
       return max(timestamp_cam1, timestamp_cam2)
 
-   def serve_next_frame(self, cam) -> Frame:
-      logger.debug("serve_next_frame()")
-      self.__acquire_lock()
-      last_frame = len(self.__frames[cam])
-      next_frame = self.__last_served_frame[cam] + 1
-      ''' How many frames are we allowed to lag '''
-      if abs(last_frame - self.__last_served_frame[cam]) > 30:
-         next_frame = last_frame
-         logger.warning("Camera " + cam + " lagging behind, reseting next_frame to last_frame")
-      new_served_frame = min(last_frame, next_frame)
-      ''' We do not want to serve same frame twice '''
-      if (self.__last_served_frame[cam] == new_served_frame or new_served_frame == 0):
-         self.__release_lock()
-         return None
-      self.__last_served_frame[cam] = new_served_frame
-      frame = self.__frames[cam][self.__last_served_frame[cam]]
-      self.__release_lock()
-      return frame
-
-   def push_serve(self, cam):
-      self.__last_served_frame[cam] -= 1
-      return
-
    def get_last_frame(self, cam: str) -> Frame:
       logger.debug("get_last_frame()")
       self.__acquire_lock()
@@ -107,6 +77,4 @@ class CamerasData:
          rows = frame_dao.load_flight_timestammps(db, flight, cam)
          for row in rows:
             self.__frames['cam' + str(cam)][row[0]] = Frame(flight, cam, row[0], row[1], None)
-      self.__last_served_frame['cam1'] = 0
-      self.__last_served_frame['cam2'] = 0
       logger.info("Loading flight done: " + format(time.time() - start, ".3f") + "s")
