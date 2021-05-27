@@ -12,13 +12,10 @@ import cgi
 import logging
 import base64
 import sys
-import os
-import shutil
 
 from Frame import Frame
 from database.DB import DB
 import database.frame_dao as frame_dao
-
 from function_timer import timer
 
 logging.getLogger("requests").setLevel(logging.WARNING)
@@ -35,9 +32,8 @@ class ServerData:
    cameras_data = None
    camera_last_transmission_timestamp = {"cam1": 0, "cam2": 0}
 
-   # performance statistics and logs
+   # logs
    last_log_message_cam_asking_to_start = {'cam1': 0, 'cam2': 0}
-
 
 class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
    """Handle requests in a separate thread."""
@@ -85,7 +81,7 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
 
          ServerData.camera_last_transmission_timestamp[cam] = time.time()
 
-         imageNum = int(postvars[b"framenumber"][0].decode('utf-8'))
+         position = int(postvars[b"framenumber"][0].decode('utf-8'))
          timestamp = int(postvars[b"timestamp"][0].decode('utf-8'))
          ServerData.last_picture_timestamp = time.time()
 
@@ -94,13 +90,13 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
          frame = Frame(
             ServerData.flight_number,
             1 if cam == 'cam1' else 2,
-            imageNum,
+            position,
             timestamp,
             image
          )
          frame_dao.store(ServerData.db, frame)
 
-         ServerData.cameras_data.add_frame(cam, imageNum, timestamp)
+         ServerData.cameras_data.add_frame(cam, position, timestamp)
 
          if (ServerData.request_pictures_from_camera):
             self.send200("OK-CONTINUE")
@@ -123,7 +119,7 @@ def is_shooting():
    global ServerData
    return ServerData.request_pictures_from_camera and time.time() - ServerData.last_picture_timestamp < 1
 
-def start_shooting(cameras_data, flight_number):
+def start_shooting(cameras_data, flight):
    global ServerData
    if ServerData.request_pictures_from_camera:
       return False
@@ -135,7 +131,7 @@ def start_shooting(cameras_data, flight_number):
    try:
       start = time.time()
       logger.info("Deleting old frames and announcements...")
-      frame_dao.delete_flight(ServerData.db, flight_number)
+      frame_dao.delete_flight(ServerData.db, flight)
       logger.info("Time to remove pictures: " + format(time.time() - start, ".3f") + "s")
    except Exception as e:
       logger.error(str(e))
@@ -163,22 +159,6 @@ def is_ready_to_shoot():
 def is_online(cam):
    global ServerData
    return time.time() - ServerData.camera_last_transmission_timestamp[cam] < 5
-
-def get_next_image(cam):
-   global ServerData
-   return ServerData.cameras_data.get_next_frame(cam)
-
-def get_last_image(cam):
-   global ServerData
-   return ServerData.cameras_data.get_last_frame(cam)
-
-def get_start_timestamp():
-   global ServerData
-   return ServerData.cameras_data.get_start_timestamp()
-
-def get_time_from_image(cam, frame_number):
-   global ServerData
-   return ServerData.cameras_data.get_timestamp_from_Frame(cam, frame_number)
 
 def start_server(db: DB):
    global ServerData
