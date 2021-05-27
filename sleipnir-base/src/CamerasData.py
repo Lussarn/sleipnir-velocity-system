@@ -3,75 +3,110 @@ import time
 
 from database.DB import DB
 import database.frame_dao as frame_dao
+from Frame import Frame
 
 import logging
 logger = logging.getLogger(__name__)
 
-class FrameData():
-
-   def __init__(self):
-      self.frames_2_timestamps = {}
-
 class CamerasData:
-   mutex = Lock()
+   __mutex = Lock()
+
+   __frames = {
+      'cam1': {},
+      'cam2': {}
+   }
+
+   __last_served_frame = {
+      'cam1': 0,
+      'cam2': 0
+   }
 
    def __init__(self):
-      self.frame_data = {}
-      self.frame_data["cam1"] = FrameData()
-      self.frame_data["cam2"] = FrameData()
-      self.last_served_frame = {}
-      self.last_served_frame["cam1"] = 0
-      self.last_served_frame["cam2"] = 0
+      self.__frames['cam1'] = {}
+      self.__frames['cam2'] = {}
+      self.__last_served_frame['cam1'] = 0
+      self.__last_served_frame['cam2'] = 0
 
-   def add_frame(self, cam, frame_number, timestamp):
-      self.mutex.acquire()
-      self.frame_data[cam].frames_2_timestamps[frame_number] = timestamp
-      self.mutex.release()
+   def __acquire_lock(self):
+      logger.debug("Acquire lock")
+      self.__mutex.acquire()
+
+   def __release_lock(self):
+      logger.debug("Release lock")
+      self.__mutex.release()
+
+   def add_frame(self, frame: Frame) -> bool:
+      logger.debug("add_frame() position " + str(frame.get_position()))
+      self.__acquire_lock()
+      ''' We require the frames to actually be in order from 1 to infinity '''
+      if frame.get_position() > 1 and not self.__frames['cam' + str(frame.get_camera())][frame.get_position() - 1]:
+         logger.critical("Missing a frame when adding, can't continue!")
+         self.__release_lock()
+         return False
+
+      self.__frames['cam' + str(frame.get_camera())][frame.get_position()] = frame
+      self.__release_lock()
+      return True
 
    def get_start_timestamp(self):
-      self.mutex.acquire()
-      timestamp_cam1 = 0
-      if 1 in self.frame_data["cam1"].frames_2_timestamps:
-         timestamp_cam1 = self.frame_data["cam1"].frames_2_timestamps[1]
-      timestamp_cam2 = 0
-      if 1 in self.frame_data["cam2"].frames_2_timestamps:
-         timestamp_cam2 = self.frame_data["cam2"].frames_2_timestamps[1]
-      self.mutex.release()
+      logger.debug("get_start_timestamp()")
+      self.__acquire_lock()
+      timestamp_cam1 = self.__frames['cam1'][1].get_timestamp() if 1 in self.__frames['cam1'] else 0
+      timestamp_cam2 = self.__frames['cam2'][1].get_timestamp() if 1 in self.__frames['cam2'] else 0
+      self.__release_lock()
       return max(timestamp_cam1, timestamp_cam2)
 
-   def get_next_frame(self, cam):
-      self.mutex.acquire()
-      last_frame = len(self.frame_data[cam].frames_2_timestamps)
-      self.mutex.release()
-      next_frame = self.last_served_frame[cam] + 1
-      # How many frames are we allowed to lag
-      if abs(last_frame - self.last_served_frame[cam]) > 30:         
+   def serve_next_frame(self, cam) -> Frame:
+      logger.debug("serve_next_frame()")
+      self.__acquire_lock()
+      last_frame = len(self.__frames[cam])
+      next_frame = self.__last_served_frame[cam] + 1
+      ''' How many frames are we allowed to lag '''
+      if abs(last_frame - self.__last_served_frame[cam]) > 30:
          next_frame = last_frame
          logger.warning("Camera " + cam + " lagging behind, reseting next_frame to last_frame")
-      self.last_served_frame[cam] = min(last_frame, next_frame)
-      return self.last_served_frame[cam]
+      new_served_frame = min(last_frame, next_frame)
+      ''' We do not want to serve same frame twice '''
+      if (self.__last_served_frame[cam] == new_served_frame or new_served_frame == 0):
+         self.__release_lock()
+         return None
+      self.__last_served_frame[cam] = new_served_frame
+      frame = self.__frames[cam][self.__last_served_frame[cam]]
+      self.__release_lock()
+      return frame
 
-   def get_last_frame(self, cam):
-      self.mutex.acquire()
-      frame_number =  len(self.frame_data[cam].frames_2_timestamps)
-      self.mutex.release()
-      return frame_number
+   def push_serve(self, cam):
+      self.__last_served_frame[cam] -= 1
+      return
 
-   def get_timestamp_from_frame_number(self, cam, frame_number):
-      if not frame_number in self.frame_data[cam].frames_2_timestamps:
-         return 0
-      return max(self.frame_data[cam].frames_2_timestamps[frame_number], 0)
+   def get_last_frame(self, cam: str) -> Frame:
+      logger.debug("get_last_frame()")
+      self.__acquire_lock()
+      if len(self.__frames[cam]) == 0:
+         self.__release_lock()
+         return None
+      frame = self.__frames[cam][len(self.__frames[cam])]
+      self.__release_lock()
+      return frame
 
-   def is_data_ok(self):
-      return len(self.frame_data["cam1"].frames_2_timestamps) >= 90 and len(self.frame_data["cam2"].frames_2_timestamps) >= 90
+   def get_timestamp_from_position(self, cam: str, position: int) -> int:
+      if not position in self.__frames[cam]: return 0
+      return max(self.__frames[cam][position].get_timestamp(), 0)
 
-   def load(self, db: DB, flight_number):
+   def get_frame(self, cam: str, position: int) -> Frame:
+      return self.__frames[cam][position] if position in self.__frames[cam] else None
+
+   def get_frames_length(self, cam: str):
+      return len(self.__frames[cam])
+
+   def load(self, db: DB, flight):
       start = time.time()
-      logger.info("Loading flight number " + str(flight_number) + "...")
+      logger.info("Loading flight " + str(flight) + "...")
       for cam in [1, 2]:
-         self.frame_data['cam' + str(cam)] = FrameData()
-         rows = frame_dao.load_flight_timestammps(db, flight_number, cam)
-         f_2_ts = {}
-         for row in rows: f_2_ts[row[0]] = row[1]
-         self.frame_data['cam' + str(cam)].frames_2_timestamps = f_2_ts
+         self.__frames['cam' + str(cam)] = {}
+         rows = frame_dao.load_flight_timestammps(db, flight, cam)
+         for row in rows:
+            self.__frames['cam' + str(cam)][row[0]] = Frame(flight, cam, row[0], row[1], None)
+      self.__last_served_frame['cam1'] = 0
+      self.__last_served_frame['cam2'] = 0
       logger.info("Loading flight done: " + format(time.time() - start, ".3f") + "s")

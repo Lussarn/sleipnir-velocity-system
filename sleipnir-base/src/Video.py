@@ -102,7 +102,7 @@ class Video:
 
       if (self.shooting == False):
          self.slider.setMinimum(1)
-         self.slider.setMaximum(self.cameras_data.get_last_frame(self.cam))
+         self.slider.setMaximum(self.cameras_data.get_last_frame(self.cam).get_position())
          self.buttonPlayForward.setEnabled(True)
          self.buttonPlayBackward.setEnabled(True)
          self.buttonFind.setEnabled(True)
@@ -122,14 +122,14 @@ class Video:
 
    # Returns a video frame as a cv image and it's timestamp
    @timer("Time to read jpeg", logging.INFO, identifier='cam', average=1000)
-   def __get_frame(self, cam, frame_number):
+   def __get_frame(self, cam, position):
       start = time.time()
-      timestamp = self.cameras_data.get_timestamp_from_frame_number(cam, frame_number)
-      frame = frame_dao.load(self.__db, self.__flight, 1 if self.cam == 'cam1' else 2, frame_number)
+      timestamp = self.cameras_data.get_timestamp_from_position(cam, position)
+      frame = frame_dao.load(self.__db, self.__flight, 1 if self.cam == 'cam1' else 2, position)
       if frame is None: return
       image_cv = simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
 
-      return {"frame_number": frame_number, "timestamp": int(timestamp), "image": image_cv }
+      return {"frame_number": position, "timestamp": int(timestamp), "image": image_cv }
 
    # Set the start timestamp
    def setStartTimestamp(self, start_timestamp):
@@ -137,9 +137,9 @@ class Video:
 
    # Copy button, set the timestamp of the sibling video to this on
    def __onCopy(self):
-      timestamp_this = self.cameras_data.get_timestamp_from_frame_number(self.cam, self.current_frame_number)
-      for i in range(1, self.cameras_data.get_last_frame(self.sibling_video.cam) + 1):
-         timestamp_sibling = self.cameras_data.get_timestamp_from_frame_number(self.sibling_video.cam, i)
+      timestamp_this = self.cameras_data.get_timestamp_from_position(self.cam, self.current_frame_number)
+      for i in range(1, self.cameras_data.get_last_frame(self.sibling_video.cam).get_position() + 1):
+         timestamp_sibling = self.cameras_data.get_timestamp_from_position(self.sibling_video.cam, i)
          if timestamp_sibling >= timestamp_this:
             break
       self.sibling_video.view_frame(i)
@@ -175,7 +175,7 @@ class Video:
 
    def __onForwardStep(self):
       self.direction = 0
-      if self.current_frame_number < self.cameras_data.get_last_frame(self.cam):
+      if self.current_frame_number < self.cameras_data.get_last_frame(self.cam).get_position():
          self.current_frame_number += 1
       self.timer.stop()
       self.__update(self.__get_frame(self.cam, self.current_frame_number))
@@ -190,14 +190,14 @@ class Video:
    def __timerplay(self):
       if self.forward:
          self.current_frame_number += 1
-         if self.current_frame_number > self.cameras_data.get_last_frame(self.cam):
-            self.current_frame_number = self.cameras_data.get_last_frame(self.cam)
+         if self.cameras_data.get_last_frame(self.cam) is None or self.current_frame_number > self.cameras_data.get_last_frame(self.cam).get_position():
+            self.current_frame_number = self.cameras_data.get_last_frame(self.cam).get_position()
             self.find = False
             self.timer.stop()
             self.__update(self.__get_frame(self.cam, self.current_frame_number))
       else:
          self.current_frame_number -= 1
-         if (self.current_frame_number < 1):
+         if self.cameras_data.get_last_frame(self.cam) is None or self.current_frame_number < 1:
             self.current_frame_number  =1
             self.find = False
             self.timer.stop()
@@ -208,7 +208,7 @@ class Video:
       if not frame:
          return
       if self.forward:
-         motion = self.have_motion(frame['image'])
+         motion = self.__have_motion(frame['image'])
          if self.find:
             frame['image'] = motion["image"]
             if motion["motion"]:
@@ -229,7 +229,7 @@ class Video:
       frame = self.__get_frame(self.cam, self.current_frame_number)
       if not frame:
          return
-      motion = self.have_motion(frame["image"])
+      motion = self.__have_motion(frame["image"])
       if (motion is None):
          return None
 
@@ -267,7 +267,7 @@ class Video:
       return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
 
    # Find if an image have motion
-   def have_motion(self, image_cv):
+   def __have_motion(self, image_cv):
       if (image_cv is None):
          logger.error("Image lost on camera " + self.cam + " image_cv == None")
          return

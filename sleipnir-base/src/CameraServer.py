@@ -96,7 +96,11 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
          )
          frame_dao.store(ServerData.db, frame)
 
-         ServerData.cameras_data.add_frame(cam, position, timestamp)
+         ''' Clear the image for memory reasons '''
+         frame.set_image(None)
+         if not ServerData.cameras_data.add_frame(frame):
+            logger.critical("Shooting stoped after failed add frame!")
+            stop_shooting()
 
          if (ServerData.request_pictures_from_camera):
             self.send200("OK-CONTINUE")

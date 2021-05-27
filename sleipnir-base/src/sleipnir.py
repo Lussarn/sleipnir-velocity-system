@@ -162,9 +162,9 @@ class WindowMain(QMainWindow):
       self.videos[0].set_flight(flight_number)
       self.videos[1].set_flight(flight_number)
       self.videos[0].slider.setMinimum(1)
-      self.videos[0].slider.setMaximum(self.cameras_data.get_last_frame("cam1"))
+      self.videos[0].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam1") else self.cameras_data.get_last_frame("cam1").get_position())
       self.videos[1].slider.setMinimum(1)
-      self.videos[1].slider.setMaximum(self.cameras_data.get_last_frame("cam2"))
+      self.videos[1].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam2") else self.cameras_data.get_last_frame("cam2").get_position())
       self.videos[0].setStartTimestamp(self.cameras_data.get_start_timestamp())
       self.videos[1].setStartTimestamp(self.cameras_data.get_start_timestamp())
       self.videos[0].comparison_image_cv = None
@@ -269,39 +269,39 @@ class WindowMain(QMainWindow):
       # Update the video view
       if CameraServer.is_shooting():
          if self.aligning_cam1:
-            frame_number = self.cameras_data.get_last_frame("cam1")
+            frame_number = self.cameras_data.get_last_frame("cam1").get_position()
             if frame_number > 0:
                self.videos[0].view_frame(frame_number)
          elif self.aligning_cam2:
-            frame_number = self.cameras_data.get_last_frame("cam2")
+            frame_number = self.cameras_data.get_last_frame("cam2").get_position()
             if frame_number > 0:
                self.videos[1].view_frame(frame_number)
          else:
             if self.ui.checkBox_motion_track.isChecked():
-               if self.shooting_frame_number_cam1 <= self.cameras_data.get_last_frame("cam1"):
+               if self.cameras_data.get_last_frame("cam1") and self.shooting_frame_number_cam1 <= self.cameras_data.get_last_frame("cam1").get_position():
                   start = self.cameras_data.get_start_timestamp()
                   self.videos[0].setStartTimestamp(start)
-                  motion = self.videos[0].view_frame_motion_track(self.cameras_data.get_next_frame("cam1"), self.ui.checkBox_live.isChecked())
+                  motion = self.videos[0].view_frame_motion_track(self.cameras_data.serve_next_frame("cam1").get_position(), self.ui.checkBox_live.isChecked())
                   if motion is not None:
                      self.check_run("cam1", motion)
                   self.shooting_frame_number_cam1 += 1
-               if self.shooting_frame_number_cam2 <= self.cameras_data.get_last_frame("cam2"):
+               if self.cameras_data.get_last_frame("cam2") and self.shooting_frame_number_cam2 <= self.cameras_data.get_last_frame("cam2").get_position():
                   start = self.cameras_data.get_start_timestamp()
                   self.videos[1].setStartTimestamp(start)
-                  motion = self.videos[1].view_frame_motion_track(self.cameras_data.get_next_frame("cam2"), self.ui.checkBox_live.isChecked())
+                  motion = self.videos[1].view_frame_motion_track(self.cameras_data.serve_next_frame("cam2").get_position(), self.ui.checkBox_live.isChecked())
                   if motion is not None:
                      self.check_run("cam2", motion)
                   self.shooting_frame_number_cam2 += 1
             else:
-               if self.shooting_frame_number_cam1 <= self.cameras_data.get_last_frame("cam1"):
+               if self.shooting_frame_number_cam1 <= self.cameras_data.get_last_frame("cam1").get_position():
                   start = self.cameras_data.get_start_timestamp()
                   self.videos[0].setStartTimestamp(start)
-                  self.videos[0].view_frame(self.cameras_data.get_last_frame("cam1"))
+                  self.videos[0].view_frame(self.cameras_data.get_last_frame("cam1").get_position())
                   self.shooting_frame_number_cam1 += 1
-               if self.shooting_frame_number_cam2 <= self.cameras_data.get_last_frame("cam2"):
+               if self.shooting_frame_number_cam2 <= self.cameras_data.get_last_frame("cam2").get_position():
                   start = self.cameras_data.get_start_timestamp()
                   self.videos[1].setStartTimestamp(start)
-                  self.videos[1].view_frame(self.cameras_data.get_last_frame("cam2"))
+                  self.videos[1].view_frame(self.cameras_data.get_last_frame("cam2").get_position())
                   self.shooting_frame_number_cam2 += 1
 
          if self.run_direction is not None and self.run_abort_timestamp < int(round(time.time() * 1000)):
@@ -314,7 +314,12 @@ class WindowMain(QMainWindow):
             self.run_tell_speed = 0
 
 
-      if self.cameras_data and not self.__shooting and self.cameras_data.is_data_ok() and not self.aligning_cam1 and not self.aligning_cam2:
+#      if self.cameras_data and not self.__shooting and self.cameras_data.is_data_ok() and not self.aligning_cam1 and not self.aligning_cam2:
+      if self.cameras_data \
+               and not self.__shooting \
+               and self.cameras_data.get_frames_length('cam1') >= 90 \
+               and self.cameras_data.get_frames_length('cam2') >= 90  \
+               and not self.aligning_cam1 and not self.aligning_cam2:
          # Calculate the speed
          cam1_frame_number = self.videos[0].get_current_frame_number()
          cam2_frame_number = self.videos[1].get_current_frame_number()
@@ -324,8 +329,8 @@ class WindowMain(QMainWindow):
       """
       Set speed from camera frame numbers
       """
-      cam1_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam1", cam1_frame_number)
-      cam2_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam2", cam2_frame_number)
+      cam1_timestamp = self.cameras_data.get_timestamp_from_position("cam1", cam1_frame_number)
+      cam2_timestamp = self.cameras_data.get_timestamp_from_position("cam2", cam2_frame_number)
       milliseconds = abs(cam1_timestamp - cam2_timestamp)
 
       kilometer = float(self.distance) / 1000
@@ -493,8 +498,8 @@ class WindowMain(QMainWindow):
          self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, -1)
 
    def add_announcement(self, cam1_frame_number, cam2_frame_number, speed, direction):
-      cam1_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam1", cam1_frame_number)
-      cam2_timestamp = self.cameras_data.get_timestamp_from_frame_number("cam2", cam2_frame_number)
+      cam1_timestamp = self.cameras_data.get_timestamp_from_position("cam1", cam1_frame_number)
+      cam2_timestamp = self.cameras_data.get_timestamp_from_position("cam2", cam2_frame_number)
       milliseconds = abs(cam1_timestamp - cam2_timestamp)
 
       self.announcements.append(Announcement(

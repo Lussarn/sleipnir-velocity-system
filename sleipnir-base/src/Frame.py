@@ -20,3 +20,6 @@ class Frame:
 
     def get_image(self):
         return self.__image
+
+    def set_image(self, image):
+        self.__image = image
