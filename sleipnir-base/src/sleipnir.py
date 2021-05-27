@@ -270,46 +270,48 @@ class WindowMain(QMainWindow):
       # Update the video view
       if CameraServer.is_shooting():
          if self.aligning_cam1:
+            ''' Align cam 1 '''
             frame_number = self.cameras_data.get_last_frame("cam1").get_position()
             if frame_number > 0:
                self.videos[0].view_frame(frame_number)
+
          elif self.aligning_cam2:
+            ''' Align cam 2 '''
             frame_number = self.cameras_data.get_last_frame("cam2").get_position()
             if frame_number > 0:
                self.videos[1].view_frame(frame_number)
+
          else:
+            ''' Motion Track '''
             if self.ui.checkBox_motion_track.isChecked():
+               for i in range(2):
+                  cam = 'cam' + str(i+1)
+                  video = self.videos[i]
+                  video.setStartTimestamp(self.cameras_data.get_start_timestamp())
+                  if not video.is_analyzer_running():
+                     last_frame = self.cameras_data.get_last_frame(cam)
+                     if last_frame is not None:
+                        frame_to_motion_check = self.get_frame_allow_lag(cam, last_frame.get_position())
+                        if frame_to_motion_check is not None:
+                           motion = video.view_frame_motion_track(
+                              frame_to_motion_check.get_position(),
+                              self.ui.checkBox_live.isChecked())                  
+                           if motion is not None:
+                              self.check_run(cam, motion)
+                        else:
+                           logger.warning("Frame to motioncheck is None on camera " +cam)
+                     else:
+                        logger.warning("Last frame is None on camera " +cam)
 
-               if self.cameras_data.get_last_frame("cam1") and self.shooting_frame_number_cam1 <= self.cameras_data.get_last_frame("cam1").get_position():
-                  start = self.cameras_data.get_start_timestamp()
-                  self.videos[0].setStartTimestamp(start)
-                  motion = self.videos[0].view_frame_motion_track(
-                     self.get_frame_allow_lag("cam1", self.shooting_frame_number_cam1).get_position(),
-                     self.ui.checkBox_live.isChecked())                  
-                  if motion is not None:
-                     self.check_run("cam1", motion)
-                  self.shooting_frame_number_cam1 += 1
-
-               if self.cameras_data.get_last_frame("cam2") and self.shooting_frame_number_cam2 <= self.cameras_data.get_last_frame("cam2").get_position():
-                  start = self.cameras_data.get_start_timestamp()
-                  self.videos[1].setStartTimestamp(start)
-                  motion = self.videos[1].view_frame_motion_track(
-                     self.get_frame_allow_lag("cam2", self.shooting_frame_number_cam2).get_position(),
-                     self.ui.checkBox_live.isChecked())
-                  if motion is not None:
-                     self.check_run("cam2", motion)
-                  self.shooting_frame_number_cam2 += 1
             else:
-               if self.shooting_frame_number_cam1 <= self.cameras_data.get_last_frame("cam1").get_position():
-                  start = self.cameras_data.get_start_timestamp()
-                  self.videos[0].setStartTimestamp(start)
-                  self.videos[0].view_frame(self.cameras_data.get_last_frame("cam1").get_position())
-                  self.shooting_frame_number_cam1 += 1
-               if self.shooting_frame_number_cam2 <= self.cameras_data.get_last_frame("cam2").get_position():
-                  start = self.cameras_data.get_start_timestamp()
-                  self.videos[1].setStartTimestamp(start)
-                  self.videos[1].view_frame(self.cameras_data.get_last_frame("cam2").get_position())
-                  self.shooting_frame_number_cam2 += 1
+               ''' No motion track '''
+               for i in range(2):
+                  cam = 'cam' + str(i+1)
+                  self.videos[i].setStartTimestamp(self.cameras_data.get_start_timestamp())
+                  if self.ui.checkBox_live.isChecked():
+                     last_frame = self.cameras_data.get_last_frame(cam)
+                     if last_frame is not None:
+                        self.videos[i].view_frame(last_frame.get_position())
 
          if self.run_direction is not None and self.run_abort_timestamp < int(round(time.time() * 1000)):
             # Abort run
@@ -343,7 +345,8 @@ class WindowMain(QMainWindow):
          self.__last_served_frame[cam] = position
          logger.warning("Lag detected when motion tracking " + cam + ": " + str(position))
       else:
-         self.__last_served_frame[cam] += 1
+         # Clamp __last_served_frame to position
+         self.__last_served_frame[cam] = min(self.__last_served_frame[cam] + 1, position) 
       return self.cameras_data.get_frame(cam, self.__last_served_frame[cam])
 
    def set_speed(self, cam1_frame_number, cam2_frame_number):
@@ -435,6 +438,7 @@ class WindowMain(QMainWindow):
       self.videos[1].cameras_data = self.cameras_data
       CameraServer.ServerData.flight_number = flight_number
       CameraServer.start_shooting(self.cameras_data, flight_number)
+
 
    def stopCameras(self):
       logger.info("Stoping Cameras")

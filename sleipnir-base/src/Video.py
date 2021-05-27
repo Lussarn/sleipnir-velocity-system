@@ -208,8 +208,9 @@ class Video:
       if not frame:
          return
       if self.forward:
+         self.frame_processing_worker.wait()
          motion = self.__have_motion(frame['image'])
-         if self.find:
+         if motion is not None and self.find:
             frame['image'] = motion["image"]
             if motion["motion"]:
                self.timer.stop()
@@ -223,6 +224,9 @@ class Video:
    def view_frame(self, frame_number):
       self.current_frame_number = frame_number
       self.__update(self.__get_frame(self.cam, self.current_frame_number))
+
+   def is_analyzer_running(self) -> bool:
+      return self.frame_processing_worker.isRunning()
 
    def view_frame_motion_track(self, frame_number, live_preview = True):
       self.current_frame_number = frame_number
@@ -245,9 +249,14 @@ class Video:
    def __have_motion(self, image_cv):
       if (image_cv is None):
          logger.error("Image lost on camera " + self.cam + " image_cv == None")
-         return
+         return None
 
-      self.frame_processing_worker.wait()
+#      self.frame_processing_worker.wait()
+
+      if self.frame_processing_worker.isRunning():
+         logger.error("Analyzer still running on camera " + self.cam)
+         return None
+ 
       image = self.frame_processing_worker.image
       found_motion = self.frame_processing_worker.found_motion
       found_motion_frame_number = self.frame_processing_worker.found_motion_frame_number
@@ -314,10 +323,6 @@ class FrameProcessingWorker(QtCore.QThread):
 
       # Last frame analyzed
       self.__last_frame_number = 0
-
-      # performance statistics
-      self.__stat_number_of_frames = 0
-      self.__stat_accumulated_time = 0
 
       QtCore.QThread.__init__(self)
       self.setObjectName("Analyzer-" + self.video.cam + "-QThread")
