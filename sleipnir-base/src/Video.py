@@ -241,6 +241,24 @@ class Video:
          return { "frame_number": motion["frame_number"], "direction": self.direction / abs(self.direction) }
       return None
 
+   # Find if an image have motion
+   def __have_motion(self, image_cv):
+      if (image_cv is None):
+         logger.error("Image lost on camera " + self.cam + " image_cv == None")
+         return
+
+      self.frame_processing_worker.wait()
+      image = self.frame_processing_worker.image
+      found_motion = self.frame_processing_worker.found_motion
+      found_motion_frame_number = self.frame_processing_worker.found_motion_frame_number
+
+      if self.direction < 0: self.direction +=1
+      if self.direction > 0: self.direction -=1
+
+      self.frame_processing_worker.do_processing(image_cv, self.current_frame_number)
+
+      return { "motion": found_motion, "image": image, "frame_number": found_motion_frame_number }
+
    def __update(self, frame):
       if not frame:
          return
@@ -265,25 +283,6 @@ class Video:
 
    def __format_time(self, ms):
       return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
-
-   # Find if an image have motion
-   def __have_motion(self, image_cv):
-      if (image_cv is None):
-         logger.error("Image lost on camera " + self.cam + " image_cv == None")
-         return
-
-      self.frame_processing_worker.wait()
-      image = self.frame_processing_worker.image
-      found_motion = self.frame_processing_worker.found_motion
-      found_motion_frame_number = self.frame_processing_worker.found_motion_frame_number
-
-      if self.direction < 0: self.direction +=1
-      if self.direction > 0: self.direction -=1
-
-      self.frame_processing_worker.do_processing(image_cv, self.current_frame_number)
-
-      return { "motion": found_motion, "image": image, "frame_number": found_motion_frame_number }
-
 
 
 
