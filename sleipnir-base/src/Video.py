@@ -121,20 +121,13 @@ class Video:
       self.__flight = flight
 
    # Returns a video frame as a cv image and it's timestamp
-   def __get_frame(self, frame_number):
+   @timer("Time to read jpeg", logging.INFO, identifier='cam', average=1000)
+   def __get_frame(self, cam, frame_number):
       start = time.time()
-      timestamp = self.cameras_data.get_timestamp_from_frame_number(self.cam, frame_number)
+      timestamp = self.cameras_data.get_timestamp_from_frame_number(cam, frame_number)
       frame = frame_dao.load(self.__db, self.__flight, 1 if self.cam == 'cam1' else 2, frame_number)
       if frame is None: return
       image_cv = simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
-
-      # statistics logging
-      self.__stat_jpeg_read_accumulated_time += (time.time() - start)
-      self.__stat_jpeg_read_number_of_frames += 1
-      if self.__stat_jpeg_read_number_of_frames % 1000 == 0:
-         logger.info("Time to read jpeg " + self.cam + ": " + str(int(self.__stat_jpeg_read_accumulated_time / self.__stat_jpeg_read_number_of_frames * 1000000)/1000) + "ms")
-         self.__stat_jpeg_read_accumulated_time = 0
-         self.__stat_jpeg_read_number_of_frames = 0
 
       return {"frame_number": frame_number, "timestamp": int(timestamp), "image": image_cv }
 
@@ -155,7 +148,7 @@ class Video:
    def __onSliderChanged(self, value):
       self.direction = 0
       self.current_frame_number = value
-      self.__update(self.__get_frame(self.current_frame_number))
+      self.__update(self.__get_frame(self.cam, self.current_frame_number))
       self.timer.stop()
 
    def __onPlayForward(self):
@@ -173,7 +166,7 @@ class Video:
    def __onPause(self):
       self.direction = 0
       self.timer.stop()
-      self.__update(self.__get_frame(self.current_frame_number))
+      self.__update(self.__get_frame(self.cam, self.current_frame_number))
 
    def __onFind(self):
       self.find = True
@@ -185,14 +178,14 @@ class Video:
       if self.current_frame_number < self.cameras_data.get_last_frame(self.cam):
          self.current_frame_number += 1
       self.timer.stop()
-      self.__update(self.__get_frame(self.current_frame_number))
+      self.__update(self.__get_frame(self.cam, self.current_frame_number))
 
    def __onBackStep(self):
       self.direction = 0
       if self.current_frame_number > 1:
          self.current_frame_number -= 1
       self.timer.stop()
-      self.__update(self.__get_frame(self.current_frame_number))
+      self.__update(self.__get_frame(self.cam, self.current_frame_number))
 
    def __timerplay(self):
       if self.forward:
@@ -201,17 +194,17 @@ class Video:
             self.current_frame_number = self.cameras_data.get_last_frame(self.cam)
             self.find = False
             self.timer.stop()
-            self.__update(self.__get_frame(self.current_frame_number))
+            self.__update(self.__get_frame(self.cam, self.current_frame_number))
       else:
          self.current_frame_number -= 1
          if (self.current_frame_number < 1):
             self.current_frame_number  =1
             self.find = False
             self.timer.stop()
-            self.__update(self.__get_frame(self.current_frame_number))
+            self.__update(self.__get_frame(self.cam, self.current_frame_number))
 
       # Find motion when playing video
-      frame = self.__get_frame(self.current_frame_number)
+      frame = self.__get_frame(self.cam, self.current_frame_number)
       if not frame:
          return
       if self.forward:
@@ -229,11 +222,11 @@ class Video:
 
    def view_frame(self, frame_number):
       self.current_frame_number = frame_number
-      self.__update(self.__get_frame(self.current_frame_number))
+      self.__update(self.__get_frame(self.cam, self.current_frame_number))
 
    def view_frame_motion_track(self, frame_number, live_preview = True):
       self.current_frame_number = frame_number
-      frame = self.__get_frame(self.current_frame_number)
+      frame = self.__get_frame(self.cam, self.current_frame_number)
       if not frame:
          return
       motion = self.have_motion(frame["image"])
