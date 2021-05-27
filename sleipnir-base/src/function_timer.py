@@ -33,7 +33,7 @@ def timer(message: str, level: int = logging.INFO , identifier = None, average: 
             if (average == 1):
                 ''' Do the actual logging '''
                 logger_func = logging.getLogger(sys.modules[func.__module__].__name__)
-                logger_func.log(level, message + f"{run_time:.3f}ms")
+                logger_func.log(level, message + f" [timer: {run_time:.3f}ms]")
                 return ret
 
             key = sys.modules[func.__module__].__name__ + "." + func.__name__ + "." + str(func.__hash__())

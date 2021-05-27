@@ -7,7 +7,7 @@ import time
 from SleipnirWindow import SleipnirWindow
 import CameraServer
 from Video import Video
-import CamerasData
+from CamerasData import CamerasData
 import CameraServer
 from Configuration import Configuration
 from database.DB import DB
@@ -37,7 +37,8 @@ class WindowMain(QMainWindow):
       self.__db = DB(self.configuration.get_or_throw('save_path'))
 
       # Data for the cameras
-      self.cameras_data = CamerasData.CamerasData()
+      self.__flight = 1
+      self.cameras_data = CamerasData(self.__db, self.__flight)
 
       # none / "Left" / "Right"
       self.run_direction = None
@@ -150,18 +151,20 @@ class WindowMain(QMainWindow):
       self.timer.timeout.connect(self.__timerGui)
       self.timer.start(20)
 
-   def load_flight(self, flight_number):
-      self.ui.radio_buttons_flights[flight_number - 1].setChecked(True)
+   def load_flight(self, flight):
+      self.__flight = flight
+      self.cameras_data = CamerasData(self.__db, self.__flight)
+      self.ui.radio_buttons_flights[self.__flight - 1].setChecked(True)
 
-      self.cameras_data.load(self.__db, flight_number)
-      self.__load_announcements(flight_number)     
+      self.cameras_data.load(self.__db, self.__flight)
+      self.__load_announcements(self.__flight)
       self.__update_announcements_gui()
 
       # FIXME: Clean this shit up to some kind of API
       self.videos[0].cameras_data = self.cameras_data
       self.videos[1].cameras_data = self.cameras_data
-      self.videos[0].set_flight(flight_number)
-      self.videos[1].set_flight(flight_number)
+      self.videos[0].set_flight(self.__flight)
+      self.videos[1].set_flight(self.__flight)
       self.videos[0].slider.setMinimum(1)
       self.videos[0].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam1") else self.cameras_data.get_last_frame("cam1").get_position())
       self.videos[1].slider.setMinimum(1)
@@ -178,6 +181,7 @@ class WindowMain(QMainWindow):
       for i in range(0,20):
          if self.ui.radio_buttons_flights[i].isChecked():
             break
+      self.__flight = i + 1
       self.load_flight(i + 1)
 
 
@@ -324,8 +328,8 @@ class WindowMain(QMainWindow):
 
       if self.cameras_data \
                and not self.__shooting \
-               and self.cameras_data.get_frames_length('cam1') >= 90 \
-               and self.cameras_data.get_frames_length('cam2') >= 90  \
+               and self.cameras_data.get_frame_count('cam1') >= 90 \
+               and self.cameras_data.get_frame_count('cam2') >= 90  \
                and not self.aligning_cam1 and not self.aligning_cam2:
          # Calculate the speed
          cam1_frame_number = self.videos[0].get_current_frame_number()
@@ -353,8 +357,8 @@ class WindowMain(QMainWindow):
       """
       Set speed from camera frame numbers
       """
-      cam1_timestamp = self.cameras_data.get_timestamp_from_position("cam1", cam1_frame_number)
-      cam2_timestamp = self.cameras_data.get_timestamp_from_position("cam2", cam2_frame_number)
+      cam1_timestamp = self.cameras_data.get_frame("cam1", cam1_frame_number).get_timestamp()
+      cam2_timestamp = self.cameras_data.get_frame("cam2", cam2_frame_number).get_timestamp()
       milliseconds = abs(cam1_timestamp - cam2_timestamp)
 
       kilometer = float(self.distance) / 1000
@@ -383,9 +387,10 @@ class WindowMain(QMainWindow):
          self.stop_camera_wait = True
          CameraServer.stop_shooting()         
       else:
+         self.__flight = 1
          self.aligning_cam1 = True
          self.videos[0].set_shooting(True)
-         self.cameras_data = CamerasData.CamerasData()
+         self.cameras_data = CamerasData(self.__db, self.__flight)
          self.videos[0].cameras_data = self.cameras_data
          CameraServer.start_shooting(self.cameras_data, 1)
          self.enable_all_gui_elements(False)
@@ -399,9 +404,10 @@ class WindowMain(QMainWindow):
          self.stop_camera_wait = True
          CameraServer.stop_shooting()         
       else:
+         self.__flight = 1
          self.aligning_cam2 = True
          self.videos[1].set_shooting(True)
-         self.cameras_data = CamerasData.CamerasData()
+         self.cameras_data = CamerasData(self.__db, self.__flight)
          self.videos[1].cameras_data = self.cameras_data
          CameraServer.start_shooting(self.cameras_data, 1)
          self.enable_all_gui_elements(False)
@@ -412,10 +418,10 @@ class WindowMain(QMainWindow):
       if not CameraServer.is_ready_to_shoot():
          return False
 
-      for flight_number in range(0,20):
-         if self.ui.radio_buttons_flights[flight_number].isChecked():
+      for i in range(0,20):
+         if self.ui.radio_buttons_flights[i].isChecked():
             break
-      flight_number += 1
+      self.__flight = i + 1
 
       self.enable_all_gui_elements(False)
 
@@ -433,11 +439,11 @@ class WindowMain(QMainWindow):
       self.videos[1].reset()
       self.videos[0].set_shooting(True)
       self.videos[1].set_shooting(True)
-      self.cameras_data = CamerasData.CamerasData()
+      self.cameras_data = CamerasData(self.__db, self.__flight)
       self.videos[0].cameras_data = self.cameras_data
       self.videos[1].cameras_data = self.cameras_data
-      CameraServer.ServerData.flight_number = flight_number
-      CameraServer.start_shooting(self.cameras_data, flight_number)
+      CameraServer.ServerData.flight_number = self.__flight
+      CameraServer.start_shooting(self.cameras_data, self.__flight)
 
 
    def stopCameras(self):
@@ -523,8 +529,8 @@ class WindowMain(QMainWindow):
          self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, -1)
 
    def add_announcement(self, cam1_frame_number, cam2_frame_number, speed, direction):
-      cam1_timestamp = self.cameras_data.get_timestamp_from_position("cam1", cam1_frame_number)
-      cam2_timestamp = self.cameras_data.get_timestamp_from_position("cam2", cam2_frame_number)
+      cam1_timestamp = self.cameras_data.get_frame("cam1", cam1_frame_number).get_timestamp()
+      cam2_timestamp = self.cameras_data.get_frame("cam2", cam2_frame_number).get_timestamp()
       milliseconds = abs(cam1_timestamp - cam2_timestamp)
 
       self.announcements.append(Announcement(
@@ -546,12 +552,12 @@ class WindowMain(QMainWindow):
 
    def __save_announcements(self):
       logger.info("Saving announcements")
-      for flight_number in range(0, len(self.ui.radio_buttons_flights)):
-         if self.ui.radio_buttons_flights[flight_number].isChecked():
-            break
-      flight_number += 1
+#      for flight_number in range(0, len(self.ui.radio_buttons_flights)):
+#         if self.ui.radio_buttons_flights[flight_number].isChecked():
+#            break
+#      flight_number += 1
 
-      announcement_dao.store(self.__db, flight_number, self.announcements)
+      announcement_dao.store(self.__db, self.__flight, self.announcements)
 
    def __load_announcements(self, flight_number):
       logger.info("Loading announcements")

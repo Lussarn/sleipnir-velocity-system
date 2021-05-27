@@ -123,8 +123,7 @@ class Video:
    # Returns a video frame as a cv image and it's timestamp
    @timer("Time to read jpeg", logging.INFO, identifier='cam', average=1000)
    def __get_frame(self, cam, position):
-      start = time.time()
-      timestamp = self.cameras_data.get_timestamp_from_position(cam, position)
+      timestamp = self.cameras_data.get_frame(cam, position).get_timestamp()
       frame = frame_dao.load(self.__db, self.__flight, 1 if self.cam == 'cam1' else 2, position)
       if frame is None: return
       image_cv = simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
@@ -137,9 +136,9 @@ class Video:
 
    # Copy button, set the timestamp of the sibling video to this on
    def __onCopy(self):
-      timestamp_this = self.cameras_data.get_timestamp_from_position(self.cam, self.current_frame_number)
+      timestamp_this = self.cameras_data.get_frame(self.cam, self.current_frame_number).get_timestamp()
       for i in range(1, self.cameras_data.get_last_frame(self.sibling_video.cam).get_position() + 1):
-         timestamp_sibling = self.cameras_data.get_timestamp_from_position(self.sibling_video.cam, i)
+         timestamp_sibling = self.cameras_data.get_frame(self.sibling_video.cam, i).get_timestamp()
          if timestamp_sibling >= timestamp_this:
             break
       self.sibling_video.view_frame(i)

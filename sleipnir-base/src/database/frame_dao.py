@@ -61,13 +61,44 @@ def delete_flight(db: DB, flight: int):
         cur.close()
         db.release_write_lock()
 
-def load_flight_timestammps(db: DB, flight: int, camera: int):
+def load_flight_timestamps(db: DB, flight: int, camera: int):
     cur = db.get_conn().cursor()
     try:
         return cur.execute(
             '''SELECT position, timestamp FROM frame WHERE flight=? AND camera=?''',
             [str(flight),
             str(camera)]).fetchall()
+    except sqlite3.Error as e:
+        logger.error(str(e))
+        raise e
+    finally:
+        cur.close()
+
+def load_frame_count(db: DB, flight: int, camera: int) -> int:
+    cur = db.get_conn().cursor()
+    try:
+        rs = cur.execute(
+            '''SELECT MAX(position) FROM frame WHERE flight=? AND camera=?''',
+            [str(flight),
+            str(camera)]).fetchone()
+        if rs is None: return None
+        return int(rs[0])
+    except sqlite3.Error as e:
+        logger.error(str(e))
+        raise e
+    finally:
+        cur.close()
+
+def load_timestamp(db: DB, flight: int, cam: int, position: int) -> int:
+    cur = db.get_conn().cursor()
+    try:
+        row = cur.execute(
+            '''SELECT timestamp FROM frame WHERE position=? AND flight=? and camera=?''',
+            [str(position),
+            str(flight),
+            str(cam)]).fetchone()
+        if row is None: return None
+        return int(row[0])
     except sqlite3.Error as e:
         logger.error(str(e))
         raise e
