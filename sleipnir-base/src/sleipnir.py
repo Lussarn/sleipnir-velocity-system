@@ -23,7 +23,6 @@ import logger
 
 logger = logging.getLogger(__name__)
 
-
 class WindowMain(QMainWindow):
    videos = {}  # type: dict[int, Video]
 
@@ -166,9 +165,9 @@ class WindowMain(QMainWindow):
       self.videos[0].set_flight(self.__flight)
       self.videos[1].set_flight(self.__flight)
       self.videos[0].slider.setMinimum(1)
-      self.videos[0].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam1") else self.cameras_data.get_last_frame("cam1").get_position())
+      self.videos[0].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam1") else (self.cameras_data.get_last_frame("cam1").get_position() or 0))
       self.videos[1].slider.setMinimum(1)
-      self.videos[1].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam2") else self.cameras_data.get_last_frame("cam2").get_position())
+      self.videos[1].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam2") else (self.cameras_data.get_last_frame("cam2").get_position() or 0))
       self.videos[0].setStartTimestamp(self.cameras_data.get_start_timestamp())
       self.videos[1].setStartTimestamp(self.cameras_data.get_start_timestamp())
       self.videos[0].comparison_image_cv = None
@@ -183,7 +182,6 @@ class WindowMain(QMainWindow):
             break
       self.__flight = i + 1
       self.load_flight(i + 1)
-
 
    def __on_distance_changed(self, value):
       try:
@@ -328,8 +326,8 @@ class WindowMain(QMainWindow):
 
       if self.cameras_data \
                and not self.__shooting \
-               and self.cameras_data.get_frame_count('cam1') >= 90 \
-               and self.cameras_data.get_frame_count('cam2') >= 90  \
+               and (self.cameras_data.get_frame_count('cam1') or 0) >= 90 \
+               and (self.cameras_data.get_frame_count('cam2') or 0) >= 90  \
                and not self.aligning_cam1 and not self.aligning_cam2:
          # Calculate the speed
          cam1_frame_number = self.videos[0].get_current_frame_number()
@@ -552,16 +550,11 @@ class WindowMain(QMainWindow):
 
    def __save_announcements(self):
       logger.info("Saving announcements")
-#      for flight_number in range(0, len(self.ui.radio_buttons_flights)):
-#         if self.ui.radio_buttons_flights[flight_number].isChecked():
-#            break
-#      flight_number += 1
-
       announcement_dao.store(self.__db, self.__flight, self.announcements)
 
-   def __load_announcements(self, flight_number):
+   def __load_announcements(self, flight):
       logger.info("Loading announcements")
-      self.announcements = announcement_dao.fetch(self.__db, flight_number)
+      self.announcements = announcement_dao.fetch(self.__db, flight)
 
    def __del__(self):
       logger.debug("Mainwindow destructor called")

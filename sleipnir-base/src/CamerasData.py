@@ -64,7 +64,7 @@ class CamerasData:
       frame1_cam2 = self.get_frame('cam2', 1)
       timestamp_cam2 = frame1_cam2.get_timestamp() if frame1_cam2 is not None else 0
       self.__release_lock()
-      return max(timestamp_cam1, timestamp_cam2)
+      return max(timestamp_cam1 or 0, timestamp_cam2 or 0)
 
    def get_last_frame(self, cam: str) -> Frame:
       logger.debug("get_last_frame()")

@@ -78,7 +78,7 @@ def load_frame_count(db: DB, flight: int, camera: int) -> int:
     cur = db.get_conn().cursor()
     try:
         rs = cur.execute(
-            '''SELECT MAX(position) FROM frame WHERE flight=? AND camera=?''',
+            '''SELECT position FROM frame WHERE flight=? AND camera=? ORDER BY id DESC LIMIT 1''',
             [str(flight),
             str(camera)]).fetchone()
         if rs is None: return None

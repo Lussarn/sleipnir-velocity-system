@@ -33,13 +33,13 @@ def store(db: DB, flight_number: int, announcements: Announcements):
         cur.close()
         db.release_write_lock()
  
-def fetch(db: DB, flight_number: int):
+def fetch(db: DB, flight: int):
     cur = db.get_conn().cursor()
     announcements = Announcements()
     try:
         for row in cur.execute(
             '''SELECT cam1_position, cam2_position, duration, speed, direction FROM announcement WHERE flight=?''',
-            str(flight_number)):
+            [str(flight)]):
                   announcements.append(Announcement(
                      int(row[0]),
                      int(row[1]),
