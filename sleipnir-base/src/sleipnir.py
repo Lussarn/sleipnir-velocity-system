@@ -355,9 +355,9 @@ class WindowMain(QMainWindow):
       """
       Set speed from camera frame numbers
       """
-      cam1_timestamp = self.cameras_data.get_frame("cam1", cam1_frame_number).get_timestamp()
-      cam2_timestamp = self.cameras_data.get_frame("cam2", cam2_frame_number).get_timestamp()
-      milliseconds = abs(cam1_timestamp - cam2_timestamp)
+      cam1_timestamp = self.cameras_data.get_frame('cam1', cam1_frame_number).get_timestamp()
+      cam2_timestamp = self.cameras_data.get_frame('cam2', cam2_frame_number).get_timestamp()
+      milliseconds = abs((cam1_timestamp or 0)- (cam2_timestamp or 0))
 
       kilometer = float(self.distance) / 1000
       hours = float(milliseconds) / 1000 / 60  / 60
