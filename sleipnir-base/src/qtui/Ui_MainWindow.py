@@ -17,7 +17,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1017, 701)
+        MainWindow.resize(1090, 706)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
@@ -307,6 +307,12 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.listView_anouncements)
 
+        self.label_average = QLabel(self.centralwidget)
+        self.label_average.setObjectName(u"label_average")
+        self.label_average.setStyleSheet(u"font-size: 24px")
+
+        self.verticalLayout_4.addWidget(self.label_average)
+
         self.verticalSpacer_2 = QSpacerItem(170, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
 
         self.verticalLayout_4.addItem(self.verticalSpacer_2)
@@ -429,7 +435,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addItem(self.verticalSpacer_5)
 
-        self.verticalLayout_4.setStretch(9, 1)
+        self.verticalLayout_4.setStretch(10, 1)
 
         self.horizontalLayout_top.addLayout(self.verticalLayout_4)
 
@@ -534,6 +540,7 @@ class Ui_MainWindow(object):
         self.label_distance.setText(QCoreApplication.translate("MainWindow", u"Distance meters", None))
         self.checkBox_live.setText(QCoreApplication.translate("MainWindow", u"Live preview", None))
         self.checkBox_motion_track.setText(QCoreApplication.translate("MainWindow", u"Realtime Anouncements", None))
+        self.label_average.setText(QCoreApplication.translate("MainWindow", u"Average: ---", None))
         self.label_flightnumber.setText(QCoreApplication.translate("MainWindow", u"Flight number", None))
         self.radioButton_flight_1.setText(QCoreApplication.translate("MainWindow", u"1", None))
         self.radioButton_flight_4.setText(QCoreApplication.translate("MainWindow", u"4", None))

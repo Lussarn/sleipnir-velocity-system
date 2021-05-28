@@ -542,11 +542,19 @@ class WindowMain(QMainWindow):
 
    def __update_announcements_gui(self):
       self.model_announcements.clear()
+      max_left = 0
+      max_right = 0
       for announcement in self.announcements.get_announcements():
          out = ("--> " if (announcement.get_direction() == 1) else "<-- ") + \
             "%.3f" % (float(announcement.get_duration()) / 1000) + "s " + \
             str(announcement.get_speed()) + " km/h "
          self.model_announcements.appendRow(QtGui.QStandardItem(out))
+         if announcement.get_direction() == 1: max_right = max(max_right, announcement.get_speed())
+         if announcement.get_direction() == -1: max_left = max(max_left, announcement.get_speed())
+
+      average = (max_left + max_right) / 2 if max_left > 0 and max_right > 0 else 0
+      self.ui.label_average.setText("Average: " + "%.1f" % average + " km/h")
+
 
    def __save_announcements(self):
       logger.info("Saving announcements")

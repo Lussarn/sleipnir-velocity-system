@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1017</width>
-    <height>701</height>
+    <width>1090</width>
+    <height>706</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -459,7 +459,7 @@
          </layout>
         </item>
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0,0,0,0,0,0,0,1">
+         <layout class="QVBoxLayout" name="verticalLayout_4" stretch="0,0,0,0,0,0,0,0,0,0,1">
           <property name="spacing">
            <number>6</number>
           </property>
@@ -541,6 +541,16 @@
               <width>16777215</width>
               <height>400</height>
              </size>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_average">
+            <property name="styleSheet">
+             <string notr="true">font-size: 24px</string>
+            </property>
+            <property name="text">
+             <string>Average: ---</string>
             </property>
            </widget>
           </item>
