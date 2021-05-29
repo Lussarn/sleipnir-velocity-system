@@ -2,6 +2,6 @@
 sleipnir
 *.pyc
 record
-sleipnir-base/venv/*
+python/venv/*
 sleipnir.yml
 sleipnir.db

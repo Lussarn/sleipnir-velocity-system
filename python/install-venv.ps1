@@ -1,8 +1,8 @@
 
 Write-Output "Installing virtual invironment"
 
-if (-Not (Get-Location).Path.EndsWith("sleipnir-base")) {
-    Write-Output("Please cd to sleipnir-base directory and rerun..")
+if (-Not (Get-Location).Path.EndsWith("python")) {
+    Write-Output("Please cd to python directory and rerun..")
     exit 1
 }
 
@@ -23,3 +23,6 @@ pip install pywin32
 pip install pyyaml
 pip install pysqlite3
 pip install simplejpeg
+
+# ADitional libs for fake-camera
+pip install requests

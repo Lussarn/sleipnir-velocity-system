@@ -1,0 +1,5 @@
+{
+    "git.ignoreLimitWarning": true,
+    "python.pythonPath": "venv/Scripts/python.exe",
+    "python.analysis.extraPaths": ["sleipnir-base/src", "fake-camera/src"]
+}
