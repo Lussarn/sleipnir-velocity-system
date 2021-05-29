@@ -29,7 +29,7 @@ def store(db: DB, frame: Frame):
         cur.close()
         db.release_write_lock()
 
-def load(db: DB, flight: int, cam: int, position: int):
+def load(db: DB, flight: int, cam: int, position: int) -> Frame:
     cur = db.get_conn().cursor()
     try:
         row = cur.execute(

@@ -45,7 +45,6 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
    @timer("Http POST", logging.INFO, identifier=None, average=1000)
    def do_POST(self):
       global ServerData
-      start = time.time()
 
       ctype, pdict = cgi.parse_header(self.headers['content-type'])
       if ctype == 'multipart/form-data':
@@ -110,8 +109,11 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
    def send200(self, msg):
       self.send_response(200)
       self.send_header('Content-Type', 'text/plain')
+      payload = msg.encode('ASCII')
+      self.send_header('Content-Length: ', str(len(payload)))
       self.end_headers()
-      self.wfile.write(msg.encode('ASCII'))
+      self.wfile.write(payload)
+      self.wfile.flush()
 
 def __startHTTP(threadName, delay):
    server = ThreadingSimpleServer(('', 8000), SleipnirRequestHandler)
