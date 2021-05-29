@@ -4,7 +4,6 @@ import time
 import sys
 import base64
 
-
 sys.path.insert(0, '../sleipnir-base/src')
 
 from Configuration import Configuration
@@ -12,10 +11,23 @@ from database.DB import DB
 import database.frame_dao as frame_dao
 from Frame import Frame
 
+def usage():
+    print ('Usage:')
+    print ('fake-camera N')
+    print ('N - flight')
+    exit(1)
+
 cfg = Configuration('../sleipnir-base/sleipnir.yml')
 db = DB(cfg.get_or_throw('save_path'))
-flight = 2
 fps = 90
+
+try:
+    flight = int(sys.argv[1])
+except Exception as e:
+    usage()
+
+if flight < 2 or flight > 20:
+    usage()
 
 url = "http://terminator.lan:8000/"
 
@@ -48,9 +60,15 @@ cams = [
     Camera('cam2'),
 ]
 
+start = time.time()
+count  = 0
 while True:
+    ''' Rate limit  to fps '''
+    if count > (time.time() - start) * fps:
+        time.sleep(0.001)
+        continue
+    count += 1    
 
-    start = time.start()
 
     for cam_idx in range(2):
         cam = cams[cam_idx]
@@ -66,7 +84,7 @@ while True:
         if (cam.get_state() == Camera.STATE_UPLOADING):
             position = cam.get_position()
             cam.set_position(position + 1)
-            frame = frame_dao.load(db, flight, 1 if cam=='cam1' else 2, position)
+            frame = frame_dao.load(db, flight, 1 if cam.get_cam() == 'cam1' else 2, position)
             response = requests.post(url, data = { 
                 'action': 'uploadframe', 
                 'id': cam.get_cam(),
@@ -78,9 +96,3 @@ while True:
                 raise Exception("Sleipnir base gave error: " + response.status_code + " exiting!")
             if (response.content == b'OK-STOP'):
                 cam.set_state(Camera.STATE_IDLE)
-
-#            time.sleep(1)
-
-
-    # FIXME: implement real rate
-    time.sleep(0.001)

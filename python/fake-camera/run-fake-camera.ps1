@@ -6,4 +6,4 @@ if (-Not (Test-Path -Path ..\venv)) {
 }
 
 ..\venv\Scripts\activate.ps1
-python .\src\fake-camera.py
+python .\src\fake-camera.py $args[0]
