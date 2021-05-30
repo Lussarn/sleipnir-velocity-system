@@ -348,7 +348,8 @@ class FrameProcessingWorker(QtCore.QThread):
       start = time.time()
 
       image_gray_cv = self.__image_cv
-      image_blur_cv = cv.GaussianBlur(image_gray_cv, (13, 13), 0)
+      #13 13
+      image_blur_cv = cv.GaussianBlur(image_gray_cv, (9, 9), 0)
       found_motion = False
 
       if self.__comparison_image_cv is not None:
@@ -367,36 +368,51 @@ class FrameProcessingWorker(QtCore.QThread):
                self.video.direction = 90 * 6
          else:
             for c in self.__motion_boxes[self.__processing_frame_number]:
-               found_motion = False
                (x, y, w, h) = cv.boundingRect(c)
 
                # Set ground level
                if y > self.video.groundlevel:
                   continue
 
-               if cv.contourArea(c) < 15:
+               #15
+               if cv.contourArea(c) < 130:
                   continue
                if cv.contourArea(c) > 10000:
                   continue
-               if x < 160 and x + w > 160:
-                  found_motion = True
+               found_center_line = True if x < 160 and x + w > 160 else False
 
                cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
 
-               if found_motion and self.__processing_frame_number > 4 and self.video.direction == 0:
+               if found_center_line and self.__processing_frame_number > 4 and self.video.direction == 0:
                   # Check previous motion boxes
-                  direction = self.__check_overlap_previous(x, y, w, h, x, w, self.__processing_frame_number - 1, 10)
+                  last_box = Rect()
+                  test_frames = 10
+                  while True:
+                     if (test_frames > 10):
+                        logger.info("Need to test frames further back(" + str(test_frames)+ ") on frame: " + str(self.__processing_frame_number))
+                     direction = self.__check_overlap_previous(x, y, w, h, x, w, self.__processing_frame_number - 1, test_frames, last_box)
 
-                  self.video.direction = direction * 90 * 6
-#                     if self.video.direction != 0:
-#                        print self.video.direction
+                     self.video.direction = direction * 90 * 6
+                     # You need to run fairly straight to register
+                     if (abs(x - last_box.x) < abs(y - last_box.y) * 5):
+                        self.video.direction = 0
 
-                  if (self.video.direction != 0):
-                     found_motion = True
-                     break
-                  else:
-                     found_motion = False
+                     if (self.video.direction != 0):
+                        found_motion = True
+#                        print (cv.contourArea(c))
+                        if last_box.x > 70 and last_box.x < 230:
+                           test_frames += 10
+                           if test_frames < 40: 
+                              self.video.direction = 0
+                              continue
+                        break
+                     else:
+                        pass
+                        found_motion = False
+                        break
+                  if found_motion: break
                else:
+                  pass
                   found_motion = False
 
       self.__comparison_image_cv = image_blur_cv
@@ -404,12 +420,16 @@ class FrameProcessingWorker(QtCore.QThread):
       self.found_motion_frame_number = self.__processing_frame_number
       self.found_motion = found_motion
 
-   def __check_overlap_previous(self, x, y, w, h, x1, w1, frame_number, iterations):
+   def __check_overlap_previous(self, x, y, w, h, x1, w1, frame_number, iterations, rect):
 #      print "check overlap: " + str(frame_number) + " iteration: " + str(iterations)
       if not frame_number in self.__motion_boxes:
          return 0
       for c2 in self.__motion_boxes[frame_number]:
          (x2, y2, w2, h2) = cv.boundingRect(c2)
+         rect.x = x2
+         rect.y = y2
+         rect.w = w2
+         rect.h = h2
 
          if cv.contourArea(c2) < 15:
             continue
@@ -440,7 +460,7 @@ class FrameProcessingWorker(QtCore.QThread):
                return -1
             else:
                return 1
-         return self.__check_overlap_previous(x2, y2, w2, h2, x1, w1, frame_number - 1, iterations -1)
+         return self.__check_overlap_previous(x2, y2, w2, h2, x1, w1, frame_number - 1, iterations -1, rect)
       return 0
 
    # Return 0 on non overlap
@@ -460,3 +480,8 @@ class FrameProcessingWorker(QtCore.QThread):
       else:
          return 1   
    
+class Rect:
+   x = 0
+   y = 0
+   w = 0
+   h = 0
