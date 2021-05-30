@@ -11,7 +11,7 @@ def store(db: DB, flight_number: int, announcements: Announcements):
     db.acquire_write_lock()
     cur = db.get_conn().cursor()
     try:
-        cur.execute("DELETE FROM announcement WHERE flight=?", str(flight_number))
+        cur.execute("DELETE FROM announcement WHERE flight=?", [str(flight_number)])
         db.get_conn().commit()
         for announcement in announcements.get_announcements():
             cur.execute('''INSERT INTO announcement

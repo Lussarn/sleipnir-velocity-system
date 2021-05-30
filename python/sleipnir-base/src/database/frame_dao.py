@@ -50,9 +50,9 @@ def delete_flight(db: DB, flight: int):
     cur = db.get_conn().cursor()
     try:
         logger.debug("Deleting frames for flight " + str(flight))
-        cur.execute('DELETE FROM frame WHERE flight=?', str(flight))
+        cur.execute('DELETE FROM frame WHERE flight=?', [str(flight)])
         logger.debug("Deleting announcements for flight " + str(flight))
-        cur.execute('DELETE FROM announcement WHERE flight=?', str(flight))
+        cur.execute('DELETE FROM announcement WHERE flight=?', [str(flight)])
         db.get_conn().commit()
     except OperationalError as e:
         logger.error(str(e))
