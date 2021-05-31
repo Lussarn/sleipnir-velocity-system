@@ -66,12 +66,8 @@ while True:
     ''' Rate limit  to fps '''
     if count > (time.time() - start) * fps:
         time.sleep(0.001)
-        print ("sleep")
         continue
     count += 1    
-
-
-    start = time.time()
 
     for cam_idx in range(2):
         cam = cams[cam_idx]
@@ -99,6 +95,3 @@ while True:
                 raise Exception("Sleipnir base gave error: " + response.status_code + " exiting!")
             if (response.content == b'OK-STOP'):
                 cam.set_state(Camera.STATE_IDLE)
-
-    end = time.time()
-    print(end-start)
