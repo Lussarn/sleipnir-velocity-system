@@ -381,8 +381,6 @@ class FrameProcessingWorker(QtCore.QThread):
                   continue
                found_center_line = True if x < 160 and x + w > 160 else False
 
-               print(cv.contourArea(c))
-
                cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
 
                if found_center_line and self.__processing_frame_number > 4 and self.video.direction == 0:
@@ -416,6 +414,9 @@ class FrameProcessingWorker(QtCore.QThread):
                else:
                   pass
                   found_motion = False
+
+      if found_motion:
+         logger.info("Motion found: area: " + str(cv.contourArea(c)))
 
       self.__comparison_image_cv = image_blur_cv
       self.image = image_gray_cv
