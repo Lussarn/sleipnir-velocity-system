@@ -29,7 +29,7 @@ except Exception as e:
 if flight < 2 or flight > 20:
     usage()
 
-url = "http://terminator.lan:8000/"
+url = "http://127.0.1.1:8000/"
 
 class Camera:
     STATE_IDLE = 0
@@ -66,9 +66,12 @@ while True:
     ''' Rate limit  to fps '''
     if count > (time.time() - start) * fps:
         time.sleep(0.001)
+        print ("sleep")
         continue
     count += 1    
 
+
+    start = time.time()
 
     for cam_idx in range(2):
         cam = cams[cam_idx]
@@ -96,3 +99,6 @@ while True:
                 raise Exception("Sleipnir base gave error: " + response.status_code + " exiting!")
             if (response.content == b'OK-STOP'):
                 cam.set_state(Camera.STATE_IDLE)
+
+    end = time.time()
+    print(end-start)
