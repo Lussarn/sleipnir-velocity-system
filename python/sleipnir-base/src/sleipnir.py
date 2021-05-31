@@ -16,6 +16,7 @@ import database.announcement_dao as announcement_dao
 from Frame import Frame
 
 from Sound import Sound
+from function_timer import timer
 
 import sys
 import logging
@@ -212,6 +213,8 @@ class WindowMain(QMainWindow):
       self.announcements.remove_announcement_by_index(index)
       self.__update_announcements_gui()
 
+
+   @timer("Time to run gui", logging.INFO, None, average=1000)
    def __timerGui(self):
       online = CameraServer.is_online("cam1") and CameraServer.is_online("cam2")
 
@@ -440,7 +443,7 @@ class WindowMain(QMainWindow):
 
       self.shooting_frame_number_cam1 = 1
       self.shooting_frame_number_cam2 = 1
-      self.timer.start(6)
+      self.timer.start(10)
 
       self.ui.label_speed.setText("")
       self.stop_camera_wait = False
