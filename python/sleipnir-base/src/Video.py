@@ -241,7 +241,7 @@ class Video:
       if live_preview and self.current_frame_number % 3 == 0:
          self.__update(frame)
       if motion["motion"]:
-         return { "frame_number": motion["frame_number"], "direction": self.direction / abs(self.direction) }
+         return { "frame_number": motion["frame_number"], "direction": self.direction / (1 if self.direction == 0 else abs(self.direction)) }
       return None
 
    # Find if an image have motion
