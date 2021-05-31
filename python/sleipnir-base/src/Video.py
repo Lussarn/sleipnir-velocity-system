@@ -375,11 +375,13 @@ class FrameProcessingWorker(QtCore.QThread):
                   continue
 
                #15
-               if cv.contourArea(c) < 130:
+               if cv.contourArea(c) < 135:
                   continue
                if cv.contourArea(c) > 10000:
                   continue
                found_center_line = True if x < 160 and x + w > 160 else False
+
+               print(cv.contourArea(c))
 
                cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
 
