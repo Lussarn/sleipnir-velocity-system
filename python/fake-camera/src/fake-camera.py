@@ -77,6 +77,8 @@ while True:
             if (response.status_code != 200):
                 raise Exception("Sleipnir base gave error: " + response.status_code + " exiting!")
             if (response.content == b'OK-START'):
+                start = time.time()
+                count  = 0
                 cam.set_state(Camera.STATE_UPLOADING)
                 cam.set_position(1)
 
