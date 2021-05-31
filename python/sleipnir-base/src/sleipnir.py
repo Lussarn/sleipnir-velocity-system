@@ -317,6 +317,7 @@ class WindowMain(QMainWindow):
 
          if self.run_direction is not None and self.run_abort_timestamp < int(round(time.time() * 1000)):
             # Abort run
+            logger.info("Aborting run due to timeout")
             self.run_direction = None
             self.__sound.play_error()
 
@@ -510,17 +511,23 @@ class WindowMain(QMainWindow):
          # Max 6 second run
          self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
          self.__sound.play_gate_1()
+         logger.info("Initiating time run from cam 1 -->")
 
       if cam == "cam2" and self.run_direction == "RIGHT" and motion["direction"] == 1:
          # Ending run on Cam 2
          self.run_frame_number_cam2 = motion["frame_number"]
          self.run_direction = None
          kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
+         logger.info("Timed run completed on cam 2 -->")
          self.__sound.play_gate_2()
          if (kmh < 500):
             self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
             self.run_tell_speed = kmh
-         self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, 1)
+            logger.info("Adding announcement --> " + str(kmh) + " km/h")
+            self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, 1)
+         else:
+            logger.warning("Do not add announcement over 500 km/h")
+      
 
       # Check left run
       if cam == "cam2" and self.run_direction == None and motion["direction"] == -1:
@@ -531,6 +538,7 @@ class WindowMain(QMainWindow):
          # Max 6 second run
          self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
          self.__sound.play_gate_1()
+         logger.info("Initiating time run from cam 2 <--")
 
       if cam == "cam1" and self.run_direction == "LEFT" and motion["direction"] == -1:
          # Ending run on Cam 1
@@ -538,10 +546,14 @@ class WindowMain(QMainWindow):
          self.run_direction = None
          kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
          self.__sound.play_gate_2()
+         logger.info("Timed run completed on cam 2 <--")
          if (kmh < 500):
             self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
             self.run_tell_speed = kmh
-         self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, -1)
+            self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, -1)
+            logger.info("Adding announcement <-- " + str(kmh) + " km/h")
+         else:
+            logger.warning("Do not add announcement over 500 km/h")
 
    def add_announcement(self, cam1_frame_number, cam2_frame_number, speed, direction):
       cam1_timestamp = self.cameras_data.get_frame("cam1", cam1_frame_number).get_timestamp()
