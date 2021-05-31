@@ -44,3 +44,6 @@ class Announcements:
 
    def get_announcements(self):
       return self.__announcements
+
+   def remove_announcement_by_index(self, index):
+      del self.__announcements[index]

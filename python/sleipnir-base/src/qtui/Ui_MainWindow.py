@@ -17,7 +17,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1090, 706)
+        MainWindow.resize(1090, 838)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
@@ -307,6 +307,11 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.listView_anouncements)
 
+        self.pushButton_remove_announcement = QPushButton(self.centralwidget)
+        self.pushButton_remove_announcement.setObjectName(u"pushButton_remove_announcement")
+
+        self.verticalLayout_4.addWidget(self.pushButton_remove_announcement)
+
         self.label_average = QLabel(self.centralwidget)
         self.label_average.setObjectName(u"label_average")
         self.label_average.setStyleSheet(u"font-size: 24px")
@@ -435,7 +440,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addItem(self.verticalSpacer_5)
 
-        self.verticalLayout_4.setStretch(10, 1)
+        self.verticalLayout_4.setStretch(11, 1)
 
         self.horizontalLayout_top.addLayout(self.verticalLayout_4)
 
@@ -539,7 +544,8 @@ class Ui_MainWindow(object):
         self.pushbutton_video2_playforward.setText(QCoreApplication.translate("MainWindow", u">>", None))
         self.label_distance.setText(QCoreApplication.translate("MainWindow", u"Distance meters", None))
         self.checkBox_live.setText(QCoreApplication.translate("MainWindow", u"Live preview", None))
-        self.checkBox_motion_track.setText(QCoreApplication.translate("MainWindow", u"Realtime Anouncements", None))
+        self.checkBox_motion_track.setText(QCoreApplication.translate("MainWindow", u"Realtime Announcements", None))
+        self.pushButton_remove_announcement.setText(QCoreApplication.translate("MainWindow", u"Remove Announcement", None))
         self.label_average.setText(QCoreApplication.translate("MainWindow", u"Average: ---", None))
         self.label_flightnumber.setText(QCoreApplication.translate("MainWindow", u"Flight number", None))
         self.radioButton_flight_1.setText(QCoreApplication.translate("MainWindow", u"1", None))

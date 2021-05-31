@@ -137,6 +137,7 @@ class WindowMain(QMainWindow):
       self.ui.lineEdit_distance.textChanged.connect(self.__on_distance_changed)
 
       self.ui.listView_anouncements.clicked.connect(self.__on_announcement_changed)
+      self.ui.pushButton_remove_announcement.clicked.connect(self.__on_remove_announcement)
 
       # Show GUI
       self.show()
@@ -200,6 +201,16 @@ class WindowMain(QMainWindow):
    def __on_announcement_changed(self, event):
       self.videos[0].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam1_position())
       self.videos[1].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam2_position())
+
+   def __on_remove_announcement(self, event):
+      index = self.ui.listView_anouncements.currentIndex().row()
+      if index == -1:
+         QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
+         return
+      ret = QMessageBox.question(self, 'Sleipnir Information', "Confirm removing announcement", QMessageBox.Ok | QMessageBox.Cancel)
+      if ret == QMessageBox.Cancel: return
+      self.announcements.remove_announcement_by_index(index)
+      self.__update_announcements_gui()
 
    def __timerGui(self):
       online = CameraServer.is_online("cam1") and CameraServer.is_online("cam2")
@@ -477,6 +488,9 @@ class WindowMain(QMainWindow):
       self.ui.checkBox_motion_track.setEnabled(enabled)
       self.ui.listView_anouncements.setEnabled(enabled)
       self.ui.verticalSlider_groundlevel.setEnabled(enabled)
+
+      self.ui.pushButton_remove_announcement.setEnabled(enabled)
+
 
       for i in range(0, len(self.ui.radio_buttons_flights)):
          self.ui.radio_buttons_flights[i].setEnabled(enabled)
