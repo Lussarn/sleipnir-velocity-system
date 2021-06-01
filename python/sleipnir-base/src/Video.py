@@ -13,10 +13,7 @@ from function_timer import timer
 import logging
 logger = logging.getLogger(__name__)
 
-from multiprocessing import Process
-
 class Video:
-
    def __init__(self, db: DB, cam: str, flight, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
 
       self.__db = db
@@ -262,10 +259,12 @@ class Video:
          logger.error("Analyzer still running on camera " + self.cam)
          return None
  
-      image = self.analyzer_worker.analyzer_done_message.get_image()
-      self.direction = self.analyzer_worker.analyzer_done_message.get_direction()
-      found_motion = self.analyzer_worker.analyzer_done_message.have_motion()
-      found_motion_position = self.analyzer_worker.analyzer_done_message.get_position()
+      msg = self.analyzer_worker.get_analyzer_done_message()
+
+      image = msg.get_image()
+      self.direction = msg.get_direction()
+      found_motion = msg.have_motion()
+      found_motion_position = msg.get_position()
 
       msg = AnalyzerDoMessage(image_cv, self.current_frame_number, self.groundlevel)
       self.analyzer_worker.do_processing(msg)
@@ -353,10 +352,13 @@ class AnalyzerWorker(QtCore.QThread):
 
       self.analyzer_do_message = None
       # Message to transfer back to main program
-      self.analyzer_done_message = AnalyzerDoneMessage(None, 0, -1)
+      self.__analyzer_done_message = AnalyzerDoneMessage(None, 0, -1)
 
       QtCore.QThread.__init__(self)
       self.setObjectName("Analyzer-" + self.__cam + "-QThread")
+
+   def get_analyzer_done_message(self):
+      return self.__analyzer_done_message
 
    def do_processing(self, analyzer_do_message: AnalyzerDoMessage):
       self.analyzer_do_message = analyzer_do_message
@@ -430,7 +432,7 @@ class AnalyzerWorker(QtCore.QThread):
       if direction != 0:
          logger.info("Motion found: area: " + str(cv.contourArea(c)))
 
-      self.analyzer_done_message = AnalyzerDoneMessage(
+      self.__analyzer_done_message = AnalyzerDoneMessage(
          __image_gray_cv, 
          direction,
          position if direction != 0 else -1)
