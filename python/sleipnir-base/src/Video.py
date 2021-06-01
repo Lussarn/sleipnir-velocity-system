@@ -13,6 +13,8 @@ from function_timer import timer
 import logging
 logger = logging.getLogger(__name__)
 
+from multiprocessing import Process
+
 class Video:
 
    def __init__(self, db: DB, cam: str, flight, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
@@ -75,7 +77,7 @@ class Video:
       self.timer.timeout.connect(self.__timerplay)
 
       # Setup worker thread (reason to have this is to utilize multicore)
-      self.analyzer_worker = AnalyzerWorker(self.cam, self)
+      self.analyzer_worker = AnalyzerWorker(self.cam)
 
    # Sibling video is the Video instance of the other camera
    def set_sibling_video(self, sibling_video):
@@ -336,17 +338,9 @@ class AnalyzerDoneMessage:
 
 ''' Worker thread doing the actual analyzing '''
 class AnalyzerWorker(QtCore.QThread):
-   def __init__(self, cam: str, video):
+   def __init__(self, cam: str):
+      # "cam1" or "cam2"
       self.__cam = cam
-
-      # Video instance
-      self.__video = video
-
-      # Image cv needed for processing
-#      self.__image_cv = None
-
-      # Frame number for processing
-#      self.__processing_position = 0
 
       # Comparision for motion tracking
       self.__comparison_image_cv = None
@@ -366,9 +360,6 @@ class AnalyzerWorker(QtCore.QThread):
 
    def do_processing(self, analyzer_do_message: AnalyzerDoMessage):
       self.analyzer_do_message = analyzer_do_message
-#      self.__image_cv = analyzerDoMessage.get_image()
-#      self.__processing_position = analyzerDoMessage.get_position()
-
       self.start()
 
    def run(self):
