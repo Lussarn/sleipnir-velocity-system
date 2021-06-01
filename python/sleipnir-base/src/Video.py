@@ -261,9 +261,10 @@ class Video:
          return None
  
       image = self.frame_processing_worker.image
+      self.direction =  self.frame_processing_worker.direction
       found_motion = False if self.frame_processing_worker.found_motion_position == -1 else True
       found_motion_frame_number = self.frame_processing_worker.found_motion_position
-
+      
       self.frame_processing_worker.do_processing(image_cv, self.current_frame_number)
 
       return { "motion": found_motion, "image": image, "frame_number": found_motion_frame_number }
@@ -391,19 +392,19 @@ class FrameProcessingWorker(QtCore.QThread):
                   while True:
                      if (test_frames > 10):
                         logger.info("Need to test frames further back(" + str(test_frames)+ ") on frame: " + str(self.__processing_position))
-                     self.__video.direction = self.__check_overlap_previous(x, y, w, h, x, w, self.__processing_position - 1, test_frames, last_box)
+                     direction = self.__check_overlap_previous(x, y, w, h, x, w, self.__processing_position - 1, test_frames, last_box)
 
                      # You need to run fairly straight to register
                      if (abs(x - last_box.x) < abs(y - last_box.y) * 5):
-                        self.__video.direction = 0
+                        direction = 0
 
-                     if (self.__video.direction != 0):
+                     if (direction != 0):
                         found_motion = True
 #                        print (cv.contourArea(c))
                         if last_box.x > 70 and last_box.x < 230:
                            test_frames += 10
                            if test_frames < 40: 
-                              self.__video.direction = 0
+                              direction = 0
                               found_motion = False
                               continue
                         break
@@ -421,6 +422,7 @@ class FrameProcessingWorker(QtCore.QThread):
 
       self.__comparison_image_cv = image_blur_cv
       self.image = image_gray_cv
+      self.direction = direction
       if (found_motion):
          self.found_motion_position = self.__processing_position
 
