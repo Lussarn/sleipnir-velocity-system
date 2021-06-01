@@ -30,6 +30,8 @@ if flight < 2 or flight > 20:
     usage()
 
 jump = 0
+if len(sys.argv) > 2:
+    jump = int(sys.argv[2])
 
 url = "http://127.0.1.1:8000/"
 
