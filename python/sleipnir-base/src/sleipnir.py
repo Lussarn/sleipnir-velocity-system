@@ -504,19 +504,19 @@ class WindowMain(QMainWindow):
       """
       if cam == "cam1" and self.run_direction == None and motion["direction"] == -1:
          # Camera 1 triggered LEFT run without being on a timed run. Reset the camera
-         self.videos[0].direction = 1
+         self.videos[0].currently_tracking = 0
          logger.info("Camera 1 triggered the wrong way for start of run, reseting")
       if cam == "cam2" and self.run_direction == None and motion["direction"] == 1:
          # Camera 1 triggered RIGHT run without being on a timed run. Reset the camera
-         self.videos[1].direction = -1
+         self.videos[1].currently_tracking = 0
          logger.info("Camera 2 triggered the wrong way for start of run, reseting")
       if cam == "cam1" and self.run_direction == 'LEFT' and motion["direction"] == 1:
          # Camera 1 triggered LEFT run without being on a timed run. Reset the camera
-         self.videos[0].direction = 1
+         self.videos[0].currently_tracking = 0
          logger.info("Camera 1 triggered the wrong way in run, reseting")
       if cam == "cam2" and self.run_direction == 'RIGHT' and motion["direction"] == -1:
          # Camera 1 triggered RIGHT run without being on a timed run. Reset the camera
-         self.videos[1].direction = -1
+         self.videos[1].currently_tracking = 0
          logger.info("Camera 2 triggered the wrong way in run, reseting")
 
       # Check right run

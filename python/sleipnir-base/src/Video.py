@@ -28,6 +28,7 @@ class Video:
 
       # Motion direction
       self.direction = 0
+      self.currently_tracking = 0
 
       # Currently shooting
       self.shooting = False
@@ -228,6 +229,8 @@ class Video:
       return self.frame_processing_worker.isRunning()
 
    def view_frame_motion_track(self, frame_number, live_preview = True):
+      if self.currently_tracking > 0: self.currently_tracking -= 1
+
       self.current_frame_number = frame_number
       frame = self.__get_frame(self.cam, self.current_frame_number)
       if not frame:
@@ -241,7 +244,10 @@ class Video:
       if live_preview and self.current_frame_number % 3 == 0:
          self.__update(frame)
       if motion["motion"]:
-         return { "frame_number": motion["frame_number"], "direction": self.direction / (1 if self.direction == 0 else abs(self.direction)) }
+         self.currently_tracking = 90 * 6
+         return { 
+            "frame_number": motion["frame_number"], 
+            "direction": self.direction / (1 if self.direction == 0 else abs(self.direction)) }
       return None
 
    # Find if an image have motion
@@ -250,18 +256,13 @@ class Video:
          logger.error("Image lost on camera " + self.cam + " image_cv == None")
          return None
 
-#      self.frame_processing_worker.wait()
-
       if self.frame_processing_worker.isRunning():
          logger.error("Analyzer still running on camera " + self.cam)
          return None
  
       image = self.frame_processing_worker.image
-      found_motion = self.frame_processing_worker.found_motion
-      found_motion_frame_number = self.frame_processing_worker.found_motion_frame_number
-
-      if self.direction < 0: self.direction +=1
-      if self.direction > 0: self.direction -=1
+      found_motion = False if self.frame_processing_worker.found_motion_position == -1 else True
+      found_motion_frame_number = self.frame_processing_worker.found_motion_position
 
       self.frame_processing_worker.do_processing(image_cv, self.current_frame_number)
 
@@ -293,17 +294,17 @@ class Video:
       return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
 
 
-
+''' Worker thread doing the actual analyzing '''
 class FrameProcessingWorker(QtCore.QThread):
    def __init__(self, video):
       # Video instance
-      self.video = video
+      self.__video = video
 
       # Image cv needed for processing
       self.__image_cv = None
 
       # Frame number for processing
-      self.__processing_frame_number = 0
+      self.__processing_position = 0
 
       # Comparision for motion tracking
       self.__comparison_image_cv = None
@@ -311,39 +312,39 @@ class FrameProcessingWorker(QtCore.QThread):
       # Motion boxes for all frames
       self.__motion_boxes = {}
 
-      # Found motion on frame number
-      self.found_motion_frame_number = 0
+      # Found motion on position 
+      self.found_motion_position = -1
 
       # Image returned by the have motion
       self.image = None
-
-      # Found motion returned
-      self.found_motion = False
 
       # Last frame analyzed
       self.__last_frame_number = 0
 
       QtCore.QThread.__init__(self)
-      self.setObjectName("Analyzer-" + self.video.cam + "-QThread")
+      self.setObjectName("Analyzer-" + self.__video.cam + "-QThread")
 
-   def do_processing(self, image_cv, processing_frame_number):
+   def do_processing(self, image_cv, processing_position):
       self.__image_cv = image_cv
-      self.__processing_frame_number = processing_frame_number
+      self.__processing_position = processing_position
       self.start()
 
    def run(self):
-      self.analyze(self.video.cam)
+      self.analyze(self.__video.cam)
     
    @timer("Time to analyze", logging.INFO, identifier='cam', average=1000)
    def analyze(self, cam):
       # We do not want to analyze the same frame twice
-      if self.__processing_frame_number == self.__last_frame_number:
+      if self.__processing_position == self.__last_frame_number:
          return
 
+      # SEt frame number to -1 to indicate we did not found any motion
+      self.found_motion_position = -1
+
       # Check to see if we are lagging behind
-      if self.__last_frame_number + 1 != self.__processing_frame_number:
-         logger.warning("Missed frame on camera " + cam + ": " + str(self.__processing_frame_number))
-      self.__last_frame_number = self.__processing_frame_number
+      if self.__last_frame_number + 1 != self.__processing_position:
+         logger.warning("Missed frame on camera " + cam + ": " + str(self.__processing_position))
+      self.__last_frame_number = self.__processing_position
 
       start = time.time()
 
@@ -357,21 +358,21 @@ class FrameProcessingWorker(QtCore.QThread):
          frame_delta = cv.absdiff(self.__comparison_image_cv, image_blur_cv)
          threshold = cv.threshold(frame_delta, 2, 255, cv.THRESH_BINARY)[1]
          threshold = cv.dilate(threshold, None, iterations=3)
-         (self.__motion_boxes[self.__processing_frame_number], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
+         (self.__motion_boxes[self.__processing_position], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 #            print len(self.__motion_boxes[self.current_frame_number])
 
          #DEBUG  MOTION TRACK
 #            if len(self.__motion_boxes[self.current_frame_number]) > 30:
          if False:
-            if (self.video.direction == 0):
+            if (self.__video.direction == 0):
                found_motion = True
-               self.video.direction = 90 * 6
+               self.__video.direction = 90 * 6
          else:
-            for c in self.__motion_boxes[self.__processing_frame_number]:
+            for c in self.__motion_boxes[self.__processing_position]:
                (x, y, w, h) = cv.boundingRect(c)
 
                # Set ground level
-               if y > self.video.groundlevel:
+               if y > self.__video.groundlevel:
                   continue
 
                #15
@@ -383,27 +384,27 @@ class FrameProcessingWorker(QtCore.QThread):
 
                cv.rectangle(image_gray_cv, (x - 2, y - 2), (x + w + 4, y + h + 4), (0, 0, 0), 2)
 
-               if found_center_line and self.__processing_frame_number > 4 and self.video.direction == 0:
+               if found_center_line and self.__processing_position > 4 and self.__video.currently_tracking == 0:
                   # Check previous motion boxes
                   last_box = Rect()
                   test_frames = 10
                   while True:
                      if (test_frames > 10):
-                        logger.info("Need to test frames further back(" + str(test_frames)+ ") on frame: " + str(self.__processing_frame_number))
-                     direction = self.__check_overlap_previous(x, y, w, h, x, w, self.__processing_frame_number - 1, test_frames, last_box)
+                        logger.info("Need to test frames further back(" + str(test_frames)+ ") on frame: " + str(self.__processing_position))
+                     self.__video.direction = self.__check_overlap_previous(x, y, w, h, x, w, self.__processing_position - 1, test_frames, last_box)
 
-                     self.video.direction = direction * 90 * 6
                      # You need to run fairly straight to register
                      if (abs(x - last_box.x) < abs(y - last_box.y) * 5):
-                        self.video.direction = 0
+                        self.__video.direction = 0
 
-                     if (self.video.direction != 0):
+                     if (self.__video.direction != 0):
                         found_motion = True
 #                        print (cv.contourArea(c))
                         if last_box.x > 70 and last_box.x < 230:
                            test_frames += 10
                            if test_frames < 40: 
-                              self.video.direction = 0
+                              self.__video.direction = 0
+                              found_motion = False
                               continue
                         break
                      else:
@@ -420,8 +421,8 @@ class FrameProcessingWorker(QtCore.QThread):
 
       self.__comparison_image_cv = image_blur_cv
       self.image = image_gray_cv
-      self.found_motion_frame_number = self.__processing_frame_number
-      self.found_motion = found_motion
+      if (found_motion):
+         self.found_motion_position = self.__processing_position
 
    def __check_overlap_previous(self, x, y, w, h, x1, w1, frame_number, iterations, rect):
 #      print "check overlap: " + str(frame_number) + " iteration: " + str(iterations)

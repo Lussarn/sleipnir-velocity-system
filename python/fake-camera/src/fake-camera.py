@@ -29,6 +29,8 @@ except Exception as e:
 if flight < 2 or flight > 20:
     usage()
 
+jump = 0
+
 url = "http://127.0.1.1:8000/"
 
 class Camera:
@@ -85,11 +87,11 @@ while True:
         if (cam.get_state() == Camera.STATE_UPLOADING):
             position = cam.get_position()
             cam.set_position(position + 1)
-            frame = frame_dao.load(db, flight, 1 if cam.get_cam() == 'cam1' else 2, position)
+            frame = frame_dao.load(db, flight, 1 if cam.get_cam() == 'cam1' else 2, position + jump)
             response = requests.post(url, data = { 
                 'action': 'uploadframe', 
                 'id': cam.get_cam(),
-                'framenumber': frame.get_position(),
+                'framenumber': frame.get_position() - jump,
                 'timestamp': frame.get_timestamp(),
                 'data': base64.encodebytes(frame.get_image())
                 }, timeout=1)
