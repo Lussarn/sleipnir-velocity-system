@@ -150,14 +150,14 @@ size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *chunk){
    return realsize;
 }
 
-int http_post(char *url, void *post_data, void *answer) {
-   CURL *curl;
+int http_post(CURL *curl, char *url, void *post_data, void *answer) {
+//   CURL *curl;
    CURLcode res = 0;
    char chunk[256];
    struct curl_slist *headerlist=NULL;
    static const char buf[] = "Expect:";
 
-   curl = curl_easy_init();
+//   curl = curl_easy_init();
    headerlist = curl_slist_append(headerlist, buf);
    if(curl) {
       curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
@@ -174,7 +174,7 @@ int http_post(char *url, void *post_data, void *answer) {
             strncpy(answer, chunk + 3, 253);
          }
       }
-      curl_easy_cleanup(curl);
+//      curl_easy_cleanup(curl);
    }
    curl_slist_free_all (headerlist);
    return res;
@@ -279,7 +279,7 @@ void *thread_io_func(void *arg) {
       while(run_threads == 1) {
          sprintf(post_data, "action=startcamera&id=%s", state->identifier);
          memset(answer,0,strlen(answer));
-         res = http_post(state->url, post_data, &answer);
+         res = http_post(curl, state->url, post_data, &answer);
          if (res != CURLE_OK) {
             usleep(30000);
             continue;
@@ -304,7 +304,7 @@ void *thread_io_func(void *arg) {
 
          sprintf(post_data, "action=uploadframe&id=%s&framenumber=%d&timestamp=%" PRIu64 "&data=%s", state->identifier, frame_number, jpegs[frame_number].timestamp, jpegs[frame_number].data);
          memset(answer,0,strlen(answer));
-         res = http_post(state->url, post_data, &answer);
+         res = http_post(curl, state->url, post_data, &answer);
          if (res != CURLE_OK) {
             break;
          }
