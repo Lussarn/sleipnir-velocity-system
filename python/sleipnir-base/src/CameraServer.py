@@ -18,13 +18,15 @@ from database.DB import DB
 import database.frame_dao as frame_dao
 from function_timer import timer
 
+from multiprocessing import Process, Pipe
+
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 class ServerData:
    db = None
-   flight_number = 1
+   flight = 1
    request_pictures_from_camera = False
    last_picture_timestamp = 0
 
@@ -87,7 +89,7 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
          image = base64.b64decode(postvars[b"data"][0].decode('ASCII'))
 
          frame = Frame(
-            ServerData.flight_number,
+            ServerData.flight,
             1 if cam == 'cam1' else 2,
             position,
             timestamp,
@@ -115,11 +117,11 @@ class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
       self.wfile.write(payload)
       self.wfile.flush()
 
-def __startHTTP(threadName, delay):
+
+
+def __startHTTP():
    server = ThreadingSimpleServer(('', 8000), SleipnirRequestHandler)
-   while True:
-      sys.stdout.flush()
-      server.handle_request()
+   server.serve_forever()
 
 def is_shooting():
    global ServerData
@@ -170,4 +172,4 @@ def start_server(db: DB):
    global ServerData
    ServerData.db = db
    logger.info("Starting camera server")
-   _thread.start_new_thread(__startHTTP, ("HTTP", 0.001))
+   _thread.start_new_thread(__startHTTP, ())
