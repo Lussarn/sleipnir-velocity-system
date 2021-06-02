@@ -33,7 +33,7 @@ jump = 0
 if len(sys.argv) > 2:
     jump = int(sys.argv[2])
 
-url = "http://127.0.1.1:8000/"
+url = "http://127.0.0.1:8000/"
 
 class Camera:
     STATE_IDLE = 0

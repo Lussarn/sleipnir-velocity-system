@@ -23,6 +23,7 @@ pip install pywin32
 pip install pyyaml
 pip install pysqlite3
 pip install simplejpeg
+pip install tornado
 
 # ADitional libs for fake-camera
 pip install requests

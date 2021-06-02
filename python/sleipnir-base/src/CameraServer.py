@@ -1,9 +1,5 @@
 #!/bin/env python
 
-from socketserver import ThreadingMixIn
-from http.server import SimpleHTTPRequestHandler
-from http.server import HTTPServer
-import http.server
 from urllib.parse import urlparse
 import urllib
 import _thread
@@ -39,32 +35,15 @@ class ServerData:
    # logs
    last_log_message_cam_asking_to_start = {'cam1': 0, 'cam2': 0}
 
-class ThreadingSimpleServer(ThreadingMixIn, HTTPServer):
-   """Handle requests in a separate thread."""
-
-#class SleipnirRequestHandler(http.server.SimpleHTTPRequestHandler):
 class TornadoHandler(tornado.web.RequestHandler):
    def log_message(self, format, *args):
       pass
 
    @timer("Http POST", logging.INFO, identifier=None, average=1000)
-#   def do_POST(self):
    def post(self):
       global ServerData
 
-
-      ctype, pdict = cgi.parse_header(self._headers['content-type'])
       postvars = urllib.parse.parse_qs(self.request.body, keep_blank_values=1)
-#      if ctype == 'multipart/form-data':
-#         postvars = cgi.parse_multipart(self.rfile, pdict)
-#         print("BODY")
-#         print(self.request.body)
-#      elif ctype == 'application/x-www-form-urlencoded':
-#         length = int(self.headers['content-length'])
-#         postvars = urllib.parse.parse_qs(self.rfile.read(length), keep_blank_values=1)
-#      else:
-#         postvars = {}
-
       action = postvars[b'action'][0].decode('utf-8')
 
       if (action == "startcamera"):
@@ -117,23 +96,12 @@ class TornadoHandler(tornado.web.RequestHandler):
             self.send200("OK-STOP")
 
    def send200(self, msg):
-#      self.send_response(200)
       self.set_status(200)
-#      self.set
-#      self.send_header('Content-Type', 'text/plain')
       self.set_header('Content-Type', 'text/plain')
       payload = msg.encode('ASCII')
       self.write(payload)
-#      self.send_header('Content-Length: ', str(len(payload)))
-#      self.end_headers()
-#      self.wfile.write(payload)
-#      self.wfile.flush()
-
-
 
 def __startHTTP():
-#   server = ThreadingSimpleServer(('', 8000), SleipnirRequestHandler)
-#   server.serve_forever()
    asyncio.set_event_loop(asyncio.new_event_loop())
    app = tornado.web.Application([
       (r"/", TornadoHandler),
