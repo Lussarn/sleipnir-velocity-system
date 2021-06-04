@@ -356,6 +356,7 @@ class WindowMain(QMainWindow):
    def get_frame_allow_lag(self, cam: str, position: int) -> Frame:
       # Served frame can be larger than position if we stop and start camera, detect this
       # and reset served frame
+      if position == 0: return None
       if self.__last_served_frame[cam] > position: self.__last_served_frame[cam] = 0
       if self.__last_served_frame[cam] < position - 30:
          # lag detected, jump
@@ -455,7 +456,7 @@ class WindowMain(QMainWindow):
       self.cameras_data = CamerasData(self.__db, self.__flight)
       self.videos[0].cameras_data = self.cameras_data
       self.videos[1].cameras_data = self.cameras_data
-      CameraServer.ServerData.flight_number = self.__flight
+      CameraServer.ServerData.flight = self.__flight
       CameraServer.start_shooting(self.cameras_data, self.__flight)
 
 
