@@ -473,7 +473,7 @@ class AnalyzerWorker(QtCore.QThread):
             continue
 
          # if iterations is zero or object is coming to close to the side
-         if iterations == 0 or x2 < 20 or x2 + w2 > 300:
+         if iterations == 0 or x2 == 0 or x2 + w2 >= 320:
             if x1 + w1 < x2 + w2:
                return -1
             else:
