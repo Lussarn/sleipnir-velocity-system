@@ -35,6 +35,8 @@ class WindowMain(QMainWindow):
          exit(1)
 
       self.__db = DB(self.configuration.get_or_throw('save_path'))
+      self.__max_dive_angle = float(self.configuration.get('max_dive_angle', 10.0))
+      logger.info("Max dive angle is set at " + str(self.__max_dive_angle) + "°")
 
       # Data for the cameras
       self.__flight = 1
@@ -93,6 +95,7 @@ class WindowMain(QMainWindow):
          self.__db,
          "cam1",
          1,
+         self.__max_dive_angle,
          self.ui.label_video1,  
          self.ui.pushbutton_video1_playforward, 
          self.ui.pushbutton_video1_playbackward, 
@@ -107,6 +110,7 @@ class WindowMain(QMainWindow):
          self.__db,
          "cam2",
          1,
+         self.__max_dive_angle,
          self.ui.label_video2, 
          self.ui.pushbutton_video2_playforward, 
          self.ui.pushbutton_video2_playbackward, 

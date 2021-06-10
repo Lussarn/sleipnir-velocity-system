@@ -1,12 +1,9 @@
-import PySide2
 from PySide2 import QtCore, QtGui
-import os
 import cv2 as cv
-import time
 from database.DB import DB
 import database.frame_dao as frame_dao
-import numpy as np
 import simplejpeg
+import math
 
 from function_timer import timer
 
@@ -14,10 +11,11 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Video:
-   def __init__(self, db: DB, cam: str, flight, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
+   def __init__(self, db: DB, cam: str, flight: int, max_dive_angle: float, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
 
       self.__db = db
       self.__flight = flight
+      self.__max_dive_angle = max_dive_angle
 
       # Frame number in video
       self.current_frame_number = 0
@@ -37,9 +35,6 @@ class Video:
 
       # cam1 or cam2
       self.cam = cam
-
-      # Directory of flight
-      self.__flight_directory = None
 
       # Timestamp to start video on, this is the higest number of the two cameras
       self.start_timestamp = 0
@@ -266,7 +261,7 @@ class Video:
       found_motion = msg.have_motion()
       found_motion_position = msg.get_position()
 
-      msg = AnalyzerDoMessage(image_cv, self.current_frame_number, self.groundlevel)
+      msg = AnalyzerDoMessage(image_cv, self.current_frame_number, self.groundlevel, self.__max_dive_angle)
       self.analyzer_worker.do_processing(msg)
 
       return { 
@@ -304,17 +299,21 @@ class AnalyzerDoMessage:
    __image = None
    __position = 0
    __ground_level = 0
+   __max_dive_angle = 0
 
-   def __init__(self, image, position, ground_level):
+   def __init__(self, image, position, ground_level, max_dive_angle):
       self.__image = image
       self.__position = position
       self.__ground_level = ground_level
+      self.__max_dive_angle = max_dive_angle
    def get_image(self):
       return self.__image
    def get_position(self):
       return self.__position
    def get_ground_level(self):
       return self.__ground_level
+   def get_max_dive_angle(self):
+      return self.__max_dive_angle
 
 class AnalyzerDoneMessage:
    __image = None
@@ -350,7 +349,7 @@ class AnalyzerWorker(QtCore.QThread):
       # Last frame analyzed
       self.__last_position = 0
 
-      self.analyzer_do_message = None
+      self.__analyzer_do_message = None
       # Message to transfer back to main program
       self.__analyzer_done_message = AnalyzerDoneMessage(None, 0, -1)
 
@@ -361,7 +360,7 @@ class AnalyzerWorker(QtCore.QThread):
       return self.__analyzer_done_message
 
    def do_processing(self, analyzer_do_message: AnalyzerDoMessage):
-      self.analyzer_do_message = analyzer_do_message
+      self.__analyzer_do_message = analyzer_do_message
       self.start()
 
    def run(self):
@@ -369,7 +368,7 @@ class AnalyzerWorker(QtCore.QThread):
     
    @timer("Time to analyze", logging.INFO, identifier='cam', average=1000)
    def analyze(self, cam):
-      position = self.analyzer_do_message.get_position()
+      position = self.__analyzer_do_message.get_position()
 
       # We do not want to analyze the same frame twice
       if position == self.__last_position:
@@ -380,10 +379,8 @@ class AnalyzerWorker(QtCore.QThread):
          logger.warning("Missed frame on camera " + cam + ": " + str(position))
       self.__last_position = position
 
-      __image_gray_cv = self.analyzer_do_message.get_image()
-      #13 13
+      __image_gray_cv = self.__analyzer_do_message.get_image()
       image_blur_cv = cv.GaussianBlur(__image_gray_cv, (13, 13), 0)
-#      image_blur_cv = cv.GaussianBlur(__image_gray_cv, (9, 9), 0)
 
       direction = 0
       if self.__comparison_image_cv is not None:
@@ -397,7 +394,7 @@ class AnalyzerWorker(QtCore.QThread):
             (x, y, w, h) = cv.boundingRect(c)
 
             # No tracking below ground level
-            if y + h > self.analyzer_do_message.get_ground_level(): continue
+            if y + h > self.__analyzer_do_message.get_ground_level(): continue
 
             if cv.contourArea(c) < 135 or cv.contourArea(c) > 10000: continue
 
@@ -414,8 +411,12 @@ class AnalyzerWorker(QtCore.QThread):
                      logger.info("Need to test frames further back(" + str(test_frames)+ ") on frame: " + str(position))
                   direction = self.__check_overlap_previous(x, y, w, h, x, w, position - 1, test_frames, last_box)
 
-                  # You need to run fairly straight to register
-                  if (abs(x - last_box.x) < abs(y - last_box.y) * 5): direction = 0
+                  # The 0.0000001 will remove a division by zero if x - last_box.x is 0
+                  dive_angle = math.atan(abs(y - last_box.y) / (abs(x - last_box.x) + 0.0000001) ) * 180 / math.pi
+                  if  dive_angle > self.__analyzer_do_message.get_max_dive_angle():
+                     logger.debug("Max dive angle of " + str(self.__analyzer_do_message.get_max_dive_angle()) + "° exceeded on position " + str(position) + " (" +  "{:.2f}".format(dive_angle)+ "°)")
+                     direction = 0
+
 
                   # Definitely no hit
                   if direction == 0: break
@@ -449,10 +450,7 @@ class AnalyzerWorker(QtCore.QThread):
          rect.w = w2
          rect.h = h2
 
-         if cv.contourArea(c2) < 15:
-            continue
-         if cv.contourArea(c2) > 10000:
-            continue
+         if cv.contourArea(c2) < 15 or cv.contourArea(c2) > 10000: continue
 
          if x == x2 and y == y2 and w == w2 and h == h2 :
             continue
