@@ -23,6 +23,7 @@
 
 #include "RaspiCamControl.h"
 #include "RaspiCLI.h"
+#include "convert_cam_v2.h"
 
 #include <semaphore.h>
 
@@ -191,14 +192,20 @@ int write_jpeg(unsigned char *data, int width, int height, int frame_number, uin
    base64_encodestate b64state;
    char *urlEncoded;
    CURL *curl;
-
+   char *newData;
+   
+   newData  = convert_from_cam_v2(data);
+   
    tjhandle jpeg_compressor = tjInitCompress();
    tjCompress2(
       jpeg_compressor,
-      data,
-      width,
+//      data,
+      newData,
+//      width,
+      320,
       0,
-      height,
+//      height,
+      480,
       TJPF_GRAY,
       &jpeg_data,
       &size,
@@ -207,6 +214,7 @@ int write_jpeg(unsigned char *data, int width, int height, int frame_number, uin
       TJFLAG_FASTDCT
    );
    tjDestroy(jpeg_compressor);
+   free(newData);
 
    // Do all the encoding to URL in this thread to free up the IO thread
    base64_data = malloc(size * 2);
@@ -653,9 +661,12 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
 out:
             mmal_buffer_header_mem_lock(buffer);
             if (yuv_image_buffers[current_encoding_thread] == NULL) {
+//            if (yuv_image_buffers[current_encoding_thread] != NULL) {
+//               free(yuv_image_buffers[current_encoding_thread]);
                yuv_image_buffers[current_encoding_thread] = malloc(buffer->length);
             }
             memcpy(yuv_image_buffers[current_encoding_thread], buffer->data, buffer->length);
+//            yuv_image_buffers[current_encoding_thread]  = convert_from_cam2(buffer->data);
             mmal_buffer_header_mem_unlock(buffer);
 
             pthread_mutex_lock(&encoding_thread_data_lock[current_encoding_thread]);
@@ -663,6 +674,8 @@ out:
             encoding_thread_data[current_encoding_thread].yuv_buffer = yuv_image_buffers[current_encoding_thread];
             encoding_thread_data[current_encoding_thread].width = pData->pstate->width;
             encoding_thread_data[current_encoding_thread].height = pData->pstate->height;
+//            encoding_thread_data[current_encoding_thread].width = 320;
+//            encoding_thread_data[current_encoding_thread].height = 480;
             encoding_thread_data[current_encoding_thread].frame_number = current_frame_number;
             pthread_mutex_unlock(&encoding_thread_data_lock[current_encoding_thread]);
 

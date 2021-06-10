@@ -1,5 +1,6 @@
 #!/bin/bash
 
+
 echo "Compiling sleipnir.c"
 gcc -c sleipnir.c -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/ -I/opt/vc/include/interface/vmcs_host/linux/
 if [ $? -ne 0 ]
@@ -17,15 +18,18 @@ then
 fi
 
 echo "Compiling RaspiCLI.c"
-gcc -c RaspiCLI.c -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/ -I/opt/vc/include/interface/vmcs_host/linux/
+gcc -c RaspiCLI.c -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/ -I/opt/vc/include/interface/vmcs_host/linux/ 
 if [ $? -ne 0 ]
 then
    echo "Error Compiling, abort!"
    exit 1
 fi
 
+echo "Compiling convert_cam_v2.cpp"
+g++ -c convert_cam_v2.cpp `pkg-config --cflags opencv`
+
 echo "Linking files..."
-gcc -o sleipnir-pod *.o -L/opt/vc/lib -lvcos -lbcm_host -lturbojpeg -lb64 -lcurl -lpthread -lmmal_core -lmmal -lmmal_components -lmmal_util
+g++ -o sleipnir-pod *.o -L/opt/vc/lib -lvcos -lbcm_host -lturbojpeg -lb64 -lcurl -lpthread -lmmal_core -lmmal -lmmal_components -lmmal_util `pkg-config --libs opencv` -lstdc++
 if [ $? -ne 0 ]
 then
    echo "Error Linking, abort!"
