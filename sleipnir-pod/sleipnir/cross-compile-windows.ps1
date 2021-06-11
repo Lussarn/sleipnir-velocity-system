@@ -46,9 +46,18 @@ If ($lastExitCode -ne "0") {
     exit $lastExitCode 
 }
 
+Write-Output "Compiling encoder.c"
+& $GCC -c encoder.c `
+    -I"$ROOT"\usr\include `
+    -I"$ROOT"\usr\include\arm-linux-gnueabihf `
+    -I"$ROOT"\opt\vc\include 
+If ($lastExitCode -ne "0") {
+    exit $lastExitCode 
+}
+
 Write-Output "Linking files..."
 & $GCC --sysroot="$ROOT" `
-    -o sleipnir-pod sleipnir.o RaspiCamControl.o RaspiCLI.o jpegs.o `
+    -o sleipnir-pod sleipnir.o RaspiCamControl.o RaspiCLI.o jpegs.o encoder.o `
     "-Wl,-rpath-link=$ROOT\usr\lib\arm-linux-gnueabihf" `
     "-Wl,-rpath-link=$ROOT\opt\vc\lib" `
     -L"$ROOT"\opt\vc\lib `

@@ -17,6 +17,7 @@ void jpegs_set_data(int32_t position, int64_t timestamp, u_char *data, int32_t d
 void jpegs_free_data(int32_t position);
 bool jpegs_have_data(int32_t position);
 void jpegs_reset();
+void jpegs_store(int position, u_char *data, int32_t width, int32_t height, int64_t timestamp);
 jpegs_t jpegs_get_by_position(int32_t position);
 
 

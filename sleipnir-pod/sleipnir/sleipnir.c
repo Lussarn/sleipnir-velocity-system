@@ -6,7 +6,6 @@
 #include <string.h>
 #include <memory.h>
 #include <sysexits.h>
-#include <turbojpeg.h>
 #include <curl/curl.h>
 #include <stdbool.h>
 
@@ -24,6 +23,7 @@
 #include "RaspiCamControl.h"
 #include "RaspiCLI.h"
 #include "jpegs.h"
+#include "encoder.h"
 
 #include <semaphore.h>
 
@@ -52,13 +52,14 @@ typedef struct VELOCITY_STATE_S VELOCITY_STATE;
 typedef struct
 {
    VELOCITY_STATE *pstate;           /// pointer to our state in case required in callback
-   int abort;                           /// Set to 1 in callback if an error occurs to attempt to abort the capture
+   int abort;                        /// Set to 1 in callback if an error occurs to attempt to abort the capture
 } PORT_USERDATA;
 
 /** Structure containing all state information for the current run
  */
 struct VELOCITY_STATE_S
 {
+   bool running;
    int timeout;                        /// Time taken before frame is grabbed and app then shuts down. Units are milliseconds
    int width;                          /// Requested width of image
    int height;                         /// requested height of image
@@ -76,6 +77,7 @@ struct VELOCITY_STATE_S
    int settings;                        /// Request settings from the camera
    int sensor_mode;                     /// Sensor mode. 0=auto. Check docs/forum for modes selected by other values.
 };
+static VELOCITY_STATE state;
 
 static XREF_T  initial_map[] =
 {
@@ -112,25 +114,6 @@ static COMMAND_LIST cmdline_commands[] =
 };
 
 static int cmdline_commands_size = sizeof(cmdline_commands) / sizeof(cmdline_commands[0]);
-
-#define NUM_ENCODING_THREADS 8
-
-static pthread_t encoding_threads[NUM_ENCODING_THREADS];
-static unsigned char *yuv_image_buffers[NUM_ENCODING_THREADS];
-static int current_encoding_thread = 0;
-
-typedef struct _encoding_thread_data_t {
-   int thread_id;
-   int frame_number;
-   int width;
-   int height;
-   int64_t timestamp;
-   unsigned char *yuv_buffer;
-} encoding_thread_data_t;
-encoding_thread_data_t encoding_thread_data[NUM_ENCODING_THREADS];
-pthread_mutex_t encoding_thread_data_lock[NUM_ENCODING_THREADS];
-
-static int run_threads = 0;
 static int save_frames = 0;
 
 static pthread_t io_thread;
@@ -168,54 +151,10 @@ int http_post(CURL *curl, char *url, void *post_data, uint32_t post_size, void *
    return res;
 }
 
-/**
- * Write JPEG
- */
-int write_jpeg(unsigned char *data, int width, int height, int frame_number, int64_t timestamp) {
-   long unsigned int size = 0;
-   unsigned char     *jpeg_data = NULL;
-
-   tjhandle jpeg_compressor = tjInitCompress();
-   tjCompress2(
-      jpeg_compressor,
-      data,
-      width,
-      0,
-      height,
-      TJPF_GRAY,
-      &jpeg_data,
-      &size,
-      TJSAMP_GRAY,
-      80,
-      TJFLAG_FASTDCT
-   );
-   tjDestroy(jpeg_compressor);
-
-   jpegs_set_data(frame_number, timestamp, jpeg_data, size);
-   return 1;
-}
-
-void *thread_func(void *arg) {
-   while(run_threads == 1) {
-      encoding_thread_data_t *data = (encoding_thread_data_t *)arg;
-      pthread_mutex_lock(&encoding_thread_data_lock[data->thread_id]);
-      if (data->frame_number != 0) {
-         pthread_mutex_unlock(&encoding_thread_data_lock[data->thread_id]);
-         write_jpeg (data->yuv_buffer, data->width, data->height, data->frame_number, data->timestamp);
-
-         // Lock while writing frame_number since this is the one we check
-         pthread_mutex_lock(&encoding_thread_data_lock[data->thread_id]);
-         data->frame_number = 0;
-      }
-      pthread_mutex_unlock(&encoding_thread_data_lock[data->thread_id]);
-      usleep(1000);
-   }
-   pthread_exit(NULL);
-}
 
 /**
  * IO THREAD 
- * globals used: run_threads, save_frames, camera_position,
+ * globals used: state, save_frames, camera_position,
  */
 void *thread_io_func(void *arg) {
    static char post_data[300000];
@@ -228,11 +167,11 @@ void *thread_io_func(void *arg) {
 
    curl = curl_easy_init();
 
-   while (run_threads == 1) {
+   while (state->running) {
       save_frames = 0;
       jpegs_reset();
       camera_position = 0;
-      while(run_threads == 1) {
+      while(state->running) {
          cx = snprintf(url, 256, "%s?action=startcamera&cam=%s", state->url, state->identifier);
          if (cx < 0 || cx >= 256) {
             printf("Error snprintf in thread_io_func");
@@ -240,17 +179,17 @@ void *thread_io_func(void *arg) {
          memset(answer,0,strlen(answer));  // Is this necesary?
          res = http_post(curl, url, "", 0, &answer);
          if (res != CURLE_OK) {
-            usleep(30000);
+            usleep(100000);
             continue;
          }
          if (strcmp(answer, "START") == 0) break;
-         usleep(30000);
+         usleep(100000);
       }
 
       save_frames = 1;
       int frame_number = 1;
       while(true) {
-         if (run_threads != 1) break;
+         if (!state->running) break;
          while (true) {
             if (jpegs_have_data(frame_number)) break;
             usleep(100);
@@ -305,6 +244,7 @@ static void default_status(VELOCITY_STATE *state)
    memset(state, 0, sizeof(VELOCITY_STATE));
 
    // Now set anything non-zero
+   state->running = true;
    state->timeout = 5000;     // 5s delay before take image
    state->width = 320;
    state->height = 480;
@@ -517,8 +457,7 @@ static void camera_control_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buf
 
 #define TIMESTAMPS_BUFFER_SIZE 200
 int64_t circularTimestamp[TIMESTAMPS_BUFFER_SIZE];
-int64_t lastTimestamp;
-int64_t lastTimestamp = 0;
+int64_t last_timestamp_nano = 0;
 int64_t lastPts = 0;
 int32_t numDrops = 0;
 
@@ -534,13 +473,14 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
 {
    MMAL_BUFFER_HEADER_T *new_buffer;
    int i;
-   int64_t now;
+   int64_t now_nano;
+   int32_t encoder_thread_id;
 
    struct timespec spec;
    clock_gettime(CLOCK_REALTIME, &spec);
 
    // Save current timestamp as nanosecond
-   now = ((int64_t)spec.tv_sec) * 1000000000 + ((int64_t)spec.tv_nsec);
+   now_nano = ((int64_t)spec.tv_sec) * 1000000000 + ((int64_t)spec.tv_nsec);
 
    // We pass our file handle and other stuff i:wn via the userdata field.
    PORT_USERDATA *pData = (PORT_USERDATA *)port->userdata;
@@ -552,32 +492,32 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
          for (i = TIMESTAMPS_BUFFER_SIZE - 2; i >= 0; i--) {
             circularTimestamp[i + 1] = circularTimestamp[i];
          }
-         circularTimestamp[0] = now;
+         circularTimestamp[0] = now_nano;
 
          // Average the frametimes to get the true framerate
          int64_t averageFrameDuration = 0;
          for (i = 0; i < TIMESTAMPS_BUFFER_SIZE - 1; i++) {
-            if (circularTimestamp[i + 1] == 0) goto out2;
+            if (circularTimestamp[i + 1] == 0) goto out;
             averageFrameDuration += circularTimestamp[i] - circularTimestamp[i + 1];
          }
          averageFrameDuration /= (TIMESTAMPS_BUFFER_SIZE - 1);
 
-         if (lastTimestamp == 0) lastTimestamp = now;
+         if (last_timestamp_nano == 0) last_timestamp_nano = now_nano;
 
-         int64_t timestamp;
+         int64_t timestamp_nano;
          // Draw timestamp closer to now a bit (smoothing)
-         if (now - lastTimestamp > averageFrameDuration) {
-            timestamp = lastTimestamp + averageFrameDuration + (averageFrameDuration / 15);
+         if (now_nano - last_timestamp_nano > averageFrameDuration) {
+            timestamp_nano = last_timestamp_nano + averageFrameDuration + (averageFrameDuration / 15);
          } else {
-            timestamp = lastTimestamp + averageFrameDuration - (averageFrameDuration / 15);
+            timestamp_nano = last_timestamp_nano + averageFrameDuration - (averageFrameDuration / 15);
          }
 
          // JITTER DEBUG
-         if (0)
+         if (false)
             printf("timestamp: %" PRId64 " pts: %" PRIu64 " diff: %" PRId64 " frametime: %" PRId64 "\n",
-                     timestamp / 1000000,
+                     timestamp_nano / 1000000,
                      buffer->pts / 1000,
-                     (timestamp / 1000 - buffer->pts) / 1000,
+                     (timestamp_nano / 1000 - buffer->pts) / 1000,
                      (buffer->pts - lastPts) / 1000);
 
          if ((buffer->pts - lastPts) > (averageFrameDuration + (averageFrameDuration / 2)) / 1000) {
@@ -587,42 +527,27 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
             strftime(timeBuf, 256, "%F %T", &t);
             numDrops++;
             printf("frame dropped %d: %s\n", numDrops, timeBuf);
-            timestamp += averageFrameDuration;
+            timestamp_nano += averageFrameDuration;
          }
-         lastTimestamp = timestamp;
+         last_timestamp_nano = timestamp_nano;
 
          if (save_frames == 1) {
-            current_encoding_thread = 0;
-            while (run_threads) {
-               for (i = 0; i < NUM_ENCODING_THREADS; i++) {
-                  pthread_mutex_lock(&encoding_thread_data_lock[i]);
-                  if (encoding_thread_data[i].frame_number == 0) {
-                     current_encoding_thread = i;
-                     pthread_mutex_unlock(&encoding_thread_data_lock[i]);
-                     goto out;
-                  }
-                  pthread_mutex_unlock(&encoding_thread_data_lock[i]);
-               }
-               printf("run out of encoder threads\n");
-               usleep(1000);
-            }
-out:
-            mmal_buffer_header_mem_lock(buffer);
-            if (yuv_image_buffers[current_encoding_thread] == NULL) {
-               yuv_image_buffers[current_encoding_thread] = malloc(buffer->length);
-            }
-            memcpy(yuv_image_buffers[current_encoding_thread], buffer->data, buffer->length);
-            mmal_buffer_header_mem_unlock(buffer);
+            encoder_thread_id = encoder_get_free_thread_id();
 
-            pthread_mutex_lock(&encoding_thread_data_lock[current_encoding_thread]);
-            encoding_thread_data[current_encoding_thread].timestamp = timestamp / 1000000;
-            encoding_thread_data[current_encoding_thread].yuv_buffer = yuv_image_buffers[current_encoding_thread];
-            encoding_thread_data[current_encoding_thread].width = pData->pstate->width;
-            encoding_thread_data[current_encoding_thread].height = pData->pstate->height;
-            encoding_thread_data[current_encoding_thread].frame_number = camera_position;
-            pthread_mutex_unlock(&encoding_thread_data_lock[current_encoding_thread]);
+            if (encoder_thread_id == -1) {
+                 printf("WARNING: Running out of encoder threads\n");
+                 goto out;
+            }
 
-            current_encoding_thread++;
+            encoder_data_set(
+               encoder_thread_id,
+               buffer,
+               pData->pstate->width,
+               pData->pstate->height,
+               camera_position,
+               timestamp_nano / 1000000
+            );
+
             camera_position++;
          }
       }
@@ -631,9 +556,10 @@ out:
    {
       vcos_log_error("Received a camera buffer callback with no state");
    }
-out2:
-   // release buffer back to the pool
+out:
    lastPts = buffer->pts;
+
+   // release buffer back to the pool
    mmal_buffer_header_release(buffer);
 
    // and send one back to the port (if still open)
@@ -643,10 +569,8 @@ out2:
 
       new_buffer = mmal_queue_get(pData->pstate->camera_pool->queue);
 
-      if (new_buffer) {
-         status = mmal_port_send_buffer(port, new_buffer);
-      }
-
+      if (new_buffer) status = mmal_port_send_buffer(port, new_buffer);
+      
       if (!new_buffer || status != MMAL_SUCCESS) {
          vcos_log_error("Unable to return a buffer to the camera port");
       }
@@ -883,7 +807,7 @@ static void signal_handler(int signal_number)
    }
    else
    {
-      run_threads = 0;
+      state.running = false;
       sleep(2);
       // Going to abort on all other signals
       vcos_log_error("Aborting program\n");
@@ -891,6 +815,7 @@ static void signal_handler(int signal_number)
    }
 
 }
+
 
 /**
  * main
@@ -901,38 +826,16 @@ int main(int argc, const char **argv)
    pthread_attr_t tattr;
    static int rc;
    static int ret;
-   run_threads = 1;
+
+   // Our main data storage vessel..
+   state.running = true;
 
    if (jpegs_init() != 0) {
       printf("\n jpegs init failed");
       return 1;
    }
 
-   for (i = 0; i < NUM_ENCODING_THREADS; i++) {
-      if (pthread_mutex_init(&encoding_thread_data_lock[i], NULL) != 0) {
-         printf("\n mutex init failed\n");
-         return 1;
-      }
 
-      yuv_image_buffers[i] = NULL;
-      encoding_threads[i] = 0;
-      encoding_thread_data[i].thread_id = i;
-      encoding_thread_data[i].frame_number = 0;
-      encoding_thread_data[i].yuv_buffer = NULL;
-      encoding_thread_data[i].width = 0;
-      encoding_thread_data[i].height = 0;
-
-      ret = pthread_attr_init(&tattr);
-      ret = pthread_attr_setschedpolicy(&tattr, SCHED_BATCH);
-      ret = pthread_attr_setinheritsched(&tattr, PTHREAD_EXPLICIT_SCHED);
-      if ((rc = pthread_create(&encoding_threads[i], &tattr, thread_func, &encoding_thread_data[i]))) {
-         vcos_log_error("Failed to create JPEG encoding thread");
-      }
-      ret = pthread_attr_destroy(&tattr);
-   }
-
-   // Our main data storage vessel..
-   VELOCITY_STATE state;
 
    int exit_code = EX_OK;
 
@@ -950,6 +853,7 @@ int main(int argc, const char **argv)
    signal(SIGUSR1, SIG_IGN);
 
    default_status(&state);
+   encoder_init(&state.running);
 
    // Do we have any parameters
    if (argc == 1) {

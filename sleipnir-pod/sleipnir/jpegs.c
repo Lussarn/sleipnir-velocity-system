@@ -1,8 +1,9 @@
 #include <stdlib.h>
 #include <pthread.h>
+#include <stdbool.h>
+#include <turbojpeg.h>
 
 #include "jpegs.h"
-#include <stdbool.h>
 
 jpegs_t jpegs[MAX_JPEGS];
 pthread_mutex_t jpegs_lock_mutex;
@@ -32,12 +33,13 @@ void jpegs_free_data(int32_t position) {
     free(jpegs[position].data);
     jpegs[position].data = NULL;
     jpegs[position].timestamp = 0;
+    jpegs[position].data_size = 0;
     jpegs_unlock();
 }
 
 bool jpegs_have_data(int32_t position) {
     jpegs_lock();
-    bool ret = jpegs[position].data != NULL;
+    bool ret = jpegs[position].timestamp != 0;
     jpegs_unlock();
     return ret;
 }
@@ -55,4 +57,27 @@ void jpegs_reset() {
 
 jpegs_t jpegs_get_by_position(int32_t position) {
     return jpegs[position];
+}
+
+void jpegs_store(int position, u_char *data, int32_t width, int32_t height, int64_t timestamp) {
+   long unsigned int size = 0;
+   unsigned char     *jpeg_data = NULL;
+
+   tjhandle jpeg_compressor = tjInitCompress();
+   tjCompress2(
+      jpeg_compressor,
+      data,
+      width,
+      0,
+      height,
+      TJPF_GRAY,
+      &jpeg_data,
+      &size,
+      TJSAMP_GRAY,
+      80,
+      TJFLAG_FASTDCT
+   );
+   tjDestroy(jpeg_compressor);
+
+   jpegs_set_data(position, timestamp, jpeg_data, size);
 }
