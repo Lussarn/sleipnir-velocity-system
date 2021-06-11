@@ -47,7 +47,7 @@ class TornadoHandler(tornado.web.RequestHandler):
 
       if (action == "startcamera"):
          id = self.get_argument("cam", None, True)
-         if id != "cam1" and cam != "cam2":
+         if id != "cam1" and id != "cam2":
             logger.info("Uploadframe unknown camera id: " + id)
             return
 

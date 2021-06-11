@@ -4,9 +4,8 @@
 #include "jpegs.h"
 #include <stdbool.h>
 
-int jpegs_init() {
-   return pthread_mutex_init(&jpegs_lock_mutex, NULL);
-}
+jpegs_t jpegs[MAX_JPEGS];
+pthread_mutex_t jpegs_lock_mutex;
 
 void jpegs_lock() {
     pthread_mutex_lock(&jpegs_lock_mutex);
@@ -14,6 +13,10 @@ void jpegs_lock() {
 
 void jpegs_unlock() {
     pthread_mutex_unlock(&jpegs_lock_mutex);
+}
+
+int jpegs_init() {
+   return pthread_mutex_init(&jpegs_lock_mutex, NULL);
 }
 
 void jpegs_set_data(int32_t position, int64_t timestamp, u_char *data, int32_t data_size) {

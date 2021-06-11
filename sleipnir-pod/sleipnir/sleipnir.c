@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#define VERSION_STRING "v0.3"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -7,10 +8,8 @@
 #include <sysexits.h>
 #include <turbojpeg.h>
 #include <curl/curl.h>
-#include <b64/cencode.h>
 #include <stdbool.h>
 
-#define VERSION_STRING "v0.2"
 #include "bcm_host.h"
 #include "interface/vcos/vcos.h"
 
@@ -136,7 +135,7 @@ static int save_frames = 0;
 
 static pthread_t io_thread;
 
-static int current_frame_number = 0;
+static int camera_position = 0;
 
 size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *chunk){
    size_t realsize = size * nmemb;
@@ -175,11 +174,6 @@ int http_post(CURL *curl, char *url, void *post_data, uint32_t post_size, void *
 int write_jpeg(unsigned char *data, int width, int height, int frame_number, int64_t timestamp) {
    long unsigned int size = 0;
    unsigned char     *jpeg_data = NULL;
-   int               base64_size;
-   char              *base64_data;
-   base64_encodestate b64state;
-   char *urlEncoded;
-   CURL *curl;
 
    tjhandle jpeg_compressor = tjInitCompress();
    tjCompress2(
@@ -220,7 +214,8 @@ void *thread_func(void *arg) {
 }
 
 /**
- * IO THREAD
+ * IO THREAD 
+ * globals used: run_threads, save_frames, camera_position,
  */
 void *thread_io_func(void *arg) {
    static char post_data[300000];
@@ -236,8 +231,9 @@ void *thread_io_func(void *arg) {
    while (run_threads == 1) {
       save_frames = 0;
       jpegs_reset();
-      current_frame_number = 0;
+      camera_position = 0;
       while(run_threads == 1) {
+         printf("camera_position: %d\n", camera_position);
          cx = snprintf(url, 256, "%s?action=startcamera&cam=%s", state->url, state->identifier);
          if (cx < 0 || cx >= 256) {
             printf("Error snprintf in thread_io_func");
@@ -260,6 +256,7 @@ void *thread_io_func(void *arg) {
             if (jpegs_have_data(frame_number)) break;
             usleep(100);
          }
+         printf("camera_position: %d\n", camera_position);
 
          cx = snprintf(url, 256, "%s?action=uploadframe&cam=%s&position=%d&timestamp=%d",
             state->url,
@@ -277,7 +274,7 @@ void *thread_io_func(void *arg) {
 
          if (strcmp(answer, "STOP") == 0) {
             save_frames = 0;
-            if (frame_number > (current_frame_number - 50)) break;
+            if (frame_number > (camera_position - 50)) break;
          }
 
          jpegs_free_data(frame_number);
@@ -597,7 +594,6 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
          lastTimestamp = timestamp;
 
          if (save_frames == 1) {
-            current_frame_number++;
             current_encoding_thread = 0;
             while (run_threads) {
                for (i = 0; i < NUM_ENCODING_THREADS; i++) {
@@ -625,10 +621,11 @@ out:
             encoding_thread_data[current_encoding_thread].yuv_buffer = yuv_image_buffers[current_encoding_thread];
             encoding_thread_data[current_encoding_thread].width = pData->pstate->width;
             encoding_thread_data[current_encoding_thread].height = pData->pstate->height;
-            encoding_thread_data[current_encoding_thread].frame_number = current_frame_number;
+            encoding_thread_data[current_encoding_thread].frame_number = camera_position;
             pthread_mutex_unlock(&encoding_thread_data_lock[current_encoding_thread]);
 
             current_encoding_thread++;
+            camera_position++;
          }
       }
    }

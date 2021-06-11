@@ -24,8 +24,16 @@ then
    exit 1
 fi
 
+echo "Compiling jpegs.c"
+gcc -c jpegs.c -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/ -I/opt/vc/include/interface/vmcs_host/linux/
+if [ $? -ne 0 ]
+then
+   echo "Error Compiling, abort!"
+   exit 1
+fi
+
 echo "Linking files..."
-gcc -o sleipnir-pod *.o -L/opt/vc/lib -lvcos -lbcm_host -lturbojpeg -lb64 -lcurl -lpthread -lmmal_core -lmmal -lmmal_components -lmmal_util
+gcc -o sleipnir-pod *.o -L/opt/vc/lib -lvcos -lbcm_host -lturbojpeg -lcurl -lpthread -lmmal_core -lmmal -lmmal_components -lmmal_util
 if [ $? -ne 0 ]
 then
    echo "Error Linking, abort!"
