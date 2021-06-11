@@ -233,7 +233,6 @@ void *thread_io_func(void *arg) {
       jpegs_reset();
       camera_position = 0;
       while(run_threads == 1) {
-         printf("camera_position: %d\n", camera_position);
          cx = snprintf(url, 256, "%s?action=startcamera&cam=%s", state->url, state->identifier);
          if (cx < 0 || cx >= 256) {
             printf("Error snprintf in thread_io_func");
@@ -256,7 +255,6 @@ void *thread_io_func(void *arg) {
             if (jpegs_have_data(frame_number)) break;
             usleep(100);
          }
-         printf("camera_position: %d\n", camera_position);
 
          cx = snprintf(url, 256, "%s?action=uploadframe&cam=%s&position=%d&timestamp=%d",
             state->url,
