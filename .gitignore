@@ -1,7 +1,8 @@
 *.o
-sleipnir
 *.pyc
+*/sleipnir/sleipnir-pod
 record
 python/venv/*
 sleipnir.yml
 sleipnir.db
+

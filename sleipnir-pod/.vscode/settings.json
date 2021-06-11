@@ -1,0 +1,15 @@
+{
+    "files.associations": {
+        "turbojpeg.h": "c",
+        "stdio.h": "c",
+        "memory.h": "c",
+        "libc-header-start.h": "c",
+        "features.h": "c",
+        "stubs.h": "c",
+        "stubs-hard.h": "c",
+        "vcos.h": "c",
+        "vcos_assert.h": "c",
+        "vcos_types.h": "c",
+        "vc_vchi_gencmd.h": "c"
+    }
+}

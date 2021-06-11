@@ -1,0 +1,44 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "C:\\raspberrypi\\rootfs\\usr\\include",
+                "C:\\raspberrypi\\rootfs\\opt\\vc\\include",
+                "C:\\raspberrypi\\rootfs\\usr\\include\\arm-linux-gnueabihf"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "__ARM_PCS_VFP",
+                "__unix__"
+            ],
+            "windowsSdkVersion": "10.0.19041.0",
+            "compilerPath": "C:/Program Files (x86)/Microsoft Visual Studio/2019/BuildTools/VC/Tools/MSVC/14.28.29910/bin/Hostx64/x64/cl.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "windows-msvc-x64"
+        },
+        {
+            "name": "raspberry pi",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "c:\\raspberrypi\\rootfs\\usr\\include",
+                "c:\\raspberrypi\\rootfs\\opt\\vc\\include"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE"
+            ],
+            "windowsSdkVersion": "10.0.19041.0",
+            "compilerPath": "C:\\SysGCC\\raspberry\\bin\\arm-linux-gnueabihf-gcc.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-arm"
+        }
+    ],
+    "version": 4
+}
