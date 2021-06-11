@@ -1,5 +1,5 @@
 *.o
-sleipnir
+*/sleipnir/sleipnir-pod
 *.pyc
 record
 python/venv/*
