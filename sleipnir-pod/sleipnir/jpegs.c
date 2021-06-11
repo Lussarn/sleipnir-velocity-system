@@ -16,10 +16,11 @@ void jpegs_unlock() {
     pthread_mutex_unlock(&jpegs_lock_mutex);
 }
 
-void jpegs_set_data(int32_t position, int64_t timestamp, u_char *data) {
+void jpegs_set_data(int32_t position, int64_t timestamp, u_char *data, int32_t data_size) {
     jpegs_lock();
     jpegs[position].timestamp = timestamp;
-    jpegs[position].data = data;    
+    jpegs[position].data = data;
+    jpegs[position].data_size = data_size;
     jpegs_unlock();
 }
 
@@ -43,6 +44,7 @@ void jpegs_reset() {
    for (int i = 1; i < MAX_JPEGS; i++) {
       if (jpegs[i].data != NULL) free(jpegs[i].data);
       jpegs[i].data = NULL;
+      jpegs[i].data_size = 0;
       jpegs[i].timestamp = 0;
    }   
    jpegs_unlock();

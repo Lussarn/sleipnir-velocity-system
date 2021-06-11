@@ -8,6 +8,7 @@
 
 typedef struct _jpegs_t {
    unsigned char *data;
+   int32_t data_size;
    int64_t timestamp;
 } jpegs_t;
 
@@ -18,7 +19,7 @@ pthread_mutex_t jpegs_lock_mutex;
 int jpegs_init();
 void jpegs_lock();
 void jpegs_unlock();
-void jpegs_set_data(int32_t position, int64_t timestamp, u_char *data);
+void jpegs_set_data(int32_t position, int64_t timestamp, u_char *data, int32_t data_size);
 void jpegs_free_data(int32_t position);
 bool jpegs_have_data(int32_t position);
 void jpegs_reset();

@@ -43,11 +43,14 @@ class TornadoHandler(tornado.web.RequestHandler):
    def post(self):
       global ServerData
 
-      postvars = urllib.parse.parse_qs(self.request.body, keep_blank_values=1)
-      action = postvars[b'action'][0].decode('utf-8')
+      action = self.get_argument("action", None, True)
 
       if (action == "startcamera"):
-         id = postvars[b'id'][0].decode('utf-8')
+         id = self.get_argument("cam", None, True)
+         if id != "cam1" and cam != "cam2":
+            logger.info("Uploadframe unknown camera id: " + id)
+            return
+
          if id == "cam1" or id == "cam2":
             ServerData.camera_last_transmission_timestamp[id] = time.time()
 
@@ -62,18 +65,18 @@ class TornadoHandler(tornado.web.RequestHandler):
          pass
 
       if (action == "uploadframe"):
-         cam = postvars[b"id"][0].decode('utf-8')
+         cam = self.get_argument("cam", None, True)
          if cam != "cam1" and cam != "cam2":
             logger.info("Uploadframe unknown camera id: " + cam)
             return
 
          ServerData.camera_last_transmission_timestamp[cam] = time.time()
 
-         position = int(postvars[b"framenumber"][0].decode('utf-8'))
-         timestamp = int(postvars[b"timestamp"][0].decode('utf-8'))
+         position = int(self.get_argument("position", None, True))
+         timestamp = int(self.get_argument("timestamp", None, True))
          ServerData.last_picture_timestamp = time.time()
 
-         image = base64.b64decode(postvars[b"data"][0].decode('ASCII'))
+         image = self.request.body
 
          frame = Frame(
             ServerData.flight,

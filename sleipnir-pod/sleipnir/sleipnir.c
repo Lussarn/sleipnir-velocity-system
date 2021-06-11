@@ -144,31 +144,26 @@ size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *chunk){
    return realsize;
 }
 
-int http_post(CURL *curl, char *url, void *post_data, void *answer) {
-//   CURL *curl;
+int http_post(CURL *curl, char *url, void *post_data, uint32_t post_size, void *answer) {
    CURLcode res = 0;
    char chunk[256];
    struct curl_slist *headerlist=NULL;
    static const char buf[] = "Expect:";
 
-//   curl = curl_easy_init();
    headerlist = curl_slist_append(headerlist, buf);
-   if(curl) {
-      curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
-      curl_easy_setopt(curl, CURLOPT_URL, url);
-      curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
-      curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_callback);
-      curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-      curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)strlen(post_data));
-      res = curl_easy_perform(curl);
-      if(res != CURLE_OK) {
-//       fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-      } else {
-         if (strncmp(chunk, "OK", 2) == 0) {
-            strncpy(answer, chunk + 3, 253);
-         }
+   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
+   curl_easy_setopt(curl, CURLOPT_URL, url);
+   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
+   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_callback);
+   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+   curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, post_size);
+   res = curl_easy_perform(curl);
+   if(res != CURLE_OK) {
+       fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
+   } else {
+      if (strncmp(chunk, "OK", 2) == 0) {
+         strncpy(answer, chunk + 3, 253);
       }
-//      curl_easy_cleanup(curl);
    }
    curl_slist_free_all (headerlist);
    return res;
@@ -202,19 +197,7 @@ int write_jpeg(unsigned char *data, int width, int height, int frame_number, int
    );
    tjDestroy(jpeg_compressor);
 
-   // Do all the encoding to URL in this thread to free up the IO thread
-   base64_data = malloc(size * 2);
-   base64_init_encodestate(&b64state);
-   base64_size = base64_encode_block(jpeg_data, size, base64_data, &b64state);
-   base64_size += base64_encode_blockend(base64_data + base64_size, &b64state);
-   base64_data[base64_size] = '\0';
-   curl = curl_easy_init();
-   urlEncoded = curl_easy_escape(curl, base64_data, base64_size);
-   free(base64_data);
-   free(jpeg_data);
-   curl_easy_cleanup(curl);
-
-   jpegs_set_data(frame_number, timestamp, urlEncoded);
+   jpegs_set_data(frame_number, timestamp, jpeg_data, size);
    return 1;
 }
 
@@ -245,6 +228,8 @@ void *thread_io_func(void *arg) {
    CURL *curl;
    CURLcode res;
    VELOCITY_STATE *state = (VELOCITY_STATE *) arg;
+   char url[256];
+   int cx;
 
    curl = curl_easy_init();
 
@@ -253,9 +238,12 @@ void *thread_io_func(void *arg) {
       jpegs_reset();
       current_frame_number = 0;
       while(run_threads == 1) {
-         sprintf(post_data, "action=startcamera&id=%s", state->identifier);
-         memset(answer,0,strlen(answer));
-         res = http_post(curl, state->url, post_data, &answer);
+         cx = snprintf(url, 256, "%s?action=startcamera&cam=%s", state->url, state->identifier);
+         if (cx < 0 || cx >= 256) {
+            printf("Error snprintf in thread_io_func");
+         }
+         memset(answer,0,strlen(answer));  // Is this necesary?
+         res = http_post(curl, url, "", 0, &answer);
          if (res != CURLE_OK) {
             usleep(30000);
             continue;
@@ -273,13 +261,16 @@ void *thread_io_func(void *arg) {
             usleep(100);
          }
 
-         sprintf(post_data, "action=uploadframe&id=%s&framenumber=%d&timestamp=%" PRIu64 "&data=%s", 
-            state->identifier, 
-            frame_number, 
-            jpegs_get_by_position(frame_number).timestamp,
-            jpegs_get_by_position(frame_number).data);
-         memset(answer,0,strlen(answer));
-         res = http_post(curl, state->url, post_data, &answer);
+         cx = snprintf(url, 256, "%s?action=uploadframe&cam=%s&position=%d&timestamp=%d",
+            state->url,
+            state->identifier,
+            frame_number,
+            jpegs_get_by_position(frame_number).timestamp);
+            if (cx < 0 || cx >= 256) {
+               printf("Error snprintf in thread_io_func");
+            }
+         memset(answer,0,strlen(answer)); // Is this necesary?
+         res = http_post(curl, url, jpegs_get_by_position(frame_number).data, jpegs_get_by_position(frame_number).data_size, &answer);
          if (res != CURLE_OK) {
             break;
          }
