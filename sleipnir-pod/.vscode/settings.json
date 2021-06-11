@@ -10,6 +10,11 @@
         "vcos.h": "c",
         "vcos_assert.h": "c",
         "vcos_types.h": "c",
-        "vc_vchi_gencmd.h": "c"
+        "vc_vchi_gencmd.h": "c",
+        "mmal_connection.h": "c",
+        "stdint.h": "c",
+        "wchar.h": "c",
+        "stdint-intn.h": "c",
+        "stdint-uintn.h": "c"
     }
 }

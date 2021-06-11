@@ -8,6 +8,7 @@
 #include <turbojpeg.h>
 #include <curl/curl.h>
 #include <b64/cencode.h>
+#include <stdbool.h>
 
 #define VERSION_STRING "v0.2"
 #include "bcm_host.h"
@@ -23,6 +24,7 @@
 
 #include "RaspiCamControl.h"
 #include "RaspiCLI.h"
+#include "jpegs.h"
 
 #include <semaphore.h>
 
@@ -123,7 +125,7 @@ typedef struct _encoding_thread_data_t {
    int frame_number;
    int width;
    int height;
-   uint64_t timestamp;
+   int64_t timestamp;
    unsigned char *yuv_buffer;
 } encoding_thread_data_t;
 encoding_thread_data_t encoding_thread_data[NUM_ENCODING_THREADS];
@@ -131,14 +133,6 @@ pthread_mutex_t encoding_thread_data_lock[NUM_ENCODING_THREADS];
 
 static int run_threads = 0;
 static int save_frames = 0;
-
-#define MAX_JPEGS 10000000
-typedef struct _jpegs_t {
-   unsigned char *data;
-   uint64_t timestamp;
-} jpegs_t;
-jpegs_t jpegs[MAX_JPEGS];
-pthread_mutex_t jpegs_lock;
 
 static pthread_t io_thread;
 
@@ -183,7 +177,7 @@ int http_post(CURL *curl, char *url, void *post_data, void *answer) {
 /**
  * Write JPEG
  */
-int write_jpeg(unsigned char *data, int width, int height, int frame_number, uint64_t timestamp) {
+int write_jpeg(unsigned char *data, int width, int height, int frame_number, int64_t timestamp) {
    long unsigned int size = 0;
    unsigned char     *jpeg_data = NULL;
    int               base64_size;
@@ -220,10 +214,7 @@ int write_jpeg(unsigned char *data, int width, int height, int frame_number, uin
    free(jpeg_data);
    curl_easy_cleanup(curl);
 
-   pthread_mutex_lock(&jpegs_lock);
-   jpegs[frame_number].timestamp = timestamp;
-   jpegs[frame_number].data = urlEncoded;
-   pthread_mutex_unlock(&jpegs_lock);
+   jpegs_set_data(frame_number, timestamp, urlEncoded);
    return 1;
 }
 
@@ -245,22 +236,6 @@ void *thread_func(void *arg) {
    pthread_exit(NULL);
 }
 
-void cleanup_data(int free_memory) {
-   int i;
-   for (i = 1; i < MAX_JPEGS; i++) {
-      pthread_mutex_lock(&jpegs_lock);
-      if (free_memory == 1) {
-         if (jpegs[i].data != NULL) {
-            free(jpegs[i].data);
-         }
-      }
-      jpegs[i].data = NULL;
-      jpegs[i].timestamp = 0;
-      pthread_mutex_unlock(&jpegs_lock);
-   }
-   current_frame_number = 0;
-}
-
 /**
  * IO THREAD
  */
@@ -275,7 +250,8 @@ void *thread_io_func(void *arg) {
 
    while (run_threads == 1) {
       save_frames = 0;
-      cleanup_data(1);
+      jpegs_reset();
+      current_frame_number = 0;
       while(run_threads == 1) {
          sprintf(post_data, "action=startcamera&id=%s", state->identifier);
          memset(answer,0,strlen(answer));
@@ -290,19 +266,18 @@ void *thread_io_func(void *arg) {
 
       save_frames = 1;
       int frame_number = 1;
-      while(1) {
+      while(true) {
          if (run_threads != 1) break;
-         while (1) {
-            pthread_mutex_lock(&jpegs_lock);
-            if (jpegs[frame_number].data != NULL) {
-               pthread_mutex_unlock(&jpegs_lock);
-               break;
-            }
-            pthread_mutex_unlock(&jpegs_lock);
+         while (true) {
+            if (jpegs_have_data(frame_number)) break;
             usleep(100);
          }
 
-         sprintf(post_data, "action=uploadframe&id=%s&framenumber=%d&timestamp=%" PRIu64 "&data=%s", state->identifier, frame_number, jpegs[frame_number].timestamp, jpegs[frame_number].data);
+         sprintf(post_data, "action=uploadframe&id=%s&framenumber=%d&timestamp=%" PRIu64 "&data=%s", 
+            state->identifier, 
+            frame_number, 
+            jpegs_get_by_position(frame_number).timestamp,
+            jpegs_get_by_position(frame_number).data);
          memset(answer,0,strlen(answer));
          res = http_post(curl, state->url, post_data, &answer);
          if (res != CURLE_OK) {
@@ -314,11 +289,7 @@ void *thread_io_func(void *arg) {
             if (frame_number > (current_frame_number - 50)) break;
          }
 
-         pthread_mutex_lock(&jpegs_lock);
-         free(jpegs[frame_number].data);
-         jpegs[frame_number].data = NULL;
-         jpegs[frame_number].timestamp = 0;
-         pthread_mutex_unlock(&jpegs_lock);
+         jpegs_free_data(frame_number);
 
          frame_number++;
       }
@@ -563,7 +534,7 @@ int64_t circularTimestamp[TIMESTAMPS_BUFFER_SIZE];
 int64_t lastTimestamp;
 int64_t lastTimestamp = 0;
 int64_t lastPts = 0;
-uint32_t numDrops = 0;
+int32_t numDrops = 0;
 
 /**
  *  buffer header callback function for camera
@@ -946,12 +917,8 @@ int main(int argc, const char **argv)
    static int ret;
    run_threads = 1;
 
-   cleanup_data(0);
-
-   // Lock for the jpegs structure
-   if (pthread_mutex_init(&jpegs_lock, NULL) != 0)
-   {
-      printf("\n mutex init failed\n");
+   if (jpegs_init() != 0) {
+      printf("\n jpegs init failed");
       return 1;
    }
 
