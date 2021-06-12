@@ -46,20 +46,9 @@ const int ABORT_INTERVAL = 100; // ms
 int mmal_status_to_int(MMAL_STATUS_T status);
 static void signal_handler(int signal_number);
 
-// Config state
-typedef struct VELOCITY_STATE_S VELOCITY_STATE;
-
-/** Struct used to pass information in camera video port userdata to callback
- */
-typedef struct
-{
-   VELOCITY_STATE *pstate;           /// pointer to our state in case required in callback
-   int abort;                        /// Set to 1 in callback if an error occurs to attempt to abort the capture
-} PORT_USERDATA;
-
 /** Structure containing all state information for the current run
  */
-struct VELOCITY_STATE_S
+typedef struct VELOCITY_STATE_S
 {
    bool running;                       /// still running
    int timeout;                        /// Time taken before frame is grabbed and app then shuts down. Units are milliseconds
@@ -73,29 +62,16 @@ struct VELOCITY_STATE_S
    RASPICAM_CAMERA_PARAMETERS camera_parameters; /// Camera setup parameters
    MMAL_COMPONENT_T *camera_component;    /// Pointer to the camera component
    MMAL_POOL_T *camera_pool;            /// Pointer to the pool of buffers used by camera video port
-   PORT_USERDATA callback_data;         /// Used to move data to the camera callback
 
-   int bCapturing;                      /// State of capture/pause
    int settings;                        /// Request settings from the camera
    int sensor_mode;                     /// Sensor mode. 0=auto. Check docs/forum for modes selected by other values.
-};
+} VELOCITY_STATE;
 static VELOCITY_STATE state;
-
-static XREF_T  initial_map[] =
-{
-   {"record",     0},
-   {"pause",      1},
-};
-
-static int initial_map_size = sizeof(initial_map) / sizeof(initial_map[0]);
 
 /// Command ID's and Structure defining our command line options
 #define CommandWidth        1
 #define CommandHeight       2
 #define CommandFramerate    7
-#define CommandSignal       9
-#define CommandInitialState 11
-#define CommandCamSelect    12
 #define CommandSettings     13
 #define CommandSensorMode   14
 #define CommandIdentifier   15
@@ -106,9 +82,6 @@ static COMMAND_LIST cmdline_commands[] =
    { CommandWidth,         "-width",      "w",  "Set image width <size>. Default 1920", 1 },
    { CommandHeight,        "-height",     "h",  "Set image height <size>. Default 1080", 1 },
    { CommandFramerate,     "-framerate",  "fps","Specify the frames per second to record", 1},
-   { CommandSignal,        "-signal",     "s",  "Cycle between capture and pause on Signal", 0},
-   { CommandInitialState,  "-initial",    "i",  "Initial state. Use 'record' or 'pause'. Default 'record'", 1},
-   { CommandCamSelect,     "-camselect",  "cs", "Select camera <number>. Default 0", 1 },
    { CommandSettings,      "-settings",   "set","Retrieve camera settings and write to stdout", 0},
    { CommandSensorMode,    "-mode",       "md", "Force sensor mode. 0=auto. See docs for other modes available", 1},
    { CommandIdentifier,    "-identifier", "id", "Command identifer for this camera", 1},
@@ -254,7 +227,7 @@ static void default_status(VELOCITY_STATE *state)
    state->height = 480;
    state->framerate = VIDEO_FRAME_RATE_NUM;
 
-   state->bCapturing = 0;
+//   state->bCapturing = 0;
 
    state->settings = 0;
    state->sensor_mode = 0;
@@ -360,18 +333,6 @@ static int parse_cmdline(int argc, const char **argv, VELOCITY_STATE *state)
          }
          else
             valid = 0;
-         break;
-      }
-
-
-      case CommandInitialState:
-      {
-         state->bCapturing = raspicli_map_xref(argv[i + 1], initial_map, initial_map_size);
-
-         if( state->bCapturing == -1)
-            state->bCapturing = 0;
-
-         i++;
          break;
       }
 
@@ -486,10 +447,10 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
    // Save current timestamp as nanosecond
    now_nano = ((int64_t)spec.tv_sec) * 1000000000 + ((int64_t)spec.tv_nsec);
 
-   // We pass our file handle and other stuff i:wn via the userdata field.
-   PORT_USERDATA *pData = (PORT_USERDATA *)port->userdata;
+   // Get the state from port userdata
+   VELOCITY_STATE *state = (VELOCITY_STATE *) port->userdata;
 
-   if (pData) {
+   if (state) {
       if (buffer->length) {
 
          // Update the circular buffer with frame timestamps
@@ -530,7 +491,7 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
             localtime_r(&(spec.tv_sec), &t);
             strftime(timeBuf, 256, "%F %T", &t);
             numDrops++;
-            printf("frame dropped %d: %s\n", numDrops, timeBuf);
+            log4c_category_warn(cat, "Frame drop number %d", numDrops);
             timestamp_nano += averageFrameDuration;
          }
          last_timestamp_nano = timestamp_nano;
@@ -539,15 +500,15 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
             encoder_thread_id = encoder_get_free_thread_id();
 
             if (encoder_thread_id == -1) {
-                 printf("WARNING: Running out of encoder threads\n");
-                 goto out;
+                  log4c_category_warn(cat, "Running out of encoder threads");
+                  goto out;
             }
 
             encoder_data_set(
                encoder_thread_id,
                buffer,
-               pData->pstate->width,
-               pData->pstate->height,
+               state->width,
+               state->height,
                camera_position,
                timestamp_nano / 1000000
             );
@@ -571,7 +532,7 @@ out:
    {
       MMAL_STATUS_T status;
 
-      new_buffer = mmal_queue_get(pData->pstate->camera_pool->queue);
+      new_buffer = mmal_queue_get(state->camera_pool->queue);
 
       if (new_buffer) status = mmal_port_send_buffer(port, new_buffer);
       
@@ -805,10 +766,10 @@ static void check_disable_port(MMAL_PORT_T *port)
 static void signal_handler_interrupt(int signal_number)
 {
    state.running = false;
-   sleep(2);
-   // Going to abort on all other signals
    log4c_category_info(cat, "Exiting program");
-   exit(0);
+//   sleep(2);
+   // Going to abort on all other signals
+//   exit(0);
 }
 
 
@@ -876,12 +837,7 @@ int main(int argc, const char **argv) {
    } else {
       camera_video_port   = state.camera_component->output[MMAL_CAMERA_VIDEO_PORT];
 
-      // Set up our userdata - this is passed though to the callback where we need the information.
-      state.callback_data.pstate = &state;
-      state.callback_data.abort = 0;
-
-      camera_video_port->userdata = (struct MMAL_PORT_USERDATA_T *)&state.callback_data;
-
+      camera_video_port->userdata = (struct MMAL_PORT_USERDATA_T *)&state;
       // Enable the camera video port and tell it its callback function
       status = mmal_port_enable(camera_video_port, camera_buffer_callback);
 
@@ -907,26 +863,23 @@ int main(int argc, const char **argv) {
          }
       }
 
+   mmal_port_parameter_set_boolean(camera_video_port, MMAL_PARAMETER_CAPTURE, true);
       // run forever
-      while (1) {
-         state.bCapturing = !state.bCapturing;
-         if (mmal_port_parameter_set_boolean(camera_video_port, MMAL_PARAMETER_CAPTURE, state.bCapturing) != MMAL_SUCCESS) {
+      while (state.running) {
+         usleep(10000);
+           // state.bCapturing = !state.bCapturing;
+//         if (mmal_port_parameter_set_boolean(camera_video_port, MMAL_PARAMETER_CAPTURE, state.bCapturing) != MMAL_SUCCESS) {
             // How to handle?
-         }
+         // }
       }
 
 error:
       mmal_status_to_int(status);
 
-      if (state.verbose) {
-         fprintf(stderr, "Closing down\n");
-      }
 
+      log4c_category_info(cat, "Closing down");
       destroy_camera_component(&state);
-
-      if (state.verbose) {
-         fprintf(stderr, "Close down completed, all components disconnected, disabled and destroyed\n\n");
-      }
+      log4c_category_info(cat, "Close down completed, all components disconnected, disabled and destroyed");
    }
 
    if (status != MMAL_SUCCESS) {

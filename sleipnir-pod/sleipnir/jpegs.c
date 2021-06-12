@@ -53,7 +53,7 @@ bool jpegs_have_data(int32_t position) {
 }
 
 void jpegs_reset() {
-   log4c_category_debug(cat, "reset jpegs data");
+   log4c_category_debug(cat, "Reset jpegs data structure");
    jpegs_lock();
    for (int i = 1; i < MAX_JPEGS; i++) {
       if (jpegs[i].data != NULL) free(jpegs[i].data);

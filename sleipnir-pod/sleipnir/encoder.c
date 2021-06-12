@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <pthread.h>
 #include <stdbool.h>
+#include <log4c.h>
 
 #include "interface/mmal/mmal.h"
 #include "interface/mmal/mmal_buffer.h"
@@ -14,6 +15,7 @@
 static bool *encoder_running;
 static pthread_t encoder_threads[ENCODER_MAX_THREADS];
 static u_char *yuv_image_buffers[ENCODER_MAX_THREADS];
+static log4c_category_t* cat;
 
 /*
  * Encoder threads
@@ -39,8 +41,10 @@ void *encoder_thread_func(void *arg) {
 void encoder_init(bool *running) {
     int i;
     pthread_attr_t tattr;
-
     encoder_running = running;
+
+    cat = log4c_category_get("sleipnir.encoder");
+    log4c_category_debug(cat, "Creating %d threads and mutexes for encoders locks", ENCODER_MAX_THREADS);
 
     for (i = 0; i < ENCODER_MAX_THREADS; i++) {
         pthread_mutex_init(&encoder_data_lock[i], NULL);
