@@ -8,6 +8,9 @@
 #include <sysexits.h>
 #include <curl/curl.h>
 #include <stdbool.h>
+#include <semaphore.h>
+
+#include <log4c.h>
 
 #include "bcm_host.h"
 #include "interface/vcos/vcos.h"
@@ -25,7 +28,6 @@
 #include "jpegs.h"
 #include "encoder.h"
 
-#include <semaphore.h>
 
 // Standard port setting for the camera component
 #define MMAL_CAMERA_VIDEO_PORT 1
@@ -59,7 +61,7 @@ typedef struct
  */
 struct VELOCITY_STATE_S
 {
-   bool running;
+   bool running;                       /// still running
    int timeout;                        /// Time taken before frame is grabbed and app then shuts down. Units are milliseconds
    int width;                          /// Requested width of image
    int height;                         /// requested height of image
@@ -119,6 +121,8 @@ static int save_frames = 0;
 static pthread_t io_thread;
 
 static int camera_position = 0;
+
+log4c_category_t* cat;
 
 size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *chunk){
    size_t realsize = size * nmemb;
@@ -798,44 +802,40 @@ static void check_disable_port(MMAL_PORT_T *port)
  * @param signal_number ID of incoming signal.
  *
  */
-static void signal_handler(int signal_number)
+static void signal_handler_interrupt(int signal_number)
 {
-   if (signal_number == SIGUSR1)
-   {
-      // Handle but ignore - prevents us dropping out if started in none-signal mode
-      // and someone sends us the USR1 signal anyway
-   }
-   else
-   {
-      state.running = false;
-      sleep(2);
-      // Going to abort on all other signals
-      vcos_log_error("Aborting program\n");
-      exit(130);
-   }
-
+   state.running = false;
+   sleep(2);
+   // Going to abort on all other signals
+   log4c_category_info(cat, "Exiting program");
+   exit(0);
 }
 
 
 /**
  * main
  */
-int main(int argc, const char **argv)
-{
-   int i;
+int main(int argc, const char **argv) {
    pthread_attr_t tattr;
    static int rc;
    static int ret;
 
-   // Our main data storage vessel..
    state.running = true;
 
+   // Initializing logging system
+   log4c_init();
+   cat = log4c_category_get("sleipnir.pod"); 
+
+   log4c_category_info(cat, "Sleipnir pod starting up...");
+
+   // Initialize jpegs structure
    if (jpegs_init() != 0) {
-      printf("\n jpegs init failed");
-      return 1;
+      log4c_category_error(cat, "Error initializing jpegs...");
+      return EX_SOFTWARE;
    }
 
-
+   // Capture CTRL-C
+   signal(SIGINT, signal_handler_interrupt);
 
    int exit_code = EX_OK;
 
@@ -843,16 +843,11 @@ int main(int argc, const char **argv)
    MMAL_PORT_T *camera_video_port = NULL;
 
    bcm_host_init();
-
-   // Register our application with the logging system
-   vcos_log_register("RaspiVid", VCOS_LOG_CATEGORY);
-
-   signal(SIGINT, signal_handler);
-
-   // Disable USR1 for the moment - may be reenabled if go in to signal capture mode
-   signal(SIGUSR1, SIG_IGN);
+   vcos_log_register("Sleipnir", VCOS_LOG_CATEGORY);
 
    default_status(&state);
+
+   // Initialize encoder
    encoder_init(&state.running);
 
    // Do we have any parameters

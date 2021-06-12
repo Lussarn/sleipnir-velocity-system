@@ -61,4 +61,4 @@ Write-Output "Linking files..."
     "-Wl,-rpath-link=$ROOT\usr\lib\arm-linux-gnueabihf" `
     "-Wl,-rpath-link=$ROOT\opt\vc\lib" `
     -L"$ROOT"\opt\vc\lib `
-    -lvcos -lbcm_host -lturbojpeg -lcurl -lpthread -lmmal_core -lmmal -lmmal_components -lmmal_util
+    -lvcos -lbcm_host -lturbojpeg -lcurl -lpthread -lmmal_core -lmmal -lmmal_components -lmmal_util -llog4c

@@ -2,11 +2,13 @@
 #include <pthread.h>
 #include <stdbool.h>
 #include <turbojpeg.h>
+#include <log4c.h>
 
 #include "jpegs.h"
 
-jpegs_t jpegs[MAX_JPEGS];
-pthread_mutex_t jpegs_lock_mutex;
+static jpegs_t jpegs[MAX_JPEGS];
+static pthread_mutex_t jpegs_lock_mutex;
+static log4c_category_t* cat;
 
 void jpegs_lock() {
     pthread_mutex_lock(&jpegs_lock_mutex);
@@ -17,7 +19,13 @@ void jpegs_unlock() {
 }
 
 int jpegs_init() {
-   return pthread_mutex_init(&jpegs_lock_mutex, NULL);
+    int ret;
+    cat = log4c_category_get("sleipnir.jpegs");
+    log4c_category_debug(cat, "Creating mutex for jpegs lock");
+    ret = pthread_mutex_init(&jpegs_lock_mutex, NULL);
+    if (ret != 0)
+        log4c_category_fatal(cat, "Unable to create mutex for jpegs lock");
+    return ret;
 }
 
 void jpegs_set_data(int32_t position, int64_t timestamp, u_char *data, int32_t data_size) {
@@ -45,6 +53,7 @@ bool jpegs_have_data(int32_t position) {
 }
 
 void jpegs_reset() {
+   log4c_category_debug(cat, "reset jpegs data");
    jpegs_lock();
    for (int i = 1; i < MAX_JPEGS; i++) {
       if (jpegs[i].data != NULL) free(jpegs[i].data);
