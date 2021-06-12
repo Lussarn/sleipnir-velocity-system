@@ -9,10 +9,10 @@
 #include "interface/mmal/mmal.h"
 #include "interface/mmal/mmal_buffer.h"
 
+#include "velocity_state.h"
 #include "encoder.h"
 #include "jpegs.h"
 
-static bool *encoder_running;
 static pthread_t encoder_threads[ENCODER_MAX_THREADS];
 static u_char *yuv_image_buffers[ENCODER_MAX_THREADS];
 static log4c_category_t* cat;
@@ -21,8 +21,8 @@ static log4c_category_t* cat;
  * Encoder threads
  */
 void *encoder_thread_func(void *arg) {
-   while(*encoder_running) {
-      encoder_data_t *data = (encoder_data_t *)arg;
+   encoder_data_t *data = (encoder_data_t *)arg;
+   while(data->state->running) {
       pthread_mutex_lock(&encoder_data_lock[data->thread_id]);
       if (data->frame_number != 0) {
          pthread_mutex_unlock(&encoder_data_lock[data->thread_id]);
@@ -38,10 +38,9 @@ void *encoder_thread_func(void *arg) {
    pthread_exit(NULL);
 }
 
-void encoder_init(bool *running) {
+void encoder_init(VELOCITY_STATE *state) {
     int i;
     pthread_attr_t tattr;
-    encoder_running = running;
 
     cat = log4c_category_get("sleipnir.encoder");
     log4c_category_debug(cat, "Creating %d threads and mutexes for encoders locks", ENCODER_MAX_THREADS);
@@ -59,6 +58,8 @@ void encoder_init(bool *running) {
         encoder_data[i].yuv_buffer = NULL;
         encoder_data[i].width = 0;
         encoder_data[i].height = 0;
+        encoder_data[i].state = state;
+        
 
         pthread_attr_init(&tattr);
         pthread_attr_setschedpolicy(&tattr, SCHED_BATCH);
@@ -72,19 +73,17 @@ int32_t encoder_get_free_thread_id() {
     int i;
     static int thread_id = 0;
 
-    while (*encoder_running) {
-        /* Round robin the threads for minimal locking */
-        for (i = 0; i < ENCODER_MAX_THREADS; i++) {
-            if (++thread_id >= ENCODER_MAX_THREADS) thread_id = 0;
-            pthread_mutex_lock(&encoder_data_lock[thread_id]);
-            if (encoder_data[thread_id].frame_number == 0) {
-                pthread_mutex_unlock(&encoder_data_lock[thread_id]);
-                return thread_id;
-            }
+    /* Round robin the threads for minimal locking */
+    for (i = 0; i < ENCODER_MAX_THREADS; i++) {
+        if (++thread_id >= ENCODER_MAX_THREADS) thread_id = 0;
+        pthread_mutex_lock(&encoder_data_lock[thread_id]);
+        if (encoder_data[thread_id].frame_number == 0) {
             pthread_mutex_unlock(&encoder_data_lock[thread_id]);
+            return thread_id;
         }
-        return -1;
+        pthread_mutex_unlock(&encoder_data_lock[thread_id]);
     }
+    return -1;
 }
 
 void encoder_copy_mmal_buffer_to_image_buffer(int32_t encoder_thread_id, MMAL_BUFFER_HEADER_T *buffer) {
@@ -93,14 +92,14 @@ void encoder_copy_mmal_buffer_to_image_buffer(int32_t encoder_thread_id, MMAL_BU
     mmal_buffer_header_mem_unlock(buffer);
 }
 
-void encoder_data_set(int32_t encoder_thread_id, MMAL_BUFFER_HEADER_T *buffer, int32_t width, int32_t height, int32_t position, int64_t timestamp) {
+void encoder_data_set(VELOCITY_STATE *state, int32_t encoder_thread_id, MMAL_BUFFER_HEADER_T *buffer, int64_t timestamp) {
     encoder_copy_mmal_buffer_to_image_buffer(encoder_thread_id, buffer);
 
     pthread_mutex_lock(&encoder_data_lock[encoder_thread_id]);
     encoder_data[encoder_thread_id].timestamp = timestamp;
     encoder_data[encoder_thread_id].yuv_buffer = yuv_image_buffers[encoder_thread_id];
-    encoder_data[encoder_thread_id].width = width;
-    encoder_data[encoder_thread_id].height = height;
-    encoder_data[encoder_thread_id].frame_number = position;
+    encoder_data[encoder_thread_id].width = camera_version(state->camera_version).capture_width;
+    encoder_data[encoder_thread_id].height =camera_version(state->camera_version).capture_height;
+    encoder_data[encoder_thread_id].frame_number = state->camera_position;
     pthread_mutex_unlock(&encoder_data_lock[encoder_thread_id]);    
 }

@@ -23,361 +23,24 @@
 #include "interface/mmal/util/mmal_default_components.h"
 #include "interface/mmal/util/mmal_connection.h"
 
+#include "velocity_state.h"
 #include "RaspiCamControl.h"
 #include "RaspiCLI.h"
 #include "jpegs.h"
 #include "encoder.h"
-
+#include "http_io.h"
 
 // Standard port setting for the camera component
 #define MMAL_CAMERA_VIDEO_PORT 1
 
-// Video format information
-// 0 implies variable
-#define VIDEO_FRAME_RATE_NUM 30
-#define VIDEO_FRAME_RATE_DEN 1
-
 /// Video render needs at least 2 buffers.
 #define VIDEO_OUTPUT_BUFFERS_NUM 2
-
-/// Interval at which we check for an failure abort during capture
-const int ABORT_INTERVAL = 100; // ms
 
 int mmal_status_to_int(MMAL_STATUS_T status);
 static void signal_handler(int signal_number);
 
-/** Structure containing all state information for the current run
- */
-typedef struct VELOCITY_STATE_S
-{
-   bool running;                       /// still running
-   int timeout;                        /// Time taken before frame is grabbed and app then shuts down. Units are milliseconds
-   int width;                          /// Requested width of image
-   int height;                         /// requested height of image
-   int framerate;                      /// Requested frame rate (fps)
-   char *identifier;                   /// identifier for this camera
-   char *url;                          /// Url for posting data
-   int verbose;                        /// !0 if want detailed run information
-
-   RASPICAM_CAMERA_PARAMETERS camera_parameters; /// Camera setup parameters
-   MMAL_COMPONENT_T *camera_component;    /// Pointer to the camera component
-   MMAL_POOL_T *camera_pool;            /// Pointer to the pool of buffers used by camera video port
-
-   int settings;                        /// Request settings from the camera
-   int sensor_mode;                     /// Sensor mode. 0=auto. Check docs/forum for modes selected by other values.
-} VELOCITY_STATE;
 static VELOCITY_STATE state;
-
-/// Command ID's and Structure defining our command line options
-#define CommandWidth        1
-#define CommandHeight       2
-#define CommandFramerate    7
-#define CommandSettings     13
-#define CommandSensorMode   14
-#define CommandIdentifier   15
-#define CommandUrl          16
-
-static COMMAND_LIST cmdline_commands[] =
-{
-   { CommandWidth,         "-width",      "w",  "Set image width <size>. Default 1920", 1 },
-   { CommandHeight,        "-height",     "h",  "Set image height <size>. Default 1080", 1 },
-   { CommandFramerate,     "-framerate",  "fps","Specify the frames per second to record", 1},
-   { CommandSettings,      "-settings",   "set","Retrieve camera settings and write to stdout", 0},
-   { CommandSensorMode,    "-mode",       "md", "Force sensor mode. 0=auto. See docs for other modes available", 1},
-   { CommandIdentifier,    "-identifier", "id", "Command identifer for this camera", 1},
-   { CommandUrl,           "-url",        "u",  "Url to post data to", 1},
-};
-
-static int cmdline_commands_size = sizeof(cmdline_commands) / sizeof(cmdline_commands[0]);
-static int save_frames = 0;
-
-static pthread_t io_thread;
-
-static int camera_position = 0;
-
 log4c_category_t* cat;
-
-size_t curl_callback(void *ptr, size_t size, size_t nmemb, void *chunk){
-   size_t realsize = size * nmemb;
-   snprintf(chunk, 255, "%s", (char *)ptr);
-   return realsize;
-}
-
-int http_post(CURL *curl, char *url, void *post_data, uint32_t post_size, void *answer) {
-   CURLcode res = 0;
-   char chunk[256];
-   struct curl_slist *headerlist=NULL;
-   static const char buf[] = "Expect:";
-
-   headerlist = curl_slist_append(headerlist, buf);
-   curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headerlist);
-   curl_easy_setopt(curl, CURLOPT_URL, url);
-   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_data);
-   curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, &curl_callback);
-   curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-   curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, post_size);
-   res = curl_easy_perform(curl);
-   if(res != CURLE_OK) {
-       fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(res));
-   } else {
-      if (strncmp(chunk, "OK", 2) == 0) {
-         strncpy(answer, chunk + 3, 253);
-      }
-   }
-   curl_slist_free_all (headerlist);
-   return res;
-}
-
-
-/**
- * IO THREAD 
- * globals used: state, save_frames, camera_position,
- */
-void *thread_io_func(void *arg) {
-   static char post_data[300000];
-   char answer[256];
-   CURL *curl;
-   CURLcode res;
-   VELOCITY_STATE *state = (VELOCITY_STATE *) arg;
-   char url[256];
-   int cx;
-
-   curl = curl_easy_init();
-
-   while (state->running) {
-      save_frames = 0;
-      jpegs_reset();
-      camera_position = 0;
-      while(state->running) {
-         cx = snprintf(url, 256, "%s?action=startcamera&cam=%s", state->url, state->identifier);
-         if (cx < 0 || cx >= 256) {
-            printf("Error snprintf in thread_io_func");
-         }
-         memset(answer,0,strlen(answer));  // Is this necesary?
-         res = http_post(curl, url, "", 0, &answer);
-         if (res != CURLE_OK) {
-            usleep(100000);
-            continue;
-         }
-         if (strcmp(answer, "START") == 0) break;
-         usleep(100000);
-      }
-
-      save_frames = 1;
-      int frame_number = 1;
-      while(true) {
-         if (!state->running) break;
-         while (true) {
-            if (jpegs_have_data(frame_number)) break;
-            usleep(100);
-         }
-
-         cx = snprintf(url, 256, "%s?action=uploadframe&cam=%s&position=%d&timestamp=%d",
-            state->url,
-            state->identifier,
-            frame_number,
-            jpegs_get_by_position(frame_number).timestamp);
-            if (cx < 0 || cx >= 256) {
-               printf("Error snprintf in thread_io_func");
-            }
-         memset(answer,0,strlen(answer)); // Is this necesary?
-         res = http_post(curl, url, jpegs_get_by_position(frame_number).data, jpegs_get_by_position(frame_number).data_size, &answer);
-         if (res != CURLE_OK) {
-            break;
-         }
-
-         if (strcmp(answer, "STOP") == 0) {
-            save_frames = 0;
-            if (frame_number > (camera_position - 50)) break;
-         }
-
-         jpegs_free_data(frame_number);
-
-         frame_number++;
-      }
-      // Wait for encoder threads
-      sleep(1);
-   }
-
-   curl_easy_cleanup(curl);
-   pthread_exit(NULL);
-}
-
-
-/**
- * Assign a default set of parameters to the state passed in
- *
- * @param state Pointer to state structure to assign defaults to
- */
-static void default_status(VELOCITY_STATE *state)
-{
-   if (!state)
-   {
-      vcos_assert(0);
-      return;
-   }
-
-   // Default everything to zero
-   memset(state, 0, sizeof(VELOCITY_STATE));
-
-   // Now set anything non-zero
-   state->running = true;
-   state->timeout = 5000;     // 5s delay before take image
-   state->width = 320;
-   state->height = 480;
-   state->framerate = VIDEO_FRAME_RATE_NUM;
-
-//   state->bCapturing = 0;
-
-   state->settings = 0;
-   state->sensor_mode = 0;
-
-   // Set up the camera_parameters to default
-   raspicamcontrol_set_defaults(&state->camera_parameters);
-}
-
-/**
- * Parse the incoming command line and put resulting parameters in to the state
- *
- * @param argc Number of arguments in command line
- * @param argv Array of pointers to strings from command line
- * @param state Pointer to state structure to assign any discovered parameters to
- * @return Non-0 if failed for some reason, 0 otherwise
- */
-static int parse_cmdline(int argc, const char **argv, VELOCITY_STATE *state)
-{
-   // Parse the command line arguments.
-   // We are looking for --<something> or -<abreviation of something>
-
-   int valid = 1;
-   int i;
-
-   for (i = 1; i < argc && valid; i++)
-   {
-      int command_id, num_parameters;
-
-      if (!argv[i]) {
-         continue;
-      }
-
-      if (argv[i][0] != '-')
-      {
-         valid = 0;
-         continue;
-      }
-
-      // Assume parameter is valid until proven otherwise
-      valid = 1;
-
-      command_id = raspicli_get_command_id(cmdline_commands, cmdline_commands_size, &argv[i][1], &num_parameters);
-
-      // If we found a command but are missing a parameter, continue (and we will drop out of the loop)
-      if (command_id != -1 && num_parameters > 0 && (i + 1 >= argc)) {
-         continue;
-      }
-
-      //  We are now dealing with a command line option
-      switch (command_id) {
-
-      case CommandWidth: // Width > 0
-         if (sscanf(argv[i + 1], "%u", &state->width) != 1)
-            valid = 0;
-         else
-            i++;
-         break;
-
-      case CommandHeight: // Height > 0
-         if (sscanf(argv[i + 1], "%u", &state->height) != 1)
-            valid = 0;
-         else
-            i++;
-         break;
-
-      case CommandIdentifier:  // cam1, cam2
-      {
-         int len = strlen(argv[i + 1]);
-         if (len)
-         {
-            state->identifier = malloc(len + 1);
-            if (state->identifier)
-               strncpy(state->identifier, argv[i + 1], len+1);
-            i++;
-         }
-         else
-            valid = 0;
-         break;
-      }
-
-      case CommandUrl:
-      {
-         int len = strlen(argv[i + 1]);
-         if (len)
-         {
-            state->url = malloc(len + 1);
-            if (state->url)
-               strncpy(state->url, argv[i + 1], len+1);
-            i++;
-         }
-         else
-            valid = 0;
-         break;
-      }
-
-
-      case CommandFramerate: // fps to record
-      {
-         if (sscanf(argv[i + 1], "%u", &state->framerate) == 1)
-         {
-            // TODO : What limits do we need for fps 1 - 30 - 120??
-            i++;
-         }
-         else
-            valid = 0;
-         break;
-      }
-
-      case CommandSettings:
-         state->settings = 1;
-         break;
-
-      case CommandSensorMode:
-      {
-         if (sscanf(argv[i + 1], "%u", &state->sensor_mode) == 1)
-         {
-            i++;
-         }
-         else
-            valid = 0;
-         break;
-      }
-
-      default:
-      {
-         // Try parsing for any image specific parameters
-         // result indicates how many parameters were used up, 0,1,2
-         // but we adjust by -1 as we have used one already
-         const char *second_arg = (i + 1 < argc) ? argv[i + 1] : NULL;
-         int parms_used = (raspicamcontrol_parse_cmdline(&state->camera_parameters, &argv[i][1], second_arg));
-
-         // If no parms were used, this must be a bad parameters
-         if (!parms_used)
-            valid = 0;
-         else
-            i += parms_used - 1;
-
-         break;
-      }
-      }
-   }
-
-   if (!valid)
-   {
-      fprintf(stderr, "Invalid command line option (%s)\n", argv[i-1]);
-      return 1;
-   }
-
-   return 0;
-}
 
 /**
  *  buffer header callback function for camera control
@@ -387,10 +50,8 @@ static int parse_cmdline(int argc, const char **argv, VELOCITY_STATE *state)
  * @param port Pointer to port from which callback originated
  * @param buffer mmal buffer header pointer
  */
-static void camera_control_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer)
-{
-   if (buffer->cmd == MMAL_EVENT_PARAMETER_CHANGED)
-   {
+static void camera_control_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer) {
+   if (buffer->cmd == MMAL_EVENT_PARAMETER_CHANGED) {
       MMAL_EVENT_PARAMETER_CHANGED_T *param = (MMAL_EVENT_PARAMETER_CHANGED_T *)buffer->data;
       switch (param->hdr.id) {
          case MMAL_PARAMETER_CAMERA_SETTINGS:
@@ -408,15 +69,12 @@ static void camera_control_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buf
          break;
       }
    }
-   else if (buffer->cmd == MMAL_EVENT_ERROR)
-   {
+   else if (buffer->cmd == MMAL_EVENT_ERROR) {
       vcos_log_error("No data received from sensor. Check all connections, including the Sunny one on the camera board");
    }
-   else
-   {
+   else {
       vcos_log_error("Received unexpected camera control callback event, 0x%08x", buffer->cmd);
    }
-
    mmal_buffer_header_release(buffer);
 }
 
@@ -496,7 +154,7 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
          }
          last_timestamp_nano = timestamp_nano;
 
-         if (save_frames == 1) {
+         if (state->post_frames) {
             encoder_thread_id = encoder_get_free_thread_id();
 
             if (encoder_thread_id == -1) {
@@ -505,15 +163,13 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
             }
 
             encoder_data_set(
+               state,
                encoder_thread_id,
                buffer,
-               state->width,
-               state->height,
-               camera_position,
                timestamp_nano / 1000000
             );
 
-            camera_position++;
+            state->camera_position++;
          }
       }
    }
@@ -528,10 +184,8 @@ out:
    mmal_buffer_header_release(buffer);
 
    // and send one back to the port (if still open)
-   if (port->is_enabled)
-   {
+   if (port->is_enabled) {
       MMAL_STATUS_T status;
-
       new_buffer = mmal_queue_get(state->camera_pool->queue);
 
       if (new_buffer) status = mmal_port_send_buffer(port, new_buffer);
@@ -561,59 +215,37 @@ static MMAL_STATUS_T create_camera_component(VELOCITY_STATE *state)
 
    /* Create the component */
    status = mmal_component_create(MMAL_COMPONENT_DEFAULT_CAMERA, &camera);
-
-   if (status != MMAL_SUCCESS)
-   {
+   if (status != MMAL_SUCCESS) {
       vcos_log_error("Failed to create camera component");
       goto error;
    }
 
+   /* Select Camera */
    MMAL_PARAMETER_INT32_T camera_num =
       {{MMAL_PARAMETER_CAMERA_NUM, sizeof(camera_num)}, 0};
-
    status = mmal_port_parameter_set(camera->control, &camera_num.hdr);
-
-   if (status != MMAL_SUCCESS)
-   {
+   if (status != MMAL_SUCCESS) {
       vcos_log_error("Could not select camera : error %d", status);
       goto error;
    }
-
-   if (!camera->output_num)
-   {
+   if (!camera->output_num) {
       status = MMAL_ENOSYS;
       vcos_log_error("Camera doesn't have output ports");
       goto error;
    }
 
-   status = mmal_port_parameter_set_uint32(camera->control, MMAL_PARAMETER_CAMERA_CUSTOM_SENSOR_CONFIG, state->sensor_mode);
-
-   if (status != MMAL_SUCCESS)
-   {
+   /* Set sensor mode */
+   status = mmal_port_parameter_set_uint32(camera->control, MMAL_PARAMETER_CAMERA_CUSTOM_SENSOR_CONFIG, camera_version(state->camera_version).sensor_mode);
+   if (status != MMAL_SUCCESS) {
       vcos_log_error("Could not set sensor mode : error %d", status);
       goto error;
    }
 
    video_port = camera->output[MMAL_CAMERA_VIDEO_PORT];
 
-   if (state->settings)
-   {
-      MMAL_PARAMETER_CHANGE_EVENT_REQUEST_T change_event_request =
-         {{MMAL_PARAMETER_CHANGE_EVENT_REQUEST, sizeof(MMAL_PARAMETER_CHANGE_EVENT_REQUEST_T)},
-          MMAL_PARAMETER_CAMERA_SETTINGS, 1};
-
-      status = mmal_port_parameter_set(camera->control, &change_event_request.hdr);
-      if ( status != MMAL_SUCCESS )
-      {
-         vcos_log_error("No camera settings events");
-      }
-   }
-
    // Enable the camera, and tell it its control callback function
    status = mmal_port_enable(camera->control, camera_control_callback);
-
-   if (status != MMAL_SUCCESS)
-   {
+   if (status != MMAL_SUCCESS) {
       vcos_log_error("Unable to enable control port : error %d", status);
       goto error;
    }
@@ -623,12 +255,12 @@ static MMAL_STATUS_T create_camera_component(VELOCITY_STATE *state)
       MMAL_PARAMETER_CAMERA_CONFIG_T cam_config =
       {
          { MMAL_PARAMETER_CAMERA_CONFIG, sizeof(cam_config) },
-         .max_stills_w = state->width,
-         .max_stills_h = state->height,
+         .max_stills_w = camera_version(state->camera_version).capture_width,
+         .max_stills_h = camera_version(state->camera_version).capture_height,
          .stills_yuv422 = 0,
          .one_shot_stills = 0,
-         .max_preview_video_w = state->width,
-         .max_preview_video_h = state->height,
+         .max_preview_video_w = camera_version(state->camera_version).capture_width,
+         .max_preview_video_h = camera_version(state->camera_version).capture_height,
          .num_preview_video_frames = 3,
          .stills_capture_circular_buffer_height = 0,
          .fast_preview_resume = 0,
@@ -638,32 +270,16 @@ static MMAL_STATUS_T create_camera_component(VELOCITY_STATE *state)
    }
 
    // Now set up the port formats
-
-
-   //enable dynamic framerate if necessary
-   if (state->camera_parameters.shutter_speed)
-   {
-      if (state->framerate > 1000000./state->camera_parameters.shutter_speed)
-      {
-         state->framerate=0;
-         if (state->verbose) {
-            fprintf(stderr, "Enable dynamic frame rate to fulfil shutter speed requirement\n");
-         }
-      }
-   }
-
    // Set the encode format on the video  port
    format = video_port->format;
    format->encoding_variant = MMAL_ENCODING_I420;
 
-   if(state->camera_parameters.shutter_speed > 6000000)
-   {
+   if(state->camera_parameters.shutter_speed > 6000000) {
         MMAL_PARAMETER_FPS_RANGE_T fps_range = {{MMAL_PARAMETER_FPS_RANGE, sizeof(fps_range)},
                                                      { 50, 1000 }, {166, 1000}};
         mmal_port_parameter_set(video_port, &fps_range.hdr);
    }
-   else if(state->camera_parameters.shutter_speed > 1000000)
-   {
+   else if(state->camera_parameters.shutter_speed > 1000000) {
         MMAL_PARAMETER_FPS_RANGE_T fps_range = {{MMAL_PARAMETER_FPS_RANGE, sizeof(fps_range)},
                                                      { 167, 1000 }, {999, 1000}};
         mmal_port_parameter_set(video_port, &fps_range.hdr);
@@ -672,19 +288,17 @@ static MMAL_STATUS_T create_camera_component(VELOCITY_STATE *state)
    format->encoding = MMAL_ENCODING_I420;
    format->encoding_variant = MMAL_ENCODING_I420;
 
-   format->es->video.width = VCOS_ALIGN_UP(state->width, 32);
-   format->es->video.height = VCOS_ALIGN_UP(state->height, 16);
+   format->es->video.width = VCOS_ALIGN_UP(camera_version(state->camera_version).capture_width, 32);
+   format->es->video.height = VCOS_ALIGN_UP(camera_version(state->camera_version).capture_height, 16);
    format->es->video.crop.x = 0;
    format->es->video.crop.y = 0;
-   format->es->video.crop.width = state->width;
-   format->es->video.crop.height = state->height;
-   format->es->video.frame_rate.num = state->framerate;
-   format->es->video.frame_rate.den = VIDEO_FRAME_RATE_DEN;
+   format->es->video.crop.width = camera_version(state->camera_version).capture_width;
+   format->es->video.crop.height = camera_version(state->camera_version).capture_height;
+   format->es->video.frame_rate.num = camera_version(state->camera_version).framerate;
+   format->es->video.frame_rate.den = 1;
 
    status = mmal_port_format_commit(video_port);
-
-   if (status != MMAL_SUCCESS)
-   {
+   if (status != MMAL_SUCCESS) {
       vcos_log_error("camera video format couldn't be set");
       goto error;
    }
@@ -695,21 +309,17 @@ static MMAL_STATUS_T create_camera_component(VELOCITY_STATE *state)
 
    /* Enable component */
    status = mmal_component_enable(camera);
-
-   if (status != MMAL_SUCCESS)
-   {
+   if (status != MMAL_SUCCESS) {
       vcos_log_error("camera component couldn't be enabled");
       goto error;
    }
 
    raspicamcontrol_set_all_parameters(camera, &state->camera_parameters);
-//   mmal_port_parameter_set_boolean(video_port, MMAL_PARAMETER_ZERO_COPY, MMAL_TRUE);
+   mmal_port_parameter_set_boolean(video_port, MMAL_PARAMETER_ZERO_COPY, MMAL_TRUE);
 
    /* Create pool of buffer headers for the output port to consume */
    pool = mmal_port_pool_create(video_port, video_port->buffer_num, video_port->buffer_size);
-
-   if (!pool)
-   {
+   if (!pool) {
       vcos_log_error("Failed to create buffer header pool for camera video port %s", video_port->name);
    }
 
@@ -723,10 +333,7 @@ static MMAL_STATUS_T create_camera_component(VELOCITY_STATE *state)
    return status;
 
 error:
-
-   if (camera)
-      mmal_component_destroy(camera);
-
+   if (camera) mmal_component_destroy(camera);
    return status;
 }
 
@@ -736,10 +343,8 @@ error:
  * @param state Pointer to state control struct
  *
  */
-static void destroy_camera_component(VELOCITY_STATE *state)
-{
-   if (state->camera_component)
-   {
+static void destroy_camera_component(VELOCITY_STATE *state) {
+   if (state->camera_component) {
       mmal_component_destroy(state->camera_component);
       state->camera_component = NULL;
    }
@@ -767,11 +372,7 @@ static void signal_handler_interrupt(int signal_number)
 {
    state.running = false;
    log4c_category_info(cat, "Exiting program");
-//   sleep(2);
-   // Going to abort on all other signals
-//   exit(0);
 }
-
 
 /**
  * main
@@ -806,10 +407,7 @@ int main(int argc, const char **argv) {
    bcm_host_init();
    vcos_log_register("Sleipnir", VCOS_LOG_CATEGORY);
 
-   default_status(&state);
-
-   // Initialize encoder
-   encoder_init(&state.running);
+   velocity_state_default(&state);
 
    // Do we have any parameters
    if (argc == 1) {
@@ -818,18 +416,17 @@ int main(int argc, const char **argv) {
    }
 
    // Parse the command line and put options in to our status structure
-   if (parse_cmdline(argc, argv, &state)) {
+   if (velocity_state_parse_cmdline(argc, argv, &state)) {
       status = -1;
       exit(EX_USAGE);
    }
 
-   ret = pthread_attr_init(&tattr);
-   ret = pthread_attr_setschedpolicy(&tattr, SCHED_BATCH);
-   ret = pthread_attr_setinheritsched(&tattr, PTHREAD_EXPLICIT_SCHED);
-   if ((rc = pthread_create(&io_thread, &tattr, thread_io_func, &state))) {
-      vcos_log_error("Failed to create IO  thread");
-   }
-   ret = pthread_attr_destroy(&tattr);
+   // Initialize encoder
+   encoder_init(&state);
+
+   // Initialize http IO
+   http_io_init(&state);
+
 
    if ((status = create_camera_component(&state)) != MMAL_SUCCESS) {
       vcos_log_error("%s: Failed to create camera component", __func__);
@@ -863,14 +460,9 @@ int main(int argc, const char **argv) {
          }
       }
 
-   mmal_port_parameter_set_boolean(camera_video_port, MMAL_PARAMETER_CAPTURE, true);
-      // run forever
+      mmal_port_parameter_set_boolean(camera_video_port, MMAL_PARAMETER_CAPTURE, true);
       while (state.running) {
          usleep(10000);
-           // state.bCapturing = !state.bCapturing;
-//         if (mmal_port_parameter_set_boolean(camera_video_port, MMAL_PARAMETER_CAPTURE, state.bCapturing) != MMAL_SUCCESS) {
-            // How to handle?
-         // }
       }
 
 error:

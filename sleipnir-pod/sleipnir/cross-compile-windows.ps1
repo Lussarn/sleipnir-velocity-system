@@ -55,9 +55,27 @@ If ($lastExitCode -ne "0") {
     exit $lastExitCode 
 }
 
+Write-Output "Compiling velocity_state.c"
+& $GCC -c velocity_state.c `
+    -I"$ROOT"\usr\include `
+    -I"$ROOT"\usr\include\arm-linux-gnueabihf `
+    -I"$ROOT"\opt\vc\include 
+If ($lastExitCode -ne "0") {
+    exit $lastExitCode 
+}
+
+Write-Output "Compiling http_io.c"
+& $GCC -c http_io.c `
+    -I"$ROOT"\usr\include `
+    -I"$ROOT"\usr\include\arm-linux-gnueabihf `
+    -I"$ROOT"\opt\vc\include 
+If ($lastExitCode -ne "0") {
+    exit $lastExitCode 
+}
+
 Write-Output "Linking files..."
 & $GCC --sysroot="$ROOT" `
-    -o sleipnir-pod sleipnir.o RaspiCamControl.o RaspiCLI.o jpegs.o encoder.o `
+    -o sleipnir-pod sleipnir.o RaspiCamControl.o RaspiCLI.o jpegs.o encoder.o velocity_state.o http_io.o `
     "-Wl,-rpath-link=$ROOT\usr\lib\arm-linux-gnueabihf" `
     "-Wl,-rpath-link=$ROOT\opt\vc\lib" `
     -L"$ROOT"\opt\vc\lib `
