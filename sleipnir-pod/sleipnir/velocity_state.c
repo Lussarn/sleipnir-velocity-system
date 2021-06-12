@@ -29,7 +29,6 @@ void velocity_state_default(VELOCITY_STATE *state)
 
    // Now set anything non-zero
    state->running = true;
-//   state->timeout = 5000;     // 5s delay before take image
    state->camera_version = CAMERA_VERSION_15;
    state->post_frames = false;
    state->camera_position = 0;
