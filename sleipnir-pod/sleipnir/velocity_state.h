@@ -26,8 +26,6 @@ typedef struct VELOCITY_STATE_T
     bool post_frames;
     int camera_position;
 
-    int verbose;                        /// !0 if want detailed run information
-
     RASPICAM_CAMERA_PARAMETERS camera_parameters; /// Camera setup parameters
     MMAL_COMPONENT_T *camera_component;    /// Pointer to the camera component
     MMAL_POOL_T *camera_pool;            /// Pointer to the pool of buffers used by camera video port

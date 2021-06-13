@@ -73,9 +73,18 @@ If ($lastExitCode -ne "0") {
     exit $lastExitCode 
 }
 
+Write-Output "Compiling camera.c"
+& $GCC -c camera.c `
+    -I"$ROOT"\usr\include `
+    -I"$ROOT"\usr\include\arm-linux-gnueabihf `
+    -I"$ROOT"\opt\vc\include 
+If ($lastExitCode -ne "0") {
+    exit $lastExitCode 
+}
+
 Write-Output "Linking files..."
 & $GCC --sysroot="$ROOT" `
-    -o sleipnir-pod sleipnir.o RaspiCamControl.o RaspiCLI.o jpegs.o encoder.o velocity_state.o http_io.o `
+    -o sleipnir-pod sleipnir.o RaspiCamControl.o RaspiCLI.o jpegs.o encoder.o velocity_state.o http_io.o camera.o `
     "-Wl,-rpath-link=$ROOT\usr\lib\arm-linux-gnueabihf" `
     "-Wl,-rpath-link=$ROOT\opt\vc\lib" `
     -L"$ROOT"\opt\vc\lib `
