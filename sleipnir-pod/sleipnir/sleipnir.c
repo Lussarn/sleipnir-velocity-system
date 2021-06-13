@@ -57,9 +57,8 @@ int32_t numDrops = 0;
  * @param port Pointer to port from which callback originated
  * @param buffer mmal buffer header pointer
  */
-static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer)
+static void picture_callback(VELOCITY_STATE *state, MMAL_BUFFER_HEADER_T *buffer)
 {
-   MMAL_BUFFER_HEADER_T *new_buffer;
    int i;
    int64_t now_nano;
    int32_t encoder_thread_id;
@@ -69,9 +68,6 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
 
    // Save current timestamp as nanosecond
    now_nano = ((int64_t)spec.tv_sec) * 1000000000 + ((int64_t)spec.tv_nsec);
-
-   // Get the state from port userdata
-   VELOCITY_STATE *state = (VELOCITY_STATE *) port->userdata;
 
    if (state) {
       if (buffer->length) {
@@ -144,39 +140,13 @@ static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buff
    }
 out:
    lastPts = buffer->pts;
-
-   // release buffer back to the pool
-   mmal_buffer_header_release(buffer);
-
-   // and send one back to the port (if still open)
-   if (port->is_enabled) {
-      MMAL_STATUS_T status;
-      new_buffer = mmal_queue_get(state->camera_pool->queue);
-
-      if (new_buffer) status = mmal_port_send_buffer(port, new_buffer);
-      
-      if (!new_buffer || status != MMAL_SUCCESS) {
-         vcos_log_error("Unable to return a buffer to the camera port");
-      }
-   }
 }
 
-
-/**
- * Handler for sigint signals
- *
- * @param signal_number ID of incoming signal.
- *
- */
-static void signal_handler_interrupt(int signal_number)
-{
+static void signal_handler_interrupt(int signal_number) {
    state.running = false;
    log4c_category_info(cat, "Exiting program");
 }
 
-/**
- * main
- */
 int main(int argc, const char **argv) {
    pthread_attr_t tattr;
    static int rc;
@@ -228,7 +198,7 @@ int main(int argc, const char **argv) {
    http_io_init(&state);
 
 
-   if ((status = camera_create_component(&state, camera_buffer_callback)) != MMAL_SUCCESS) {
+   if ((status = camera_create_component(&state, picture_callback)) != MMAL_SUCCESS) {
       vcos_log_error("%s: Failed to create camera component", __func__);
       exit_code = EX_SOFTWARE;
    } else {

@@ -16,7 +16,7 @@
 // Standard port setting for the camera component
 #define MMAL_CAMERA_VIDEO_PORT 1
 
-MMAL_STATUS_T camera_create_component(VELOCITY_STATE *state, MMAL_PORT_BH_CB_T cb);
+MMAL_STATUS_T camera_create_component(VELOCITY_STATE *state, void *cb);
 void camera_destroy_component(VELOCITY_STATE *state);
 
 #endif

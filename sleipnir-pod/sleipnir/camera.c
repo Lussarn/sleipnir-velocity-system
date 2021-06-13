@@ -21,6 +21,12 @@
 
 static log4c_category_t* cat;
 
+typedef struct BUFFER_CALLBACK_DATA_T {
+    void (*callback_functon)(VELOCITY_STATE *state, MMAL_BUFFER_HEADER_T *buffer);
+    VELOCITY_STATE *state;
+} BUFFER_CALLBACK_DATA;
+static BUFFER_CALLBACK_DATA buffer_callback_data;
+
 /**
  *  buffer header callback function for camera control
  *
@@ -59,6 +65,28 @@ static void camera_control_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buf
 
 
 
+static void camera_buffer_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buffer) {
+    BUFFER_CALLBACK_DATA *buffer_callback_data;
+    MMAL_BUFFER_HEADER_T *new_buffer;
+
+    // Calback to user function
+    buffer_callback_data = (BUFFER_CALLBACK_DATA *) port->userdata;
+    (*buffer_callback_data->callback_functon)(buffer_callback_data->state, buffer);
+
+    // release buffer back to the pool
+    mmal_buffer_header_release(buffer);
+
+    // and send one back to the port (if still open)
+    if (port->is_enabled) {
+        MMAL_STATUS_T status;
+        new_buffer = mmal_queue_get(buffer_callback_data->state->camera_pool->queue);
+        if (new_buffer) status = mmal_port_send_buffer(port, new_buffer);
+        if (!new_buffer || status != MMAL_SUCCESS) {
+            vcos_log_error("Unable to return a buffer to the camera port");
+        }
+    }
+}
+
 /**
  * Create the camera component, set up its ports
  *
@@ -67,13 +95,16 @@ static void camera_control_callback(MMAL_PORT_T *port, MMAL_BUFFER_HEADER_T *buf
  * @return MMAL_SUCCESS if all OK, something else otherwise
  *
  */
-MMAL_STATUS_T camera_create_component(VELOCITY_STATE *state, MMAL_PORT_BH_CB_T cb) {
+MMAL_STATUS_T camera_create_component(VELOCITY_STATE *state, void* cb) {
     MMAL_COMPONENT_T *camera = 0;
     MMAL_ES_FORMAT_T *format;
     MMAL_PORT_T *video_port = NULL;
     MMAL_STATUS_T status;
     MMAL_POOL_T *pool;
     MMAL_PORT_T *camera_video_port = NULL;
+
+    buffer_callback_data.state = state;
+    buffer_callback_data.callback_functon = cb;
 
     cat = log4c_category_get("sleipnir.camera"); 
 
@@ -191,10 +222,10 @@ MMAL_STATUS_T camera_create_component(VELOCITY_STATE *state, MMAL_PORT_BH_CB_T c
     state->camera_component = camera;
 
     camera_video_port   = state->camera_component->output[MMAL_CAMERA_VIDEO_PORT];
-    camera_video_port->userdata = (struct MMAL_PORT_USERDATA_T *)state;
+    camera_video_port->userdata = (struct MMAL_PORT_USERDATA_T *) &buffer_callback_data;
 
     // Enable the camera video port and tell it its callback function
-    status = mmal_port_enable(camera_video_port, cb);
+    status = mmal_port_enable(camera_video_port, camera_buffer_callback);
     if (status != MMAL_SUCCESS) {
         vcos_log_error("Failed to setup camera output");
         goto error;

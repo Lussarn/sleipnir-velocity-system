@@ -26,7 +26,11 @@ void *encoder_thread_func(void *arg) {
       pthread_mutex_lock(&encoder_data_lock[data->thread_id]);
       if (data->frame_number != 0) {
          pthread_mutex_unlock(&encoder_data_lock[data->thread_id]);
-         jpegs_store(data->frame_number, data->yuv_buffer, data->width, data->height,  data->timestamp);
+         jpegs_store(data->frame_number,
+                    data->yuv_buffer, 
+                    camera_version(data->state->camera_version).capture_width, 
+                    camera_version(data->state->camera_version).capture_height,  
+                    data->timestamp);
 
          // Lock while writing frame_number since this is the one we check
          pthread_mutex_lock(&encoder_data_lock[data->thread_id]);
@@ -56,10 +60,7 @@ void encoder_init(VELOCITY_STATE *state) {
         encoder_data[i].thread_id = i;
         encoder_data[i].frame_number = 0;
         encoder_data[i].yuv_buffer = NULL;
-        encoder_data[i].width = 0;
-        encoder_data[i].height = 0;
         encoder_data[i].state = state;
-        
 
         pthread_attr_init(&tattr);
         pthread_attr_setschedpolicy(&tattr, SCHED_BATCH);
@@ -98,8 +99,7 @@ void encoder_data_set(VELOCITY_STATE *state, int32_t encoder_thread_id, MMAL_BUF
     pthread_mutex_lock(&encoder_data_lock[encoder_thread_id]);
     encoder_data[encoder_thread_id].timestamp = timestamp;
     encoder_data[encoder_thread_id].yuv_buffer = yuv_image_buffers[encoder_thread_id];
-    encoder_data[encoder_thread_id].width = camera_version(state->camera_version).capture_width;
-    encoder_data[encoder_thread_id].height =camera_version(state->camera_version).capture_height;
     encoder_data[encoder_thread_id].frame_number = state->camera_position;
+    encoder_data[encoder_thread_id].state = state;
     pthread_mutex_unlock(&encoder_data_lock[encoder_thread_id]);    
 }

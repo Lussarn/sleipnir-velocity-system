@@ -14,8 +14,6 @@
 typedef struct _encoder_data_t {
    int thread_id;
    int frame_number;
-   int width;
-   int height;
    int64_t timestamp;
    u_char *yuv_buffer;
    VELOCITY_STATE *state;
