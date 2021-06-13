@@ -78,7 +78,7 @@ while True:
         cam = cams[cam_idx]
 
         if cam.get_state() == Camera.STATE_IDLE:
-            response = session.post(url, data = { 'action': 'startcamera', 'id': cam.get_cam() }, timeout=1)
+            response = session.post(url + "?action=startcamera&cam=" + cam.get_cam(), timeout=1)
             if (response.status_code != 200):
                 raise Exception("Sleipnir base gave error: " + response.status_code + " exiting!")
             if (response.content == b'OK-START'):
@@ -91,13 +91,9 @@ while True:
             position = cam.get_position()
             cam.set_position(position + 1)
             frame = frame_dao.load(db, flight, 1 if cam.get_cam() == 'cam1' else 2, position + jump)
-            response = session.post(url, data = { 
-                'action': 'uploadframe', 
-                'id': cam.get_cam(),
-                'framenumber': frame.get_position() - jump,
-                'timestamp': frame.get_timestamp(),
-                'data': base64.encodebytes(frame.get_image())
-                }, timeout=1)
+            response = session.post(url + "?action=uploadframe&cam=" + cam.get_cam() + "&position=" + str(frame.get_position() - jump ) + "&timestamp=" + str(frame.get_timestamp()), 
+                data=frame.get_image(),
+                timeout=1)
             if (response.status_code != 200):
                 raise Exception("Sleipnir base gave error: " + response.status_code + " exiting!")
             if (response.content == b'OK-STOP'):

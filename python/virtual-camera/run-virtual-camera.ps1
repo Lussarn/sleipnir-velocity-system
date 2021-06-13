@@ -1,4 +1,4 @@
-Write-Output "Running fake camera"
+Write-Output "Running virtual camera"
 Write-Output "Checking for virtual environment..."
 if (-Not (Test-Path -Path ..\venv)) {
     Write-Output "ERROR: no 'venv' exists, please run install-venv.ps1 from parent firectory"
@@ -6,4 +6,4 @@ if (-Not (Test-Path -Path ..\venv)) {
 }
 
 ..\venv\Scripts\activate.ps1
-python .\src\fake-camera.py $args[0]  $args[1]
+python .\src\virtual-camera.py $args[0]  $args[1]
