@@ -26,6 +26,9 @@ void *encoder_thread_func(void *arg) {
       pthread_mutex_lock(&encoder_data_lock[data->thread_id]);
       if (data->frame_number != 0) {
          pthread_mutex_unlock(&encoder_data_lock[data->thread_id]);
+
+//        newData  = convert_from_cam_v2(data);
+
          jpegs_store(data->frame_number,
                     data->yuv_buffer, 
                     camera_version(data->state->camera_version).capture_width, 

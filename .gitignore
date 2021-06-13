@@ -1,4 +1,8 @@
 *.o
+<<<<<<< HEAD
+=======
+*/sleipnir/sleipnir-pod
+>>>>>>> feature-camv2
 *.pyc
 */sleipnir/sleipnir-pod
 record
