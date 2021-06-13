@@ -12,6 +12,7 @@
 #include "velocity_state.h"
 #include "encoder.h"
 #include "jpegs.h"
+#include "fit_image.h"
 
 static pthread_t encoder_threads[ENCODER_MAX_THREADS];
 static u_char *yuv_image_buffers[ENCODER_MAX_THREADS];
@@ -21,28 +22,43 @@ static log4c_category_t* cat;
  * Encoder threads
  */
 void *encoder_thread_func(void *arg) {
-   encoder_data_t *data = (encoder_data_t *)arg;
-   while(data->state->running) {
-      pthread_mutex_lock(&encoder_data_lock[data->thread_id]);
-      if (data->frame_number != 0) {
-         pthread_mutex_unlock(&encoder_data_lock[data->thread_id]);
+    char *buffer;
+    char *new_buffer;
 
-//        newData  = convert_from_cam_v2(data);
+    encoder_data_t *data = (encoder_data_t *)arg;
+    while(data->state->running) {
+        pthread_mutex_lock(&encoder_data_lock[data->thread_id]);
+        if (data->frame_number != 0) {
+            pthread_mutex_unlock(&encoder_data_lock[data->thread_id]);
 
-         jpegs_store(data->frame_number,
-                    data->yuv_buffer, 
-                    camera_version(data->state->camera_version).capture_width, 
-                    camera_version(data->state->camera_version).capture_height,  
-                    data->timestamp);
+            buffer = data->yuv_buffer;
 
-         // Lock while writing frame_number since this is the one we check
-         pthread_mutex_lock(&encoder_data_lock[data->thread_id]);
-         data->frame_number = 0;
-      }
-      pthread_mutex_unlock(&encoder_data_lock[data->thread_id]);
-      usleep(1000);
-   }
-   pthread_exit(NULL);
+            new_buffer = fit_image(
+                        buffer,
+                        camera_version(data->state->camera_version).capture_width,
+                        camera_version(data->state->camera_version).capture_height, 
+                        camera_version(data->state->camera_version).final_width,
+                        camera_version(data->state->camera_version).final_height,
+                        camera_version(data->state->camera_version).rotate
+                        );
+
+            jpegs_store(data->frame_number,
+                        new_buffer, 
+                        camera_version(data->state->camera_version).final_width, 
+                        camera_version(data->state->camera_version).final_height,  
+                        data->timestamp);
+
+            // If a new buffer is allocated by fit_image we need to free it
+            if (buffer != new_buffer) free(new_buffer);
+
+            // Lock while writing frame_number since this is the one we check
+            pthread_mutex_lock(&encoder_data_lock[data->thread_id]);
+            data->frame_number = 0;
+        }
+        pthread_mutex_unlock(&encoder_data_lock[data->thread_id]);
+        usleep(1000);
+    }
+    pthread_exit(NULL);
 }
 
 void encoder_init(VELOCITY_STATE *state) {

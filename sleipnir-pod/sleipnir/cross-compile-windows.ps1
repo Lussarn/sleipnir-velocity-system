@@ -81,8 +81,8 @@ If ($lastExitCode -ne "0") {
     exit $lastExitCode 
 }
 
-Write-Output "Compiling convert_cam_v2.cpp"
-& $GPP -c convert_cam_v2.cpp `
+Write-Output "Compiling fit_image.cpp"
+& $GPP -c fit_image.cpp `
     -I"$ROOT"\usr\include `
     -I"$ROOT"\usr\include\arm-linux-gnueabihf `
     -I"$ROOT"\opt\vc\include `
@@ -93,7 +93,7 @@ If ($lastExitCode -ne "0") {
 
 Write-Output "Linking files..."
 & $GPP --sysroot="$ROOT" `
-    -o sleipnir-pod sleipnir.o RaspiCamControl.o RaspiCLI.o jpegs.o encoder.o velocity_state.o http_io.o camera.o  convert_cam_v2.cpp `
+    -o sleipnir-pod sleipnir.o RaspiCamControl.o RaspiCLI.o jpegs.o encoder.o velocity_state.o http_io.o camera.o fit_image.o `
     "-Wl,-rpath-link=$ROOT\usr\lib\arm-linux-gnueabihf" `
     "-Wl,-rpath-link=$ROOT\usr\lib\arm-linux-gnueabihf\blas" `
     "-Wl,-rpath-link=$ROOT\usr\lib\arm-linux-gnueabihf\lapack" `
