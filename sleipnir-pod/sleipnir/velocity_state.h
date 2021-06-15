@@ -47,14 +47,16 @@ typedef struct
    int capture_width;
    int capture_height;
 
-   // Region of interest (crop)
+   // 2. Region of interest (crop)
    int roi_left;
    int roi_top;
    int roi_width;
    int roi_height;
 
+   // 3. Rotate
    int rotate;
 
+   // 4. Resize
    int final_width;
    int final_height;
 
@@ -63,16 +65,18 @@ typedef struct
 
 static CAMERA_VERSION_PROPERTIES camera_version_properties[] =
 {
-   { CAMERA_VERSION_15, 7, 90, 
-      320, 480, 
-      0, 0, 320, 480,
-      0,
-      320, 480 },
-   { CAMERA_VERSION_21, 6, 90, 
-      1280, 720, 
-      130, 30, 1020, 660, 
-      90,
-      320, 480 }
+   { CAMERA_VERSION_15, 7, 90,  // Camera mode, framerate
+      320, 480,                 // capture width, height
+      0, 0, 320, 480,           // region of interest
+      0,                        // rotate
+      320, 480 },               // final width height
+
+   { CAMERA_VERSION_21, 6, 90,  // Camera mode, framerate
+      1280, 660,                // capture width, height
+      130, 0, 1020, 660,       // region of interest
+      90,                       // rotate
+      320, 480 }                // final width height
+
 //   { CAMERA_VERSION_15, 7, 320, 480, 90, 320, 480, 0 },
 //   { CAMERA_VERSION_21, 6, 1280, 720, 90, 320, 480, 90 },
 
