@@ -77,9 +77,6 @@ static CAMERA_VERSION_PROPERTIES camera_version_properties[] =
       90,                       // rotate
       320, 480 }                // final width height
 
-//   { CAMERA_VERSION_15, 7, 320, 480, 90, 320, 480, 0 },
-//   { CAMERA_VERSION_21, 6, 1280, 720, 90, 320, 480, 90 },
-
 };
 
 CAMERA_VERSION_PROPERTIES camera_version(int camera_version);

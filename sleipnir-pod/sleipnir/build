@@ -69,7 +69,7 @@ echo "Compiling fit_image.cpp"
 g++ -c fit_image.cpp `pkg-config --cflags opencv`
 
 echo "Linking files..."
-g++ -o sleipnir-pod *.o -L/opt/vc/lib -lvcos -lbcm_host -lturbojpeg -lb64 -lcurl -lpthread -lmmal_core -lmmal -lmmal_components -lmmal_util -llog4c `pkg-config --libs opencv` -lstdc++
+g++ -o sleipnir-pod *.o -L/opt/vc/lib -lvcos -lbcm_host -lturbojpeg -lcurl -lpthread -lmmal_core -lmmal -lmmal_components -lmmal_util -llog4c `pkg-config --libs opencv` -lstdc++
 
 if [ $? -ne 0 ]
 then
