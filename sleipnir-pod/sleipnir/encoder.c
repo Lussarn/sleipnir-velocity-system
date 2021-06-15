@@ -36,10 +36,14 @@ void *encoder_thread_func(void *arg) {
             new_buffer = fit_image(
                         buffer,
                         camera_version(data->state->camera_version).capture_width,
-                        camera_version(data->state->camera_version).capture_height, 
+                        camera_version(data->state->camera_version).capture_height,
+                        camera_version(data->state->camera_version).roi_left,
+                        camera_version(data->state->camera_version).roi_top,
+                        camera_version(data->state->camera_version).roi_width,
+                        camera_version(data->state->camera_version).roi_height,
+                        camera_version(data->state->camera_version).rotate,
                         camera_version(data->state->camera_version).final_width,
-                        camera_version(data->state->camera_version).final_height,
-                        camera_version(data->state->camera_version).rotate
+                        camera_version(data->state->camera_version).final_height
                         );
 
             jpegs_store(data->frame_number,

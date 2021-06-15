@@ -41,18 +41,41 @@ typedef struct
 {
    int version;
    int sensor_mode;
+   int framerate;
+
+   // 1. Capture size
    int capture_width;
    int capture_height;
-   int framerate;
+
+   // Region of interest (crop)
+   int roi_left;
+   int roi_top;
+   int roi_width;
+   int roi_height;
+
+   int rotate;
+
    int final_width;
    int final_height;
-   int rotate;
+
+
 } CAMERA_VERSION_PROPERTIES;
 
 static CAMERA_VERSION_PROPERTIES camera_version_properties[] =
 {
-   { CAMERA_VERSION_15, 7, 320, 480, 90, 320, 480, 0 },
-   { CAMERA_VERSION_21, 6, 1280, 720, 90, 320, 480, 90 },
+   { CAMERA_VERSION_15, 7, 90, 
+      320, 480, 
+      0, 0, 320, 480,
+      0,
+      320, 480 },
+   { CAMERA_VERSION_21, 6, 90, 
+      1280, 720, 
+      130, 30, 1020, 660, 
+      90,
+      320, 480 }
+//   { CAMERA_VERSION_15, 7, 320, 480, 90, 320, 480, 0 },
+//   { CAMERA_VERSION_21, 6, 1280, 720, 90, 320, 480, 90 },
+
 };
 
 CAMERA_VERSION_PROPERTIES camera_version(int camera_version);
