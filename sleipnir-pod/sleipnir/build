@@ -17,14 +17,6 @@ then
    exit 1
 fi
 
-echo "Compiling RaspiCLI.c"
-gcc -c RaspiCLI.c -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/ -I/opt/vc/include/interface/vmcs_host/linux/ 
-if [ $? -ne 0 ]
-then
-   echo "Error Compiling, abort!"
-   exit 1
-fi
-
 echo "Compiling jpegs.c"
 gcc -c jpegs.c -I/opt/vc/include -I/opt/vc/include/interface/vcos/pthreads/ -I/opt/vc/include/interface/vmcs_host/linux/
 if [ $? -ne 0 ]
