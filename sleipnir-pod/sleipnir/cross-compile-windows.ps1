@@ -15,17 +15,6 @@ If ($lastExitCode -ne "0") {
     exit $lastExitCode 
 }
     
-Write-Output "Compiling RaspiCLI.c"
-& $GCC -c RaspiCLI.c `
-    -I"$ROOT"\usr\include `
-    -I"$ROOT"\usr\include\arm-linux-gnueabihf `
-    -I"$ROOT"\opt\vc\include `
-    -I"$ROOT"\opt\vc\include\interface\vcos\pthreads `
-    -I"$ROOT"\opt\vc\include\interface\vmcs_host\linux
-If ($lastExitCode -ne "0") {
-    exit $lastExitCode 
-}
-
 Write-Output "Compiling sleipnir.c"
 & $GCC -c sleipnir.c `
     -I"$ROOT"\usr\include `
@@ -93,7 +82,7 @@ If ($lastExitCode -ne "0") {
 
 Write-Output "Linking files..."
 & $GPP --sysroot="$ROOT" `
-    -o sleipnir-pod sleipnir.o RaspiCamControl.o RaspiCLI.o jpegs.o encoder.o velocity_state.o http_io.o camera.o fit_image.o `
+    -o sleipnir-pod sleipnir.o RaspiCamControl.o jpegs.o encoder.o velocity_state.o http_io.o camera.o fit_image.o `
     "-Wl,-rpath-link=$ROOT\usr\lib\arm-linux-gnueabihf" `
     "-Wl,-rpath-link=$ROOT\usr\lib\arm-linux-gnueabihf\blas" `
     "-Wl,-rpath-link=$ROOT\usr\lib\arm-linux-gnueabihf\lapack" `
