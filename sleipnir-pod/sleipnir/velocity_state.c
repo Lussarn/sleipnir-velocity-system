@@ -29,7 +29,7 @@ void velocity_state_default(VELOCITY_STATE *state)
 
    // Now set anything non-zero
    state->running = true;
-   state->camera_version = CAMERA_VERSION_15;
+   state->camera_version = CAMERA_VERSION_21;
    state->post_frames = false;
    state->camera_position = 0;
 
@@ -86,8 +86,8 @@ int velocity_state_parse_cmdline(int argc, const char **argv, VELOCITY_STATE *st
             if (sscanf(argv[i + 1], "%u", &state->camera_version) != 1)
                valid = 0;
             else
-               if (state->camera_version == 15) 
-                  state->camera_version = CAMERA_VERSION_15;
+               if (state->camera_version == 13) 
+                  state->camera_version = CAMERA_VERSION_13;
                else if (state->camera_version == 21) 
                   state->camera_version = CAMERA_VERSION_21;
                else {

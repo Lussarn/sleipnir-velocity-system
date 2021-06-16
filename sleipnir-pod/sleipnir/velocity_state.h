@@ -34,7 +34,7 @@ typedef struct VELOCITY_STATE_T
 
 void velocity_state_default(VELOCITY_STATE *state);
 
-#define CAMERA_VERSION_15 0
+#define CAMERA_VERSION_13 0
 #define CAMERA_VERSION_21 1
 
 typedef struct
@@ -65,7 +65,7 @@ typedef struct
 
 static CAMERA_VERSION_PROPERTIES camera_version_properties[] =
 {
-   { CAMERA_VERSION_15, 7, 90,  // Camera mode, framerate
+   { CAMERA_VERSION_13, 7, 90,  // Camera mode, framerate
       320, 480,                 // capture width, height
       0, 0, 320, 480,           // region of interest
       0,                        // rotate
