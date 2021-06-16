@@ -11,6 +11,7 @@
 #include <semaphore.h>
 
 #include <log4c.h>
+#include <popt.h>
 
 #include "bcm_host.h"
 #include "interface/vcos/vcos.h"
@@ -31,14 +32,9 @@
 #include "http_io.h"
 #include "camera.h"
 
-// Standard port setting for the camera component
-#define MMAL_CAMERA_VIDEO_PORT 1
-
-/// Video render needs at least 2 buffers.
-#define VIDEO_OUTPUT_BUFFERS_NUM 2
-
 int mmal_status_to_int(MMAL_STATUS_T status);
 static void signal_handler(int signal_number);
+static void parse_cmdline(int argc, const char **argv, VELOCITY_STATE *state);
 
 static VELOCITY_STATE state;
 log4c_category_t* cat;
@@ -152,6 +148,10 @@ int main(int argc, const char **argv) {
    static int rc;
    static int ret;
 
+   // Parse the command line and put options in to our status structure
+   velocity_state_default(&state);
+   parse_cmdline(argc, argv, &state);
+
    state.running = true;
 
    // Initializing logging system
@@ -177,19 +177,6 @@ int main(int argc, const char **argv) {
    bcm_host_init();
    vcos_log_register("Sleipnir", VCOS_LOG_CATEGORY);
 
-   velocity_state_default(&state);
-
-   // Do we have any parameters
-   if (argc == 1) {
-      fprintf(stdout, "Sleipnir %s\n\n", VERSION_STRING);
-      exit(EX_USAGE);
-   }
-
-   // Parse the command line and put options in to our status structure
-   if (velocity_state_parse_cmdline(argc, argv, &state)) {
-      status = -1;
-      exit(EX_USAGE);
-   }
 
    // Initialize encoder
    encoder_init(&state);
@@ -220,4 +207,57 @@ error:
    }
 
    return exit_code;
+}
+
+static void parse_cmdline(int argc, const char **argv, VELOCITY_STATE *state) {
+   int c;
+   poptContext optCon;
+
+   struct poptOption optionsTable[] = {
+        { "url", 'u', POPT_ARG_STRING, &state->url, 'u',
+        "URL to base station including port" },
+
+        { "cam", 'c', POPT_ARG_STRING, &state->identifier, 'c',
+        "Camera pod left (cam1) or right (cam2)" },
+
+        { "camversion", 'r', POPT_ARG_INT, &state->camera_version, 'r',
+        "Camera version (13, 21)" },
+
+        POPT_AUTOHELP
+        POPT_TABLEEND
+   };
+
+   optCon =  poptGetContext(NULL, argc, argv, optionsTable, 0);
+
+   while ((c = poptGetNextOpt(optCon)) > 0) ;
+
+   if (c == POPT_ERROR_BADOPT) {
+      printf("%s %s\n", poptStrerror(c), poptBadOption(optCon, 0));
+      exit(1);
+   } else if (c < -1) {
+      printf("%s\n", poptStrerror(c));
+      exit(1);
+   }
+
+   // Sanity check url
+   if (state->url == NULL) {
+      printf("need url\n");
+      exit(1);
+   }
+
+   // Sanity check cam
+   if (state->identifier == NULL || (strcmp(state->identifier, "cam1") != 0 && strcmp(state->identifier, "cam2") != 0)) {
+      printf("bad cammera supplied\n");
+      exit(1);
+   }
+
+   // Sanity check camera version
+   if (state->camera_version == 13)
+      state->camera_version = CAMERA_VERSION_13;
+   else if (state->camera_version == 21)
+      state->camera_version = CAMERA_VERSION_21;
+   else {
+      printf("bad camera version\n");
+      exit(1);
+   }
 }

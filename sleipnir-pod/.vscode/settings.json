@@ -18,6 +18,7 @@
         "stdint-uintn.h": "c",
         "encoder.h": "c",
         "xiosbase": "c",
-        "bcm_host.h": "c"
+        "bcm_host.h": "c",
+        "popt.h": "c"
     }
 }

@@ -94,6 +94,4 @@ static COMMAND_LIST cmdline_commands[] =
 };
 static int cmdline_commands_size = sizeof(cmdline_commands) / sizeof(cmdline_commands[0]);
 
-int velocity_state_parse_cmdline(int argc, const char **argv, VELOCITY_STATE *state);
-
 #endif
