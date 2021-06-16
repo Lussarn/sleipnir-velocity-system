@@ -26,7 +26,6 @@
 
 #include "velocity_state.h"
 #include "RaspiCamControl.h"
-#include "RaspiCLI.h"
 #include "jpegs.h"
 #include "encoder.h"
 #include "http_io.h"

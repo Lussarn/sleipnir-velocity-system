@@ -12,7 +12,6 @@
 #include "interface/mmal/util/mmal_connection.h"
 
 #include "RaspiCamControl.h"
-#include "RaspiCLI.h"
 
 /** Structure containing all state information for the current run
  */
@@ -80,18 +79,5 @@ static CAMERA_VERSION_PROPERTIES camera_version_properties[] =
 };
 
 CAMERA_VERSION_PROPERTIES camera_version(int camera_version);
-
-/// Command ID's and Structure defining our command line options
-#define CommandIdentifier    15
-#define CommandUrl           16
-#define CommandCameraVersion 17
-
-static COMMAND_LIST cmdline_commands[] =
-{
-   { CommandIdentifier,    "-identifier", "id", "Command identifer for this camera", 1},
-   { CommandUrl,           "-url",        "u",  "Url to post data to", 1},
-   { CommandCameraVersion, "-camversion", "cv", "Camera version (15, 21)", 1},
-};
-static int cmdline_commands_size = sizeof(cmdline_commands) / sizeof(cmdline_commands[0]);
 
 #endif
