@@ -1,1 +1,11 @@
-save_path: D:\sleipnir\pics
+# Path where your sleipnir database is saved
+save_path: D:\sleipnir
+
+# The max angle of flight where the camera will trigger
+#
+# Raising this will make it easier for the camera to trigger 
+# However, the system will also catch more bugs on the camera
+#
+# For true honests speed you do not want this too high since 
+# diving increases airspeed, a value around 10 is fine
+max_dive_angle: 10.0
