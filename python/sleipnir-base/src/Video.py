@@ -11,11 +11,12 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Video:
-   def __init__(self, db: DB, cam: str, flight: int, max_dive_angle: float, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
+   def __init__(self, db: DB, cam: str, flight: int, max_dive_angle: float, blur_strength: int, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
 
       self.__db = db
       self.__flight = flight
       self.__max_dive_angle = max_dive_angle
+      self.__blur_strength = blur_strength
 
       # Frame number in video
       self.current_frame_number = 0
@@ -261,7 +262,7 @@ class Video:
       found_motion = msg.have_motion()
       found_motion_position = msg.get_position()
 
-      msg = AnalyzerDoMessage(image_cv, self.current_frame_number, self.groundlevel, self.__max_dive_angle)
+      msg = AnalyzerDoMessage(image_cv, self.current_frame_number, self.groundlevel, self.__max_dive_angle, self.__blur_strength)
       self.analyzer_worker.do_processing(msg)
 
       return { 
@@ -300,12 +301,14 @@ class AnalyzerDoMessage:
    __position = 0
    __ground_level = 0
    __max_dive_angle = 0
+   __blur_strength = 0
 
-   def __init__(self, image, position, ground_level, max_dive_angle):
+   def __init__(self, image, position, ground_level, max_dive_angle, blur_strength):
       self.__image = image
       self.__position = position
       self.__ground_level = ground_level
       self.__max_dive_angle = max_dive_angle
+      self.__blur_strength = blur_strength
    def get_image(self):
       return self.__image
    def get_position(self):
@@ -314,6 +317,8 @@ class AnalyzerDoMessage:
       return self.__ground_level
    def get_max_dive_angle(self):
       return self.__max_dive_angle
+   def get_blur_strength(self):
+      return self.__blur_strength
 
 class AnalyzerDoneMessage:
    __image = None
@@ -380,7 +385,9 @@ class AnalyzerWorker(QtCore.QThread):
       self.__last_position = position
 
       __image_gray_cv = self.__analyzer_do_message.get_image()
-      image_blur_cv = cv.GaussianBlur(__image_gray_cv, (13, 13), 0)
+      blur = int(5 +  self.__analyzer_do_message.get_blur_strength() * 2)
+      print(blur)
+      image_blur_cv = cv.GaussianBlur(__image_gray_cv, (blur, blur), 0)
 
       direction = 0
       if self.__comparison_image_cv is not None:

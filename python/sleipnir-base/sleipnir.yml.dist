@@ -9,3 +9,15 @@ save_path: D:\sleipnir
 # For true honests speed you do not want this too high since 
 # diving increases airspeed, a value around 10 is fine
 max_dive_angle: 10.0
+
+# Blur strength: positive number between 1 and 5
+#
+# When motion tracking blur is the first step to soften the image.
+# With too little blur all small movements like the clouds will 
+# register, with too much the aircraft will be harder for the system
+# to spot at distance.
+#
+# A blur strength of 4 is a safe default and should work for most
+# If you want to measure something really small it can help to 
+# lower this.
+blur_strength: 1
