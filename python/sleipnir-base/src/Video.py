@@ -386,7 +386,6 @@ class AnalyzerWorker(QtCore.QThread):
 
       __image_gray_cv = self.__analyzer_do_message.get_image()
       blur = int(5 +  self.__analyzer_do_message.get_blur_strength() * 2)
-      print(blur)
       image_blur_cv = cv.GaussianBlur(__image_gray_cv, (blur, blur), 0)
 
       direction = 0

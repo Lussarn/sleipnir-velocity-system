@@ -24,6 +24,7 @@ pip install pyyaml
 pip install pysqlite3
 pip install simplejpeg
 pip install tornado
+pip install pymitter
 
-# ADitional libs for fake-camera
+# Additional libs for virtual-camera
 pip install requests

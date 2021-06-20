@@ -5,15 +5,14 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 import time
 
 from SleipnirWindow import SleipnirWindow
-import CameraServer
 from Video import Video
 from CamerasData import CamerasData
-import CameraServer
 from Configuration import Configuration, ConfigurationError
 from database.DB import DB
 from Announcements import Announcements, Announcement
 import database.announcement_dao as announcement_dao
 from Frame import Frame
+from CameraServer import CameraServer
 
 from Sound import Sound
 from function_timer import timer
@@ -24,12 +23,19 @@ import logger
 
 logger = logging.getLogger(__name__)
 
-class WindowMain(QMainWindow):
-   videos = {}  # type: dict[int, Video]
+from Event import Event
 
-   __db = None
+
+
+
+class WindowMain(QMainWindow):
+
+
 
    def __init__(self):
+      self.__db = None
+      self.videos = {}  # type: dict[int, Video]
+
       try:
          self.configuration = Configuration("sleipnir.yml")
       except IOError as e:
@@ -134,6 +140,12 @@ class WindowMain(QMainWindow):
       self.videos[0].set_sibling_video(self.videos[1])
       self.videos[1].set_sibling_video(self.videos[0])
 
+      # Start camera server
+      self.__camera_server = CameraServer()
+      self.__camera_server.start_server(self.__db)
+      Event.on(CameraServer.EVENT_CAMERA_ONLINE, self.__camera_online_handler)
+      Event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__camera_offline_handler)
+
       # Load flight number 1
       self.load_flight(1)
 
@@ -158,13 +170,16 @@ class WindowMain(QMainWindow):
       self.show()
       self.raise_()
 
-      # Start camera server
-      CameraServer.start_server(self.__db)
-
       # Run Gui
       self.timer = QtCore.QTimer(self)
       self.timer.timeout.connect(self.__timerGui)
       self.timer.start(20)
+
+   def __camera_online_handler(self, cam):
+      logger.info("CAMERA ONLINE: " + cam)
+
+   def __camera_offline_handler(self, cam):
+      logger.info("CAMERA OFFLINE: " + cam)
 
    def load_flight(self, flight):
       self.__flight = flight
@@ -218,6 +233,8 @@ class WindowMain(QMainWindow):
       self.videos[1].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam2_position())
 
    def __on_remove_announcement(self, event):
+      self.__camera_server.event_camera_online()
+
       index = self.ui.listView_anouncements.currentIndex().row()
       if index == -1:
          QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
@@ -230,28 +247,28 @@ class WindowMain(QMainWindow):
 
    @timer("Time to run gui", logging.INFO, None, average=1000)
    def __timerGui(self):
-      online = CameraServer.is_online("cam1") and CameraServer.is_online("cam2")
+      online = self.__camera_server.is_online("cam1") and self.__camera_server.is_online("cam2")
 
-      if CameraServer.is_online("cam1"):
+      if self.__camera_server.is_online("cam1"):
          self.ui.label_video1_online.setText("Cam1: Online")
          if not self.aligning_cam2 and not self.__shooting:
            self.ui.pushButton_video1_align.setEnabled(True)
-      if CameraServer.is_online("cam2"):
+      if self.__camera_server.is_online("cam2"):
          self.ui.label_video2_online.setText("Cam2: Online")
          if not self.aligning_cam1 and not self.__shooting:
             self.ui.pushButton_video2_align.setEnabled(True)
 
-      if not  CameraServer.is_online("cam1"):
+      if not self.__camera_server.is_online("cam1"):
          self.ui.label_video1_online.setText("Cam1: Offline")
          self.ui.pushButton_video1_align.setEnabled(False)
-      if not CameraServer.is_online("cam2"):
+      if not self.__camera_server.is_online("cam2"):
          self.ui.label_video2_online.setText("Cam2: Offline")
          self.ui.pushButton_video2_align.setEnabled(False)
 
       if (self.__shooting and not online):
          # Camera lost?
          self.__shooting = False
-         CameraServer.stop_shooting()
+         self.__camera_server.stop_shooting()
 
       if not online:
          self.ui.pushbutton_start.setEnabled(False)
@@ -267,7 +284,7 @@ class WindowMain(QMainWindow):
          if self.aligning_cam1:
             logger.info("Stop aligning camera 1")
             self.ui.pushButton_video1_align.setEnabled(False)
-            if not CameraServer.is_shooting():
+            if not self.__camera_server.is_shooting():
                self.aligning_cam1 = False
                self.ui.pushButton_video1_align.setEnabled(True)
                self.stop_camera_wait = False
@@ -276,7 +293,7 @@ class WindowMain(QMainWindow):
          elif self.aligning_cam2:
             logger.info("Stop aligning camera 2")
             self.ui.pushButton_video2_align.setEnabled(False)
-            if not CameraServer.is_shooting():
+            if not self.__camera_server.is_shooting():
                self.aligning_cam2 = False
                self.ui.pushButton_video2_align.setEnabled(True)
                self.stop_camera_wait = False
@@ -285,7 +302,7 @@ class WindowMain(QMainWindow):
          else:
             self.ui.pushbutton_stop.setText("Waiting...")
             self.ui.pushbutton_stop.setEnabled(False)
-            if not CameraServer.is_shooting():
+            if not self.__camera_server.is_shooting():
                self.stop_camera_wait = False
                self.__shooting = False
                self.ui.pushbutton_stop.setText("Stop cameras")
@@ -298,7 +315,7 @@ class WindowMain(QMainWindow):
                self.enable_all_gui_elements(True)
 
       # Update the video view
-      if CameraServer.is_shooting():
+      if self.__camera_server.is_shooting():
          if self.aligning_cam1:
             ''' Align cam 1 '''
             frame_number = self.cameras_data.get_last_frame("cam1").get_position()
@@ -413,14 +430,14 @@ class WindowMain(QMainWindow):
       """
       if (self.aligning_cam1):
          self.stop_camera_wait = True
-         CameraServer.stop_shooting()         
+         self.__camera_server.stop_shooting()         
       else:
          self.__flight = 1
          self.aligning_cam1 = True
          self.videos[0].set_shooting(True)
          self.cameras_data = CamerasData(self.__db, self.__flight)
          self.videos[0].cameras_data = self.cameras_data
-         CameraServer.start_shooting(self.cameras_data, 1)
+         self.__camera_server.start_shooting(self.cameras_data, 1)
          self.enable_all_gui_elements(False)
          self.ui.pushButton_video1_align.setText("Stop")
 
@@ -430,20 +447,20 @@ class WindowMain(QMainWindow):
       """
       if (self.aligning_cam2):
          self.stop_camera_wait = True
-         CameraServer.stop_shooting()         
+         self.__camera_server.stop_shooting()         
       else:
          self.__flight = 1
          self.aligning_cam2 = True
          self.videos[1].set_shooting(True)
          self.cameras_data = CamerasData(self.__db, self.__flight)
          self.videos[1].cameras_data = self.cameras_data
-         CameraServer.start_shooting(self.cameras_data, 1)
+         self.__camera_server.start_shooting(self.cameras_data, 1)
          self.enable_all_gui_elements(False)
          self.ui.pushButton_video2_align.setText("Stop")
 
    def startCameras(self):
       logger.info("Starting Cameras")
-      if not CameraServer.is_ready_to_shoot():
+      if not self.__camera_server.is_ready_to_shoot():
          return False
 
       for i in range(0,20):
@@ -470,14 +487,14 @@ class WindowMain(QMainWindow):
       self.cameras_data = CamerasData(self.__db, self.__flight)
       self.videos[0].cameras_data = self.cameras_data
       self.videos[1].cameras_data = self.cameras_data
-      CameraServer.ServerData.flight = self.__flight
-      CameraServer.start_shooting(self.cameras_data, self.__flight)
+      self.__camera_server.set_flight(self.__flight)
+      self.__camera_server.start_shooting(self.cameras_data, self.__flight)
 
 
    def stopCameras(self):
       logger.info("Stoping Cameras")
       self.stop_camera_wait = True
-      CameraServer.stop_shooting()
+      self.__camera_server.stop_shooting()
       self.__save_announcements()
 
    def enable_all_gui_elements(self, enabled):
