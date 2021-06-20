@@ -9,7 +9,7 @@ import CameraServer
 from Video import Video
 from CamerasData import CamerasData
 import CameraServer
-from Configuration import Configuration
+from Configuration import Configuration, ConfigurationError
 from database.DB import DB
 from Announcements import Announcements, Announcement
 import database.announcement_dao as announcement_dao
@@ -27,17 +27,23 @@ logger = logging.getLogger(__name__)
 class WindowMain(QMainWindow):
    videos = {}  # type: dict[int, Video]
 
+   __db = None
+
    def __init__(self):
       try:
          self.configuration = Configuration("sleipnir.yml")
       except IOError as e:
-         logger.error("Unable to open configuration file: " + str(e))
-         exit(1)
+         raise ConfigurationError("Unable to open configuration file sleipnir.yml")
 
-      self.__db = DB(self.configuration.get_or_throw('save_path'))
-      self.__max_dive_angle = float(self.configuration.get('max_dive_angle', 10.0))
+      try:
+         self.configuration.check_configuration()
+      except ConfigurationError as e:
+         raise e
+
+      self.__db = DB(self.configuration.get_save_path())
+      self.__max_dive_angle = self.configuration.get_max_dive_angle()
       logger.info("Max dive angle is set at " + str(self.__max_dive_angle) + "°")
-      self.__blur_strength = float(self.configuration.get('blur_strength', 4))
+      self.__blur_strength = self.configuration.get_blur_strength()
       logger.info("Blur strength is set at t at " + str(self.__blur_strength))
 
       # Data for the cameras
@@ -621,7 +627,8 @@ class WindowMain(QMainWindow):
 
    def __del__(self):
       logger.debug("Mainwindow destructor called")
-      self.__db.stop()
+      if self.__db is not None:
+         self.__db.stop()
 
 
 if __name__ == '__main__':
@@ -632,6 +639,12 @@ if __name__ == '__main__':
       ret = app.exec_()
       del window
       sys.exit(ret)
+   except ConfigurationError as e:
+      msg_box = QMessageBox()
+      msg_box.setIcon(QMessageBox.Critical)
+      msg_box.setWindowTitle("Sleipnir message")
+      msg_box.setText("Configuration Error\n\n" + str(e))
+      msg_box.exec_()
    except Exception:
       import traceback
       var = traceback.format_exc()
