@@ -20,4 +20,4 @@ max_dive_angle: 10.0
 # A blur strength of 4 is a safe default and should work for most
 # If you want to measure something really small it can help to 
 # lower this.
-blur_strength: 1
+blur_strength: 4
