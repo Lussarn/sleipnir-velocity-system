@@ -39,9 +39,6 @@ class ServerState:
       # Server is telling camera to start stop sending pictures
       self.request_pictures_from_camera = False
 
-      # Timestamp of last picture
-      self.last_picture_timestamp = 0
-
       # Camera Frames
       self.cameras_data = None
 
@@ -52,7 +49,7 @@ class ServerState:
       self.camera_online_status = {"cam1": False, "cam2": False}
 
       # logs
-      self.last_log_message_cam_asking_to_start = {'cam1': 0, 'cam2': 0}
+#      self.last_log_message_cam_asking_to_start = {'cam1': 0, 'cam2': 0}
 
 ''' Request Handler '''
 class RequestHandler(tornado.web.RequestHandler):
@@ -66,19 +63,18 @@ class RequestHandler(tornado.web.RequestHandler):
    def post(self):
       action = self.get_argument("action", None, True)
 
-      cam = ""
+      ''' startcamera action '''
       if (action == "startcamera"):
          cam = self.get_argument("cam", None, True)
          if cam != "cam1" and cam != "cam2":
-            logger.info("Uploadframe unknown camera: " + cam)
+            logger.info("startcamera unknown camera: " + cam)
             return
 
-         if cam == "cam1" or cam == "cam2":
-            self.__server_state.camera_last_transmission_timestamp[cam] = time.time()
+         self.__server_state.camera_last_transmission_timestamp[cam] = time.time()
 
-         if (time.time() -  self.__server_state.last_log_message_cam_asking_to_start[cam] > 10):
-            logger.info("Camera " + cam + " is online and asking to start")
-            self.__server_state.last_log_message_cam_asking_to_start[cam] = time.time()
+#         if (time.time() -  self.__server_state.last_log_message_cam_asking_to_start[cam] > 10):
+#            logger.info("Camera " + cam + " is online and asking to start")
+#            self.__server_state.last_log_message_cam_asking_to_start[cam] = time.time()
 
          if (self.__server_state.request_pictures_from_camera):
             self.send200("OK-START")
@@ -86,17 +82,17 @@ class RequestHandler(tornado.web.RequestHandler):
             self.send200("OK-STOP")
          pass
 
+      ''' uploadframe action '''
       if (action == "uploadframe"):
          cam = self.get_argument("cam", None, True)
          if cam != "cam1" and cam != "cam2":
-            logger.info("Uploadframe unknown camera id: " + cam)
+            logger.info("uploadframe unknown camera id: " + cam)
             return
 
          self.__server_state.camera_last_transmission_timestamp[cam] = time.time()
 
          position = int(self.get_argument("position", None, True))
          timestamp = int(self.get_argument("timestamp", None, True))
-         self.__server_state.last_picture_timestamp = time.time()
 
          image = self.request.body
 
@@ -153,7 +149,7 @@ class CameraServer:
    def __is_shooting(self, cam):
       return time.time() - self.__server_state.camera_last_transmission_timestamp[cam] < 1
 
-   ''' public api '''
+   ''' public is_shooting api '''
    def is_shooting(self):
       return self.__server_state.request_pictures_from_camera and (self.__is_shooting('cam1') or self.__is_shooting('cam2'))
 
