@@ -7,8 +7,9 @@ import asyncio
 
 import tornado.ioloop
 import tornado.web
+from CamerasData import CamerasData
 
-from Event import Event
+import Event
 from database.DB import DB
 import database.frame_dao as frame_dao
 from Frame import Frame
@@ -126,7 +127,7 @@ class CameraServer:
    def __init__(self):
       self.__server_state = ServerState()
 
-   def __startHTTP(self):
+   def __startHTTP(self) -> None:
       asyncio.set_event_loop(asyncio.new_event_loop())
       app = tornado.web.Application([
          (r"/", RequestHandler, dict(server_state=self.__server_state)),
@@ -135,21 +136,21 @@ class CameraServer:
       tornado.ioloop.PeriodicCallback(self.__check_online, 2500).start()
       tornado.ioloop.IOLoop.instance().start()
 
-   def start_server(self, db: DB):
+   def start_server(self, db :DB) -> None:
       self.__server_state.db = db
       logger.info("Starting camera server")
       _thread.start_new_thread(self.__startHTTP, ())
 
    ''' Definition of is_shooting '''
-   def __is_shooting(self, cam):
+   def __is_shooting(self, cam :str) -> bool:
       return time.time() - self.__server_state.camera_last_seen[cam] < 1
 
    ''' public is_shooting api '''
-   def is_shooting(self):
+   def is_shooting(self) -> bool:
       return self.__server_state.request_pictures_from_camera and (self.__is_shooting('cam1') or self.__is_shooting('cam2'))
 
    ''' start requesting pictures from camera '''
-   def start_shooting(self, flight :int, cameras_data):
+   def start_shooting(self, flight :int, cameras_data :CamerasData) -> None:
       if self.__server_state.request_pictures_from_camera:
          return False
 
@@ -172,12 +173,12 @@ class CameraServer:
       return True
 
    ''' Request to stop the cameras from taking pictures '''
-   def stop_shooting(self):
+   def stop_shooting(self) -> None:
       logger.info("Request to stop shooting")
       self.__server_state.request_pictures_from_camera = False
 
    ''' Both cameras online and not currently requesting pictures '''
-   def is_ready_to_shoot(self):
+   def is_ready_to_shoot(self) -> bool:
       if not self.is_online("cam1"):
          return False
       if not self.is_online("cam2"):
@@ -185,20 +186,20 @@ class CameraServer:
       return not self.__server_state.request_pictures_from_camera
 
    ''' public online api '''
-   def is_online(self, cam):
+   def is_online(self, cam : str) -> bool:
       return self.__server_state.camera_online_status[cam]
 
    ''' Our definition of online '''
-   def __is_online(self, cam):
+   def __is_online(self, cam : str) -> bool:
       return time.time() - self.__server_state.camera_last_seen[cam] < 5
 
    ''' Make an online sweep on the cameras '''
-   def __check_online(self):
+   def __check_online(self) -> None:
       self.__check_online_status("cam1")
       self.__check_online_status("cam2")
 
    ''' Check a single camera for being online '''
-   def __check_online_status(self, cam):
+   def __check_online_status(self, cam : str) -> None:
       if self.__server_state.camera_online_status[cam] == True and self.__is_online(cam) == False:
          self.__server_state.camera_online_status[cam] = False
          logger.debug("Camera is going offline: " + cam)

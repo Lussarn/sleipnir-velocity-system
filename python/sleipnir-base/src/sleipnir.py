@@ -23,16 +23,17 @@ import logger
 
 logger = logging.getLogger(__name__)
 
-from Event import Event
-
-
-
+import Event
 
 class WindowMain(QMainWindow):
 
 
 
    def __init__(self):
+      QMainWindow.__init__(self)
+      # Bootstrap event system
+      Event.create_event_server(self)
+
       self.__db = None
       self.videos = {}  # type: dict[int, Video]
 
@@ -86,7 +87,6 @@ class WindowMain(QMainWindow):
       # Sound effects
       self.__sound = Sound()
 
-      QMainWindow.__init__(self)
       self.ui = SleipnirWindow()
       self.ui.setupUi(self)
       self.setWindowTitle("Sleipnir Velocity - Go Fast!")
@@ -139,6 +139,7 @@ class WindowMain(QMainWindow):
          self.ui.label_time_video2)
       self.videos[0].set_sibling_video(self.videos[1])
       self.videos[1].set_sibling_video(self.videos[0])
+
 
       # Start camera server
       self.__camera_server = CameraServer()
