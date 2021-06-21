@@ -1,23 +1,24 @@
 #!/bin/env python
 
 import _thread
-
-from urllib.parse import urlparse
 import time
 import logging
 import asyncio
+
 import tornado.ioloop
 import tornado.web
 
-from Frame import Frame
+from Event import Event
 from database.DB import DB
 import database.frame_dao as frame_dao
+from Frame import Frame
 from function_timer import timer
-from Event import Event
 
+''' Set logger on third party modules '''
 logging.getLogger("requests").setLevel(logging.WARNING)
 logging.getLogger("urllib3").setLevel(logging.WARNING)
 logging.getLogger('tornado.access').disabled = True
+
 logger = logging.getLogger(__name__)
 
 '''
@@ -25,6 +26,7 @@ CameraServer emits the following events
 
 CameraServer.EVENT_CAMERA_ONLINE cam : str        : Camera have come online
 CameraServer.EVENT_CAMERA_OFFLINE cam : str       : Camera have gone offline
+CameraServer.EVENT_NEW_FRAME frame : Frame        : A new picture have arrived from the camera
 '''
 
 ''' Server state '''
@@ -43,13 +45,10 @@ class ServerState:
       self.cameras_data = None
 
       # Last transmission
-      self.camera_last_transmission_timestamp = {"cam1": 0, "cam2": 0}
+      self.camera_last_seen = {"cam1": 0, "cam2": 0}
 
-      # onlide status
+      # onlide status, we use a state for this so we can seend an event if state changes
       self.camera_online_status = {"cam1": False, "cam2": False}
-
-      # logs
-#      self.last_log_message_cam_asking_to_start = {'cam1': 0, 'cam2': 0}
 
 ''' Request Handler '''
 class RequestHandler(tornado.web.RequestHandler):
@@ -70,16 +69,12 @@ class RequestHandler(tornado.web.RequestHandler):
             logger.info("startcamera unknown camera: " + cam)
             return
 
-         self.__server_state.camera_last_transmission_timestamp[cam] = time.time()
-
-#         if (time.time() -  self.__server_state.last_log_message_cam_asking_to_start[cam] > 10):
-#            logger.info("Camera " + cam + " is online and asking to start")
-#            self.__server_state.last_log_message_cam_asking_to_start[cam] = time.time()
+         self.__server_state.camera_last_seen[cam] = time.time()
 
          if (self.__server_state.request_pictures_from_camera):
-            self.send200("OK-START")
+            self.__send_200("OK-START")
          else:
-            self.send200("OK-STOP")
+            self.__send_200("OK-STOP")
          pass
 
       ''' uploadframe action '''
@@ -89,21 +84,20 @@ class RequestHandler(tornado.web.RequestHandler):
             logger.info("uploadframe unknown camera id: " + cam)
             return
 
-         self.__server_state.camera_last_transmission_timestamp[cam] = time.time()
-
-         position = int(self.get_argument("position", None, True))
-         timestamp = int(self.get_argument("timestamp", None, True))
-
-         image = self.request.body
+         self.__server_state.camera_last_seen[cam] = time.time()
 
          frame = Frame(
             self.__server_state.flight,
             1 if cam == 'cam1' else 2,
-            position,
-            timestamp,
-            image
+            int(self.get_argument("position", None, True)),
+            int(self.get_argument("timestamp", None, True)),
+            self.request.body
          )
+         ''' Store to SQLite Database '''
          frame_dao.store(self.__server_state.db, frame)
+
+         ''' Emit new frame event '''
+         Event.emit(CameraServer.EVENT_NEW_FRAME, frame)
 
          ''' Clear the image for memory reasons '''
          frame.set_image(None)
@@ -112,11 +106,11 @@ class RequestHandler(tornado.web.RequestHandler):
             self.__server_state.camera_server.stop_shooting()
 
          if (self.__server_state.request_pictures_from_camera):
-            self.send200("OK-CONTINUE")
+            self.__send_200("OK-CONTINUE")
          else:
-            self.send200("OK-STOP")
+            self.__send_200("OK-STOP")
 
-   def send200(self, msg):
+   def __send_200(self, msg):
       self.set_status(200)
       self.set_header('Content-Type', 'text/plain')
       payload = msg.encode('ASCII')
@@ -125,8 +119,9 @@ class RequestHandler(tornado.web.RequestHandler):
 
 ''' Server '''
 class CameraServer:
-   EVENT_CAMERA_ONLINE = "cameraserver.camera_online"
+   EVENT_CAMERA_ONLINE  = "cameraserver.camera_online"
    EVENT_CAMERA_OFFLINE = "cameraserver.camera_offline"
+   EVENT_NEW_FRAME      = "cameraserver.new_frame"
 
    def __init__(self):
       self.__server_state = ServerState()
@@ -147,16 +142,14 @@ class CameraServer:
 
    ''' Definition of is_shooting '''
    def __is_shooting(self, cam):
-      return time.time() - self.__server_state.camera_last_transmission_timestamp[cam] < 1
+      return time.time() - self.__server_state.camera_last_seen[cam] < 1
 
    ''' public is_shooting api '''
    def is_shooting(self):
       return self.__server_state.request_pictures_from_camera and (self.__is_shooting('cam1') or self.__is_shooting('cam2'))
 
-   def set_flight(self, flight):
-      self.__server_state.flight = flight
-
-   def start_shooting(self, cameras_data, flight):
+   ''' start requesting pictures from camera '''
+   def start_shooting(self, flight :int, cameras_data):
       if self.__server_state.request_pictures_from_camera:
          return False
 
@@ -173,15 +166,17 @@ class CameraServer:
          logger.error(str(e))
          return
 
+      self.__server_state.flight = flight
       self.__server_state.cameras_data = cameras_data
       self.__server_state.request_pictures_from_camera = True
       return True
 
+   ''' Request to stop the cameras from taking pictures '''
    def stop_shooting(self):
       logger.info("Request to stop shooting")
       self.__server_state.request_pictures_from_camera = False
 
-   # Both cameras online and not currently requesting pictures
+   ''' Both cameras online and not currently requesting pictures '''
    def is_ready_to_shoot(self):
       if not self.is_online("cam1"):
          return False
@@ -189,14 +184,13 @@ class CameraServer:
          return False
       return not self.__server_state.request_pictures_from_camera
 
-
    ''' public online api '''
    def is_online(self, cam):
       return self.__server_state.camera_online_status[cam]
 
    ''' Our definition of online '''
    def __is_online(self, cam):
-      return time.time() - self.__server_state.camera_last_transmission_timestamp[cam] < 5
+      return time.time() - self.__server_state.camera_last_seen[cam] < 5
 
    ''' Make an online sweep on the cameras '''
    def __check_online(self):
@@ -214,6 +208,3 @@ class CameraServer:
          self.__server_state.camera_online_status[cam] = True
          logger.debug("Camera is coming online: " + cam)
          Event.emit(CameraServer.EVENT_CAMERA_ONLINE, cam)
-
-
-

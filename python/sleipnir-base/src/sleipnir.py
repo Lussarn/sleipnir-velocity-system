@@ -430,14 +430,14 @@ class WindowMain(QMainWindow):
       """
       if (self.aligning_cam1):
          self.stop_camera_wait = True
-         self.__camera_server.stop_shooting()         
+         self.__camera_server.stop_shooting()
       else:
          self.__flight = 1
          self.aligning_cam1 = True
          self.videos[0].set_shooting(True)
          self.cameras_data = CamerasData(self.__db, self.__flight)
          self.videos[0].cameras_data = self.cameras_data
-         self.__camera_server.start_shooting(self.cameras_data, 1)
+         self.__camera_server.start_shooting(self.__flight, self.cameras_data)
          self.enable_all_gui_elements(False)
          self.ui.pushButton_video1_align.setText("Stop")
 
@@ -454,7 +454,7 @@ class WindowMain(QMainWindow):
          self.videos[1].set_shooting(True)
          self.cameras_data = CamerasData(self.__db, self.__flight)
          self.videos[1].cameras_data = self.cameras_data
-         self.__camera_server.start_shooting(self.cameras_data, 1)
+         self.__camera_server.start_shooting(self.__flight, self.cameras_data)
          self.enable_all_gui_elements(False)
          self.ui.pushButton_video2_align.setText("Stop")
 
@@ -487,8 +487,7 @@ class WindowMain(QMainWindow):
       self.cameras_data = CamerasData(self.__db, self.__flight)
       self.videos[0].cameras_data = self.cameras_data
       self.videos[1].cameras_data = self.cameras_data
-      self.__camera_server.set_flight(self.__flight)
-      self.__camera_server.start_shooting(self.cameras_data, self.__flight)
+      self.__camera_server.start_shooting(self.__flight, self.cameras_data)
 
 
    def stopCameras(self):
