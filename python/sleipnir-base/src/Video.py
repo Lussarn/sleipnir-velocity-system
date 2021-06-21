@@ -217,6 +217,21 @@ class Video:
       elif not self.find:
          self.__update(frame)         
 
+   def display_frame(self, frame :Frame):
+      if frame.get_image() == None:
+         frame = frame_dao.load(self.__db, frame.get_flight(), frame.get_cam(), frame.get_position())
+      if frame is None: return
+      image = simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
+
+      # Draw center line
+      cv.rectangle(image, (160, 0), (160, 480), (0, 0, 0), 1)
+      # Draw ground level
+      cv.rectangle(image, (0, self.groundlevel), (320, self.groundlevel), (0, 0, 0), 1)
+
+      image_qt = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], QtGui.QImage.Format_Indexed8)
+      self.widgetVideo.setPixmap(QtGui.QPixmap.fromImage(image_qt))
+
+
    def view_frame(self, frame_number):
       self.current_frame_number = frame_number
       self.__update(self.__get_frame(self.cam, self.current_frame_number))
@@ -275,7 +290,6 @@ class Video:
    def __update(self, frame :Frame):
       if not frame:
          return
-
 
       local_timestamp = frame["timestamp"] - self.start_timestamp
       if (local_timestamp < 0):

@@ -26,3 +26,8 @@ class SleipnirWindow(Ui_MainWindow):
             self.radioButton_flight_18,
             self.radioButton_flight_19,
             self.radioButton_flight_20]
+
+        self.widget_video = {
+            'cam1': self.label_video1,
+            'cam2': self.label_video2
+        }        

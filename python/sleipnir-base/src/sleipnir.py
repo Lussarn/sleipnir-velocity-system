@@ -1,8 +1,9 @@
+import sys
+import time
+
 from PySide2 import QtCore, QtGui
 from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
-
-import time
-from ActionLogic import ActionLogic
+import cv2 as cv
 
 from SleipnirWindow import SleipnirWindow
 from Video import Video
@@ -13,11 +14,11 @@ from Announcements import Announcements, Announcement
 import database.announcement_dao as announcement_dao
 from Frame import Frame
 from CameraServer import CameraServer
-
+from Globals import Globals
+from AlignLogic import AlignLogic
 from Sound import Sound
 from function_timer import timer
 
-import sys
 import logging
 import logger
 
@@ -92,10 +93,7 @@ class WindowMain(QMainWindow):
       self.ui.listView_anouncements.setModel(self.model_announcements)
       self.__update_announcements_gui()
 
-      self.ui.verticalSlider_groundlevel.sliderMoved.connect(self.__on_groundlevel_changed)
 
-      for radio_buttons_flight in self.ui.radio_buttons_flights:
-         radio_buttons_flight.clicked.connect(self.__cb_flight)
 
       # Init the videos
       self.videos['cam1'] = Video(
@@ -149,10 +147,6 @@ class WindowMain(QMainWindow):
       self.ui.pushbutton_start.clicked.connect(self.cb_start_cameras)
       self.ui.pushbutton_stop.clicked.connect(self.stopCameras)
 
-      # Align cameras connects
-      self.ui.pushButton_video1_align.clicked.connect(self.__cb_align_cam1_clicked)
-      self.ui.pushButton_video2_align.clicked.connect(self.__cb_align_cam2_clicked)
-
       # distance connect
       self.ui.lineEdit_distance.setText(str(self.distance))
       self.ui.lineEdit_distance.textChanged.connect(self.__cb_distance_changed)
@@ -160,13 +154,29 @@ class WindowMain(QMainWindow):
       self.ui.listView_anouncements.clicked.connect(self.__on_announcement_changed)
       self.ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
 
-      self.__action_logic = ActionLogic(self, self.__db, self.__camera_server, self.videos)
+      self.__globals = Globals()
+      self.__align_logic = AlignLogic(self.__globals, self.__db, self.__camera_server)
 
-      Event.on(ActionLogic.EVENT_ALIGN_START, self.__evt_align_start)
-      Event.on(ActionLogic.EVENT_ALIGN_STOP, self.__evt_align_stop)
-      Event.on(ActionLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_align_new_frame)
+      ''' Align callbacks and events '''
+      self.ui.pushButton_video1_align.clicked.connect(self.__cb_align_cam1_clicked)
+      self.ui.pushButton_video2_align.clicked.connect(self.__cb_align_cam2_clicked)
+      Event.on(AlignLogic.EVENT_ALIGN_START, self.__evt_alignlogic_align_start)
+      Event.on(AlignLogic.EVENT_ALIGN_STOP, self.__evt_alignlogic_align_stop)
+      Event.on(AlignLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_alignlogic_align_new_frame)
       self.ui.pushButton_video1_align.setEnabled(False)
       self.ui.pushButton_video2_align.setEnabled(False)
+
+      ''' flight callbacks and events '''
+      for radio_buttons_flight in self.ui.radio_buttons_flights:
+         radio_buttons_flight.clicked.connect(self.__cb_flight)
+      Event.on(Globals.EVENT_FLIGHT_CHANGE, self.__evt_globals_flight_change)
+
+      ''' ground level callbacks and events '''
+      self.__ground_level_currently_pressed = False
+      self.ui.verticalSlider_groundlevel.sliderPressed.connect(self.__cb_groundlevel_pressed)
+      self.ui.verticalSlider_groundlevel.sliderReleased.connect(self.__cb_groundlevel_released)
+      self.ui.verticalSlider_groundlevel.sliderMoved.connect(self.__cb_groundlevel_changed)
+      Event.on(Globals.EVENT_GROUND_LEVEL_CHANGE, self.__evt_globals_ground_level_change)
 
       # Show GUI
       self.show()
@@ -198,17 +208,17 @@ class WindowMain(QMainWindow):
    '''
    def __cb_align_cam1_clicked(self):
       if self.ui.pushButton_video1_align.text() == 'Align Camera':
-         self.__action_logic.start_align_camera('cam1')
+         self.__align_logic.start_align_camera('cam1')
       else:
-         self.__action_logic.stop_align_camera('cam1')
+         self.__align_logic.stop_align_camera('cam1')
 
    def __cb_align_cam2_clicked(self):
       if self.ui.pushButton_video2_align.text() == 'Align Camera':
-         self.__action_logic.start_align_camera('cam2')
+         self.__align_logic.start_align_camera('cam2')
       else:
-         self.__action_logic.stop_align_camera('cam2')
+         self.__align_logic.stop_align_camera('cam2')
 
-   def __evt_align_start(self, cam):
+   def __evt_alignlogic_align_start(self, cam):
       self.enable_all_gui_elements(False)
       if cam == 'cam1':
          self.ui.pushButton_video1_align.setText('Stop')
@@ -217,7 +227,7 @@ class WindowMain(QMainWindow):
          self.ui.pushButton_video2_align.setText('Stop')
          self.ui.pushButton_video1_align.setEnabled(False)
 
-   def __evt_align_stop(self, cam):
+   def __evt_alignlogic_align_stop(self, cam):
       self.enable_all_gui_elements(True)
 
       self.ui.pushButton_video1_align.setText('Align Camera')
@@ -228,13 +238,19 @@ class WindowMain(QMainWindow):
       if self.__camera_server.is_online('cam2'): 
          self.ui.pushButton_video2_align.setEnabled(True)
 
-   def __evt_align_new_frame(self, frame :Frame):
-      self.videos[frame.get_cam()].view_frame(frame.get_position())
+   def __evt_alignlogic_align_new_frame(self, frame :Frame):
+      self.display_frame(frame)
 
+   '''
+   Flight GUI
+   '''
    def __cb_flight(self):
       for i in range(0,20):
          if self.ui.radio_buttons_flights[i].isChecked(): break
-      self.__load_flight(i + 1)
+      self.__action_logic.set_flight(i + 1)
+
+   def __evt_globals_flight_change(self, flight):
+      self.ui.radio_buttons_flights[flight - 1].setChecked(True)
 
    def __load_flight(self, flight):
       self.__flight = flight
@@ -270,12 +286,36 @@ class WindowMain(QMainWindow):
          value = 100
       self.distance = value
 
-   def __on_groundlevel_changed(self, value):
+   ''' ground level GUI '''
+   def __cb_groundlevel_pressed(self):
+      self.__ground_level_currently_pressed = True
+   def __cb_groundlevel_released(self):
+      self.__ground_level_currently_pressed = False
+
+   def __cb_groundlevel_changed(self, value):
+      self.__action_logic.set_ground_level(value)
+
+   def __evt_globals_ground_level_change(self, value):
       # Forward ground level to videos
       self.videos['cam1'].groundlevel = value
       self.videos['cam2'].groundlevel = value
       self.videos['cam1'].view_frame(self.videos['cam1'].get_current_frame_number())
       self.videos['cam2'].view_frame(self.videos['cam2'].get_current_frame_number())
+      if self.__ground_level_currently_pressed == False:
+         self.ui.verticalSlider_groundlevel.setValue(value)
+
+   ''' display video frame '''
+   def display_frame(self, frame :Frame):
+      image = frame.get_image_load_if_missing(self.__db)
+
+      # Draw center line
+      cv.rectangle(image, (160, 0), (160, 480), (0, 0, 0), 1)
+      # Draw ground level
+      cv.rectangle(image, (0, self.__globals.get_ground_level()), (320, self.__globals.get_ground_level()), (0, 0, 0), 1)
+
+      image_qt = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], QtGui.QImage.Format_Indexed8)
+      self.ui.widget_video[frame.get_cam()].setPixmap(QtGui.QPixmap.fromImage(image_qt))
+
 
    def __on_announcement_changed(self, event):
       self.videos['cam1'].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam1_position())
