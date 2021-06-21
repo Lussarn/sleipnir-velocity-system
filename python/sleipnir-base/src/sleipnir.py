@@ -1,8 +1,8 @@
-import PySide2
 from PySide2 import QtCore, QtGui
 from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 import time
+from ActionLogic import ActionLogic
 
 from SleipnirWindow import SleipnirWindow
 from Video import Video
@@ -26,9 +26,6 @@ logger = logging.getLogger(__name__)
 import Event
 
 class WindowMain(QMainWindow):
-
-
-
    def __init__(self):
       QMainWindow.__init__(self)
       # Bootstrap event system
@@ -79,10 +76,6 @@ class WindowMain(QMainWindow):
 
       self.run_tell_speed_timestamp = 0
       self.run_tell_speed = 0
-
-      # Aligning cameras 1/2
-      self.aligning_cam1 = False
-      self.aligning_cam2 = False
 
       # Sound effects
       self.__sound = Sound()
@@ -153,12 +146,12 @@ class WindowMain(QMainWindow):
       self.ui.label_speed.setText("")
 
       # Start / Stop connects
-      self.ui.pushbutton_start.clicked.connect(self.startCameras)
+      self.ui.pushbutton_start.clicked.connect(self.cb_start_cameras)
       self.ui.pushbutton_stop.clicked.connect(self.stopCameras)
 
       # Align cameras connects
-      self.ui.pushButton_video1_align.clicked.connect(self.align_cam1)
-      self.ui.pushButton_video2_align.clicked.connect(self.align_cam2)
+      self.ui.pushButton_video1_align.clicked.connect(self.cb_align_cam1)
+      self.ui.pushButton_video2_align.clicked.connect(self.cb_align_cam2)
 
       # distance connect
       self.ui.lineEdit_distance.setText(str(self.distance))
@@ -166,6 +159,14 @@ class WindowMain(QMainWindow):
 
       self.ui.listView_anouncements.clicked.connect(self.__on_announcement_changed)
       self.ui.pushButton_remove_announcement.clicked.connect(self.__on_remove_announcement)
+
+      self.__action_logic = ActionLogic(self, self.__db, self.__camera_server, self.videos)
+
+      Event.on(ActionLogic.EVENT_ALIGN_START, self.__evt_align_start)
+      Event.on(ActionLogic.EVENT_ALIGN_STOP, self.__evt_align_stop)
+      Event.on(ActionLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_align_new_frame)
+      self.ui.pushButton_video1_align.setEnabled(False)
+      self.ui.pushButton_video2_align.setEnabled(False)
 
       # Show GUI
       self.show()
@@ -177,10 +178,20 @@ class WindowMain(QMainWindow):
       self.timer.start(20)
 
    def __camera_online_handler(self, cam):
-      logger.info("CAMERA ONLINE: " + cam)
+      if (cam == 'cam1'):
+         self.ui.label_video1_online.setText("Cam1: Online")
+         self.ui.pushButton_video1_align.setEnabled(True)
+      else:
+         self.ui.pushButton_video2_align.setEnabled(True)
+         self.ui.label_video1_online.setText("Cam2: Online")
 
    def __camera_offline_handler(self, cam):
-      logger.info("CAMERA OFFLINE: " + cam)
+      if (cam == 'cam1'):
+         self.ui.label_video1_online.setText("Cam1: Offline")
+         self.ui.pushButton_video1_align.setEnabled(False)
+      else:
+         self.ui.label_video1_online.setText("Cam2: Offine")
+         self.ui.pushButton_video2_align.setEnabled(False)
 
    def load_flight(self, flight):
       self.__flight = flight
@@ -250,22 +261,6 @@ class WindowMain(QMainWindow):
    def __timerGui(self):
       online = self.__camera_server.is_online("cam1") and self.__camera_server.is_online("cam2")
 
-      if self.__camera_server.is_online("cam1"):
-         self.ui.label_video1_online.setText("Cam1: Online")
-         if not self.aligning_cam2 and not self.__shooting:
-           self.ui.pushButton_video1_align.setEnabled(True)
-      if self.__camera_server.is_online("cam2"):
-         self.ui.label_video2_online.setText("Cam2: Online")
-         if not self.aligning_cam1 and not self.__shooting:
-            self.ui.pushButton_video2_align.setEnabled(True)
-
-      if not self.__camera_server.is_online("cam1"):
-         self.ui.label_video1_online.setText("Cam1: Offline")
-         self.ui.pushButton_video1_align.setEnabled(False)
-      if not self.__camera_server.is_online("cam2"):
-         self.ui.label_video2_online.setText("Cam2: Offline")
-         self.ui.pushButton_video2_align.setEnabled(False)
-
       if (self.__shooting and not online):
          # Camera lost?
          self.__shooting = False
@@ -281,55 +276,25 @@ class WindowMain(QMainWindow):
          self.ui.pushbutton_start.setEnabled(True)
          self.ui.pushbutton_stop.setEnabled(False)
 
+
       if (self.stop_camera_wait):
-         if self.aligning_cam1:
-            logger.info("Stop aligning camera 1")
-            self.ui.pushButton_video1_align.setEnabled(False)
-            if not self.__camera_server.is_shooting():
-               self.aligning_cam1 = False
-               self.ui.pushButton_video1_align.setEnabled(True)
-               self.stop_camera_wait = False
-               self.videos[0].set_shooting(False)
-               self.ui.pushButton_video1_align.setText("Align Camera")
-         elif self.aligning_cam2:
-            logger.info("Stop aligning camera 2")
-            self.ui.pushButton_video2_align.setEnabled(False)
-            if not self.__camera_server.is_shooting():
-               self.aligning_cam2 = False
-               self.ui.pushButton_video2_align.setEnabled(True)
-               self.stop_camera_wait = False
-               self.videos[1].set_shooting(False)
-               self.ui.pushButton_video2_align.setText("Align Camera")
-         else:
-            self.ui.pushbutton_stop.setText("Waiting...")
-            self.ui.pushbutton_stop.setEnabled(False)
-            if not self.__camera_server.is_shooting():
-               self.stop_camera_wait = False
-               self.__shooting = False
-               self.ui.pushbutton_stop.setText("Stop cameras")
-               self.ui.pushbutton_start.setEnabled(True)
-               self.videos[0].view_frame(1)
-               self.videos[1].view_frame(1)
-               self.videos[0].set_shooting(False)
-               self.videos[1].set_shooting(False)
-               self.timer.start(20)
-               self.enable_all_gui_elements(True)
+         self.ui.pushbutton_stop.setText("Waiting...")
+         self.ui.pushbutton_stop.setEnabled(False)
+         if not self.__camera_server.is_shooting():
+            self.stop_camera_wait = False
+            self.__shooting = False
+            self.ui.pushbutton_stop.setText("Stop cameras")
+            self.ui.pushbutton_start.setEnabled(True)
+            self.videos[0].view_frame(1)
+            self.videos[1].view_frame(1)
+            self.videos[0].set_shooting(False)
+            self.videos[1].set_shooting(False)
+            self.timer.start(20)
+            self.enable_all_gui_elements(True)
 
       # Update the video view
       if self.__camera_server.is_shooting():
-         if self.aligning_cam1:
-            ''' Align cam 1 '''
-            frame_number = self.cameras_data.get_last_frame("cam1").get_position()
-            if frame_number > 0:
-               self.videos[0].view_frame(frame_number)
-
-         elif self.aligning_cam2:
-            ''' Align cam 2 '''
-            frame_number = self.cameras_data.get_last_frame("cam2").get_position()
-            if frame_number > 0:
-               self.videos[1].view_frame(frame_number)
-
-         else:
+         if self.__shooting:
             ''' Motion Track '''
             if self.ui.checkBox_motion_track.isChecked():
                for i in range(2):
@@ -374,8 +339,7 @@ class WindowMain(QMainWindow):
       if self.cameras_data \
                and not self.__shooting \
                and (self.cameras_data.get_frame_count('cam1') or 0) >= 90 \
-               and (self.cameras_data.get_frame_count('cam2') or 0) >= 90  \
-               and not self.aligning_cam1 and not self.aligning_cam2:
+               and (self.cameras_data.get_frame_count('cam2') or 0) >= 90:
          # Calculate the speed
          cam1_frame_number = self.videos[0].get_current_frame_number()
          cam2_frame_number = self.videos[1].get_current_frame_number()
@@ -425,41 +389,45 @@ class WindowMain(QMainWindow):
       self.ui.label_time.setText(time_text)
       return int(kmh)
 
-   def align_cam1(self):
-      """
-      Align camera one
-      """
-      if (self.aligning_cam1):
-         self.stop_camera_wait = True
-         self.__camera_server.stop_shooting()
+   def __evt_align_new_frame(self, frame :Frame):
+      if frame.get_camera() == 1:
+         self.videos[0].view_frame(frame.get_position())
       else:
-         self.__flight = 1
-         self.aligning_cam1 = True
-         self.videos[0].set_shooting(True)
-         self.cameras_data = CamerasData(self.__db, self.__flight)
-         self.videos[0].cameras_data = self.cameras_data
-         self.__camera_server.start_shooting(self.__flight, self.cameras_data)
-         self.enable_all_gui_elements(False)
-         self.ui.pushButton_video1_align.setText("Stop")
+         self.videos[1].view_frame(frame.get_position())
 
-   def align_cam2(self):
-      """
-      Align camera two
-      """
-      if (self.aligning_cam2):
-         self.stop_camera_wait = True
-         self.__camera_server.stop_shooting()         
+   def __evt_align_start(self, cam):
+      self.enable_all_gui_elements(False)
+      if cam == 'cam1':
+         self.ui.pushButton_video1_align.setText('Stop')
+         self.ui.pushButton_video2_align.setEnabled(False)
       else:
-         self.__flight = 1
-         self.aligning_cam2 = True
-         self.videos[1].set_shooting(True)
-         self.cameras_data = CamerasData(self.__db, self.__flight)
-         self.videos[1].cameras_data = self.cameras_data
-         self.__camera_server.start_shooting(self.__flight, self.cameras_data)
-         self.enable_all_gui_elements(False)
-         self.ui.pushButton_video2_align.setText("Stop")
+         self.ui.pushButton_video2_align.setText('Stop')
+         self.ui.pushButton_video1_align.setEnabled(False)
 
-   def startCameras(self):
+   def __evt_align_stop(self, cam):
+      self.enable_all_gui_elements(True)
+
+      self.ui.pushButton_video1_align.setText('Align Camera')
+      self.ui.pushButton_video2_align.setText('Align Camera')
+      
+      if self.__camera_server.is_online('cam1'): 
+         self.ui.pushButton_video1_align.setEnabled(True)
+      if self.__camera_server.is_online('cam2'): 
+         self.ui.pushButton_video2_align.setEnabled(True)
+
+   def cb_align_cam1(self):
+      if self.ui.pushButton_video1_align.text() == 'Align Camera':
+         self.__action_logic.start_align_camera('cam1')
+      else:
+         self.__action_logic.stop_align_camera('cam1')
+
+   def cb_align_cam2(self):
+      if self.ui.pushButton_video2_align.text() == 'Align Camera':
+         self.__action_logic.start_align_camera('cam2')
+      else:
+         self.__action_logic.stop_align_camera('cam2')
+
+   def cb_start_cameras(self):
       logger.info("Starting Cameras")
       if not self.__camera_server.is_ready_to_shoot():
          return False
@@ -504,7 +472,6 @@ class WindowMain(QMainWindow):
       self.ui.pushbutton_video1_find.setEnabled(enabled) 
       self.ui.pushbutton_video1_forwardstep.setEnabled(enabled)
       self.ui.pushbutton_video1_backstep.setEnabled(enabled)
-      self.ui.pushButton_video1_align.setEnabled(enabled)
       self.ui.slider_video1.setEnabled(enabled)
       self.ui.pushbutton_video1_copy.setEnabled(enabled)
 
@@ -514,7 +481,6 @@ class WindowMain(QMainWindow):
       self.ui.pushbutton_video2_find.setEnabled(enabled) 
       self.ui.pushbutton_video2_forwardstep.setEnabled(enabled)
       self.ui.pushbutton_video2_backstep.setEnabled(enabled)
-      self.ui.pushButton_video2_align.setEnabled(enabled)
       self.ui.slider_video2.setEnabled(enabled)
       self.ui.pushbutton_video2_copy.setEnabled(enabled)
 
