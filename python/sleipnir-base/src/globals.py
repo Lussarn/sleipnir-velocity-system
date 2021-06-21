@@ -1,21 +1,55 @@
-"""
-Global Config variables 
-"""
-import sys
+import Event
+from CameraServer import CameraServer
 
-# Program name
-PROGRAM_NAME = "Sleipnir velocity system"
+'''
+Globals.EVENT_FLIGHT_CHANGE flight: int          : the flight have changed
+Globals.EVENT_GROUND_LEVEL_CHANGE value: int     : the ground level hanve changed
+'''
 
-# Program version
-VERSION = "v0.1.0"
+class GlobalState:
+    def __init__(self):
+        ''' flight number (1-20) '''
+        self.flight = 1
+        ''' ground level, no tracking below this '''
+        self.ground_level = 400
 
+        ''' Are the cameras online '''
+        self.camera_online = {
+            'cam1': False,
+            'cam2': False
+        }
 
-if sys.platform.startswith("linux"):
-    OS = "linux"
-elif sys.platform.startswith("darwin"):
-    OS = "osx"
-elif sys.platform.startswith("win32"):
-    OS = "windows"
-else:
-    print ("Unknown OS")
-    exit
+class Globals:
+    EVENT_FLIGHT_CHANGE         = "globals.flight.change"
+    EVENT_GROUND_LEVEL_CHANGE   = "globals.ground_level.change"
+
+    def __init__(self):
+        self.__state = GlobalState()
+        Event.on(CameraServer.EVENT_CAMERA_ONLINE, self.__evt_camera_online)
+        Event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_camera_offline)
+
+    def __evt_camera_online(self, cam):
+        self.__state.camera_online[cam] = True
+
+    def __evt_camera_offline(self, cam):
+        self.__state.camera_online[cam] = False
+
+    '''
+    flight functions
+    '''
+    def set_flight(self, flight):
+        self.__state.flight = flight
+        Event.emit(Globals.EVENT_FLIGHT_CHANGE, flight)
+
+    def get_flight(self):
+        return self.__state.flight
+
+    '''
+    ground level functions
+    '''
+    def set_ground_level(self, ground_level):
+        self.__state.ground_level = ground_level
+        Event.emit(Globals.EVENT_GROUND_LEVEL_CHANGE, ground_level)
+    
+    def get_ground_level(self):
+        return self.__state.ground_level

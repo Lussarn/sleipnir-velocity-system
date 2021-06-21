@@ -1,7 +1,12 @@
+import simplejpeg
+
+from database.DB import DB
+import database.frame_dao as frame_dao
+
 class Frame:
-    def __init__ (self, flight: int, camera: str, position: int, timestamp: int, image):
+    def __init__ (self, flight: int, cam: str, position: int, timestamp: int, image):
         self.__flight = flight
-        self.__camera = camera
+        self.__cam = cam
         self.__position = position
         self.__timestamp = timestamp
         self.__image = image
@@ -10,7 +15,7 @@ class Frame:
         return self.__flight
 
     def get_cam(self):
-        return self.__camera
+        return self.__cam
 
     def get_position(self):
         return self.__position
@@ -23,3 +28,11 @@ class Frame:
 
     def set_image(self, image):
         self.__image = image
+
+    def get_image_load_if_missing(self, db :DB):
+        if self.__image == None:
+            frame = frame_dao.load(db, self.__flight, self.__cam, self.__position)
+            if frame is None: return
+            return simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
+        else:
+            return self.image
