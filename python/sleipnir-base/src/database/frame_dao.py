@@ -16,7 +16,7 @@ def store(db: DB, frame: Frame):
             VALUES (?, ?, ?, ?, ?)
             ''',[
             str(frame.get_flight()),
-            str(frame.get_camera()),
+            str(1 if frame.get_cam() == 'cam1' else 2),
             str(frame.get_position()),
             str(frame.get_timestamp()),
             frame.get_image()
@@ -29,14 +29,14 @@ def store(db: DB, frame: Frame):
         cur.close()
         db.release_write_lock()
 
-def load(db: DB, flight: int, cam: int, position: int) -> Frame:
+def load(db: DB, flight: int, cam: str, position: int) -> Frame:
     cur = db.get_conn().cursor()
     try:
         row = cur.execute(
-            '''SELECT timestamp, image FROM frame WHERE position=? AND flight=? and camera=?''',
+            '''SELECT timestamp, image FROM frame WHERE position=? AND flight=? AND camera=?''',
             [str(position),
             str(flight),
-            str(cam)]).fetchone()
+            str(1 if cam == 'cam1' else 2)]).fetchone()
         if row is None: return None
         return Frame(flight, cam, position, row[0], row[1])
     except sqlite3.Error as e:
@@ -61,26 +61,26 @@ def delete_flight(db: DB, flight: int):
         cur.close()
         db.release_write_lock()
 
-def load_flight_timestamps(db: DB, flight: int, camera: int):
+def load_flight_timestamps(db: DB, flight: int, cam: str):
     cur = db.get_conn().cursor()
     try:
         return cur.execute(
             '''SELECT position, timestamp FROM frame WHERE flight=? AND camera=?''',
             [str(flight),
-            str(camera)]).fetchall()
+            str(1 if cam == 'cam1' else 2)]).fetchall()
     except sqlite3.Error as e:
         logger.error(str(e))
         raise e
     finally:
         cur.close()
 
-def load_frame_count(db: DB, flight: int, camera: int) -> int:
+def load_frame_count(db: DB, flight: int, cam: str) -> int:
     cur = db.get_conn().cursor()
     try:
         rs = cur.execute(
             '''SELECT position FROM frame WHERE flight=? AND camera=? ORDER BY id DESC LIMIT 1''',
             [str(flight),
-            str(camera)]).fetchone()
+            str(1 if cam == 'cam1' else 2)]).fetchone()
         if rs is None: return None
         return int(rs[0])
     except sqlite3.Error as e:
@@ -89,14 +89,14 @@ def load_frame_count(db: DB, flight: int, camera: int) -> int:
     finally:
         cur.close()
 
-def load_timestamp(db: DB, flight: int, cam: int, position: int) -> int:
+def load_timestamp(db: DB, flight: int, cam: str, position: int) -> int:
     cur = db.get_conn().cursor()
     try:
         row = cur.execute(
             '''SELECT timestamp FROM frame WHERE position=? AND flight=? and camera=?''',
             [str(position),
             str(flight),
-            str(cam)]).fetchone()
+            str(1 if cam == 'cam1' else 2)]).fetchone()
         if row is None: return None
         return int(row[0])
     except sqlite3.Error as e:

@@ -44,8 +44,8 @@ class ActionLogic:
         self.__timer = None
         self.__qobject = qobject
         self.__action_state = ActionState()
-        self.__action_state.videos['cam1'] = videos[0]
-        self.__action_state.videos['cam2'] = videos[1]
+        self.__action_state.videos['cam1'] = videos['cam1']
+        self.__action_state.videos['cam2'] = videos['cam2']
         self.__db = db
         self.__camera_server = camera_server
         Event.on(CameraServer.EVENT_CAMERA_ONLINE, self.__evt_camera_online)
@@ -64,6 +64,9 @@ class ActionLogic:
         if self.__action_state.camera_aligning != None:
             self.stop_align_camera(self.__action_state.camera_aligning)
 
+    '''
+    Aligning of the camera function start
+    '''
     def start_align_camera(self, cam :str):
         if self.__action_state.camera_aligning == cam:
             ''' Camera is already aligning '''
@@ -90,6 +93,6 @@ class ActionLogic:
         Event.emit(ActionLogic.EVENT_ALIGN_STOP, cam)
 
     def __align_evt_new_frame(self, frame :Frame):
-        if "cam" + str(frame.get_camera()) == self.__action_state.camera_aligning:
+        if frame.get_cam() == self.__action_state.camera_aligning:
             Event.emit(ActionLogic.EVENT_ALIGN_NEW_FRAME, frame)
         return

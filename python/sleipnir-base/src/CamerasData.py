@@ -44,12 +44,12 @@ class CamerasData:
       logger.debug("add_frame() position " + str(frame.get_position()))
       self.__acquire_lock()
       ''' We require the frames to actually be in order from 1 to infinity '''
-      if frame.get_position() > 1 and not self.__frames['cam' + str(frame.get_camera())][frame.get_position() - 1]:
+      if frame.get_position() > 1 and not self.__frames[frame.get_cam()][frame.get_position() - 1]:
          logger.critical("Missing a frame when adding, can't continue!")
          self.__release_lock()
          return False
 
-      cam = 'cam' + str(frame.get_camera())
+      cam = frame.get_cam()
       position = frame.get_position()
       self.__frames[cam][position] = frame
       self.__frame_count[cam] = position
@@ -77,7 +77,7 @@ class CamerasData:
 
    def get_frame(self, cam: str, position: int) -> Frame:
       if self.__frames[cam].get(position): return self.__frames[cam][position]
-      timestamp = frame_dao.load_timestamp(self.__db, self.__flight, 1 if cam == 'cam1' else 2, position)
+      timestamp = frame_dao.load_timestamp(self.__db, self.__flight, cam, position)
       self.__frames[cam][position] = Frame(self.__flight, cam, position, timestamp, None)
       return self.__frames[cam][position]
 
@@ -87,5 +87,5 @@ class CamerasData:
    @timer("Time to load last position")
    def load(self, db: DB, flight):
       logger.info("Lazy loading flight " + str(flight) + "...")
-      for cam in [1, 2]:
-         self.__frame_count['cam' + str(cam)] = frame_dao.load_frame_count(db, flight, cam)
+      for cam in ['cam1', 'cam2']:
+         self.__frame_count[cam] = frame_dao.load_frame_count(db, flight, cam)

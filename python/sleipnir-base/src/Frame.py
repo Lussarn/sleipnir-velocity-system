@@ -1,5 +1,5 @@
 class Frame:
-    def __init__ (self, flight: int, camera: int, position: int, timestamp: int, image):
+    def __init__ (self, flight: int, camera: str, position: int, timestamp: int, image):
         self.__flight = flight
         self.__camera = camera
         self.__position = position
@@ -9,7 +9,7 @@ class Frame:
     def get_flight(self):
         return self.__flight
 
-    def get_camera(self):
+    def get_cam(self):
         return self.__camera
 
     def get_position(self):

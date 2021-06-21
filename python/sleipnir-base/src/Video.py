@@ -5,6 +5,7 @@ import database.frame_dao as frame_dao
 import simplejpeg
 import math
 
+from Frame import Frame
 from function_timer import timer
 
 import logging
@@ -120,7 +121,7 @@ class Video:
    @timer("Time to read jpeg", logging.INFO, identifier='cam', average=1000)
    def __get_frame(self, cam, position):
       timestamp = self.cameras_data.get_frame(cam, position).get_timestamp()
-      frame = frame_dao.load(self.__db, self.__flight, 1 if self.cam == 'cam1' else 2, position)
+      frame = frame_dao.load(self.__db, self.__flight, self.cam, position)
       if frame is None: return
       image_cv = simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
 
@@ -271,9 +272,10 @@ class Video:
          "frame_number": found_motion_position
          }
 
-   def __update(self, frame):
+   def __update(self, frame :Frame):
       if not frame:
          return
+
 
       local_timestamp = frame["timestamp"] - self.start_timestamp
       if (local_timestamp < 0):

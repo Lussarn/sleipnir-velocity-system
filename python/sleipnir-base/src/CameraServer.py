@@ -89,7 +89,7 @@ class RequestHandler(tornado.web.RequestHandler):
 
          frame = Frame(
             self.__server_state.flight,
-            1 if cam == 'cam1' else 2,
+            cam,
             int(self.get_argument("position", None, True)),
             int(self.get_argument("timestamp", None, True)),
             self.request.body

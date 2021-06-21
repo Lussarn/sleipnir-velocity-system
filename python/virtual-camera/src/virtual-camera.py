@@ -90,7 +90,7 @@ while True:
         if (cam.get_state() == Camera.STATE_UPLOADING):
             position = cam.get_position()
             cam.set_position(position + 1)
-            frame = frame_dao.load(db, flight, 1 if cam.get_cam() == 'cam1' else 2, position + jump)
+            frame = frame_dao.load(db, flight, cam.get_cam(), position + jump)
             response = session.post(url + "?action=uploadframe&cam=" + cam.get_cam() + "&position=" + str(frame.get_position() - jump ) + "&timestamp=" + str(frame.get_timestamp()), 
                 data=frame.get_image(),
                 timeout=1)
