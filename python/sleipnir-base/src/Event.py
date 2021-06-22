@@ -1,4 +1,5 @@
 import queue
+import copy
 
 from PySide2 import QtCore
 from pymitter import EventEmitter
@@ -37,9 +38,12 @@ class EventServer:
         while(True):
             try:
                 evt = self.__evt_queue.get_nowait()
+                if (evt is None): continue
             except queue.Empty:
                 return
-            self.__ee.emit(evt.event, *evt.args, **evt.kwargs)
+            evt2 = evt # copy.deepcopy(evt)
+            self.__ee.emit(evt2.event, *evt2.args, **evt2.kwargs)
+            self.__evt_queue.task_done()
 
 __event_server__ = None
 

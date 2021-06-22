@@ -53,7 +53,7 @@ class Video:
       self.buttonPlayBackward = buttonPlayBackward
 #      self.buttonPlayBackward.clicked.connect(self.__onPlayBackward)
       self.buttonFind = buttonFind
-      self.buttonFind.clicked.connect(self.__onFind)
+#      self.buttonFind.clicked.connect(self.__onFind)
       self.buttonForwardStep = buttonForwardStep
 #      self.buttonForwardStep.clicked.connect(self.__onForwardStep)
       self.buttonBackStep = buttonBackStep
@@ -63,7 +63,7 @@ class Video:
       self.slider = slider
 #      self.slider.sliderMoved.connect(self.__onSliderChanged)
       self.buttonCopy = buttonCopy
-      self.buttonCopy.clicked.connect(self.__onCopy)
+#      self.buttonCopy.clicked.connect(self.__onCopy)
       self.labelTime = labelTime
 
       # Timer for playing video

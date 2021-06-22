@@ -157,7 +157,7 @@ class WindowMain(QMainWindow):
 
       self.__globals = Globals(self.__db)
       self.__align_logic = AlignLogic(self.__globals, self.__camera_server)
-      self.__video_player = VideoPlayer(self.__globals, self)
+      self.__video_player = VideoPlayer(self.__globals, self, self.configuration)
 
       ''' flight callbacks and events '''
       for radio_buttons_flight in self.ui.radio_buttons_flights:
@@ -165,10 +165,7 @@ class WindowMain(QMainWindow):
       Event.on(Globals.EVENT_FLIGHT_CHANGE, self.__evt_globals_flight_change)
 
       ''' ground level callbacks and events '''
-      self.__ground_level_currently_pressed = False
-      self.ui.verticalSlider_groundlevel.sliderPressed.connect(self.__cb_groundlevel_pressed)
-      self.ui.verticalSlider_groundlevel.sliderReleased.connect(self.__cb_groundlevel_released)
-      self.ui.verticalSlider_groundlevel.sliderMoved.connect(self.__cb_groundlevel_changed)
+      self.ui.verticalSlider_groundlevel.valueChanged.connect(self.__cb_groundlevel_changed)
       Event.on(Globals.EVENT_GROUND_LEVEL_CHANGE, self.__evt_globals_ground_level_change)
 
       ''' Align callbacks and events '''
@@ -182,10 +179,6 @@ class WindowMain(QMainWindow):
 
       ''' Video player callbacs and events '''
       Event.on(VideoPlayer.EVENT_PLAY_NEW_FRAME, self.__evt_videoplayer_play_new_frame)
-      self.__video_slider_currently_pressed = {
-         'cam1': False,
-         'cam2': False
-      }
 
       ''' video 1 '''
       self.ui.pushbutton_video1_playforward.clicked.connect(self.__cb_video1_play_forward_clicked)
@@ -193,9 +186,9 @@ class WindowMain(QMainWindow):
       self.ui.pushbutton_video1_pause.clicked.connect(self.__cb_video1_stop_clicked)
       self.ui.pushbutton_video1_forwardstep.clicked.connect(self.__cb_video1_step_forward)
       self.ui.pushbutton_video1_backstep.clicked.connect(self.__cb_video1_step_reverse)
-      self.ui.slider_video['cam1'].sliderPressed.connect(self.__cb_video1_slider_pressed)
-      self.ui.slider_video['cam1'].sliderReleased.connect(self.__cb_video1_slider_released)
-      self.ui.slider_video['cam1'].sliderMoved.connect(self.__cb_video1_slider_moved)
+      self.ui.slider_video['cam1'].valueChanged.connect(self.__cb_video1_slider_moved)
+      self.ui.pushbutton_video1_copy.clicked.connect(self.__cb_video1_copy_clicked)
+      self.ui.pushbutton_video1_find.clicked.connect(self.__cb_video1_find_clicked)
 
       ''' video 2 '''
       self.ui.pushbutton_video2_playforward.clicked.connect(self.__cb_video2_play_forward_clicked)
@@ -203,9 +196,9 @@ class WindowMain(QMainWindow):
       self.ui.pushbutton_video2_pause.clicked.connect(self.__cb_video2_stop_clicked)
       self.ui.pushbutton_video2_forwardstep.clicked.connect(self.__cb_video2_step_forward)
       self.ui.pushbutton_video2_backstep.clicked.connect(self.__cb_video2_step_reverse)
-      self.ui.slider_video['cam2'].sliderPressed.connect(self.__cb_video2_slider_pressed)
-      self.ui.slider_video['cam2'].sliderReleased.connect(self.__cb_video2_slider_released)
-      self.ui.slider_video['cam2'].sliderMoved.connect(self.__cb_video2_slider_moved)
+      self.ui.slider_video['cam2'].valueChanged.connect(self.__cb_video2_slider_moved)
+      self.ui.pushbutton_video2_copy.clicked.connect(self.__cb_video2_copy_clicked)
+      self.ui.pushbutton_video2_find.clicked.connect(self.__cb_video2_find_clicked)
 
 
       # Show GUI
@@ -217,6 +210,9 @@ class WindowMain(QMainWindow):
       self.timer.timeout.connect(self.__timerGui)
       self.timer.start(20)
 
+   '''
+   Camera online GUI
+   '''
    def __evt_camera_online(self, cam):
       if (cam == 'cam1'):
          self.ui.label_video1_online.setText("Cam1: Online")
@@ -236,15 +232,6 @@ class WindowMain(QMainWindow):
    '''
    Video player GUI
    '''
-   def __cb_video1_slider_pressed(self):
-      self.__video_slider_currently_pressed['cam1'] = True
-   def __cb_video1_slider_released(self):
-      self.__video_slider_currently_pressed['cam1'] = False
-   def __cb_video2_slider_pressed(self):
-      self.__video_slider_currently_pressed['cam2'] = True
-   def __cb_video2_slider_released(self):
-      self.__video_slider_currently_pressed['cam2'] = False
-
    def __cb_video1_play_forward_clicked(self): self.__video_play_forward_clicked('cam1')
    def __cb_video2_play_forward_clicked(self): self.__video_play_forward_clicked('cam2')
    def __video_play_forward_clicked(self, cam: str):
@@ -275,22 +262,37 @@ class WindowMain(QMainWindow):
    def __video_slider_moved(self, cam: str, value: int):
       self.__video_player.set_position(cam, value)
 
+   def __cb_video1_copy_clicked(self): self.__video_copy('cam1', 'cam2')
+   def __cb_video2_copy_clicked(self): self.__video_copy('cam2', 'cam1')
+   def __video_copy(self, source_cam: str, dest_cam: str):
+      self.__video_player.copy(source_cam, dest_cam)
+
+   def __cb_video1_find_clicked(self): self.__video_find_clicked('cam1')
+   def __cb_video2_find_clicked(self): self.__video_find_clicked('cam2')
+   def __video_find_clicked(self, cam):
+      self.__video_player.find(cam)
+
+
    def __evt_videoplayer_play_new_frame(self, frame :Frame):
       self.display_frame(frame)
-      ''' Only set slider position if we are NOT fragging it '''
-      if self.__video_slider_currently_pressed[frame.get_cam()] == False:
-         self.ui.slider_video[frame.get_cam()].setSliderPosition(frame.get_position())
+#      ''' Only set slider position if we are NOT dragging it '''
+#      if self.ui.slider_video[frame.get_cam()].isSliderDown() == False:
+      ''' block signal on slider since it will do a video_player.set_poistion on change
+      and thereby intrduce a circular event '''
+      self.ui.slider_video[frame.get_cam()].blockSignals(True)
+      self.ui.slider_video[frame.get_cam()].setSliderPosition(frame.get_position())
+      self.ui.slider_video[frame.get_cam()].blockSignals(False)
+
       ''' Display time '''
       self.ui.label_time_video[frame.get_cam()].setText(
          self.__format_video_time(
             self.__video_player.get_time(frame.get_cam())
          )
       )
+      pass
 
    def __format_video_time(self, ms):
       return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
-
-
 
    '''
    Align GUI
@@ -342,9 +344,6 @@ class WindowMain(QMainWindow):
       self.ui.radio_buttons_flights[flight - 1].setChecked(True)
       self.__load_flight(flight)
 
-#      self.slider.setMinimum(1)
-#      self.slider.setMaximum(self.cameras_data.get_last_frame(self.cam).get_position())
-
 
    def __load_flight(self, flight):
       self.__flight = flight
@@ -381,21 +380,19 @@ class WindowMain(QMainWindow):
       self.distance = value
 
    ''' ground level GUI '''
-   def __cb_groundlevel_pressed(self):
-      self.__ground_level_currently_pressed = True
-   def __cb_groundlevel_released(self):
-      self.__ground_level_currently_pressed = False
-
    def __cb_groundlevel_changed(self, value):
       self.__globals.set_ground_level(value)
 
    def __evt_globals_ground_level_change(self, value):
-      # Forward ground level to videos
+      ''' When the ground level change the videos needs to redraw '''
+      self.display_frame(self.__video_player.get_current_frame('cam1'))
+      self.display_frame(self.__video_player.get_current_frame('cam2'))
+
       self.videos['cam1'].groundlevel = value
       self.videos['cam2'].groundlevel = value
-      self.videos['cam1'].view_frame(self.videos['cam1'].get_current_frame_number())
-      self.videos['cam2'].view_frame(self.videos['cam2'].get_current_frame_number())
-      if self.__ground_level_currently_pressed == False:
+
+      ''' Do not try to set position if we are currently dragging '''
+      if self.ui.verticalSlider_groundlevel.isSliderDown() == False:
          self.ui.verticalSlider_groundlevel.setValue(value)
 
    ''' display video frame '''
