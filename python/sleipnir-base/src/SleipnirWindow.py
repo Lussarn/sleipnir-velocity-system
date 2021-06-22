@@ -30,4 +30,14 @@ class SleipnirWindow(Ui_MainWindow):
         self.widget_video = {
             'cam1': self.label_video1,
             'cam2': self.label_video2
-        }        
+        }
+
+        self.slider_video = {
+            'cam1': self.slider_video1,
+            'cam2': self.slider_video2
+        }
+
+        self.label_time_video = {
+            'cam1': self.label_time_video1,
+            'cam2': self.label_time_video2
+        }

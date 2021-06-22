@@ -2,7 +2,6 @@ import logging
 
 import Event
 from Globals import Globals
-from database.DB import DB
 from Frame import Frame
 from CameraServer import CameraServer
 from CamerasData import CamerasData
@@ -30,10 +29,9 @@ class AlignLogic:
     EVENT_ALIGN_STOP            = "alignlogic.align.stop"
     EVENT_ALIGN_NEW_FRAME       = "alignlogic.align.new_frame"
 
-    def __init__(self, globals :Globals, db :DB, camera_server :CameraServer):
+    def __init__(self, globals :Globals, camera_server :CameraServer):
         self.__globals = globals
         self.__state = AlignState()
-        self.__db = db
         self.__camera_server = camera_server
         Event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_camera_offline)
         
@@ -53,7 +51,7 @@ class AlignLogic:
         Event.on(CameraServer.EVENT_NEW_FRAME, self.__align_evt_new_frame)
         self.__state.camera_aligning = cam
 
-        self.__state.cameras_data = CamerasData(self.__db, self.__globals.get_flight())
+        self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_flight())
         self.__camera_server.start_shooting(
             self.__globals.get_flight(),
             self.__state.cameras_data

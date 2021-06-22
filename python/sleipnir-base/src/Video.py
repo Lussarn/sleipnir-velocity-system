@@ -49,19 +49,19 @@ class Video:
       # Lots of widgets
       self.widgetVideo = widgetVideo
       self.buttonPlayForward = buttonPlayForward
-      self.buttonPlayForward.clicked.connect(self.__onPlayForward)
+#      self.buttonPlayForward.clicked.connect(self.__onPlayForward)
       self.buttonPlayBackward = buttonPlayBackward
-      self.buttonPlayBackward.clicked.connect(self.__onPlayBackward)
+#      self.buttonPlayBackward.clicked.connect(self.__onPlayBackward)
       self.buttonFind = buttonFind
       self.buttonFind.clicked.connect(self.__onFind)
       self.buttonForwardStep = buttonForwardStep
-      self.buttonForwardStep.clicked.connect(self.__onForwardStep)
+#      self.buttonForwardStep.clicked.connect(self.__onForwardStep)
       self.buttonBackStep = buttonBackStep
-      self.buttonBackStep.clicked.connect(self.__onBackStep)
+#      self.buttonBackStep.clicked.connect(self.__onBackStep)
       self.buttonPause = buttonPause
-      self.buttonPause.clicked.connect(self.__onPause)
+#      self.buttonPause.clicked.connect(self.__onPause)
       self.slider = slider
-      self.slider.sliderMoved.connect(self.__onSliderChanged)
+#      self.slider.sliderMoved.connect(self.__onSliderChanged)
       self.buttonCopy = buttonCopy
       self.buttonCopy.clicked.connect(self.__onCopy)
       self.labelTime = labelTime
@@ -194,7 +194,7 @@ class Video:
       else:
          self.current_frame_number -= 1
          if self.cameras_data.get_last_frame(self.cam) is None or self.current_frame_number < 1:
-            self.current_frame_number  =1
+            self.current_frame_number = 1
             self.find = False
             self.timer.stop()
             self.__update(self.__get_frame(self.cam, self.current_frame_number))
@@ -217,19 +217,6 @@ class Video:
       elif not self.find:
          self.__update(frame)         
 
-   def display_frame(self, frame :Frame):
-      if frame.get_image() == None:
-         frame = frame_dao.load(self.__db, frame.get_flight(), frame.get_cam(), frame.get_position())
-      if frame is None: return
-      image = simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
-
-      # Draw center line
-      cv.rectangle(image, (160, 0), (160, 480), (0, 0, 0), 1)
-      # Draw ground level
-      cv.rectangle(image, (0, self.groundlevel), (320, self.groundlevel), (0, 0, 0), 1)
-
-      image_qt = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], QtGui.QImage.Format_Indexed8)
-      self.widgetVideo.setPixmap(QtGui.QPixmap.fromImage(image_qt))
 
 
    def view_frame(self, frame_number):

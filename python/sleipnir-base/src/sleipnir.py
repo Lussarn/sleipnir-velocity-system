@@ -16,6 +16,7 @@ from Frame import Frame
 from CameraServer import CameraServer
 from Globals import Globals
 from AlignLogic import AlignLogic
+from VideoPlayer import VideoPlayer
 from Sound import Sound
 from function_timer import timer
 
@@ -154,17 +155,9 @@ class WindowMain(QMainWindow):
       self.ui.listView_anouncements.clicked.connect(self.__on_announcement_changed)
       self.ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
 
-      self.__globals = Globals()
-      self.__align_logic = AlignLogic(self.__globals, self.__db, self.__camera_server)
-
-      ''' Align callbacks and events '''
-      self.ui.pushButton_video1_align.clicked.connect(self.__cb_align_cam1_clicked)
-      self.ui.pushButton_video2_align.clicked.connect(self.__cb_align_cam2_clicked)
-      Event.on(AlignLogic.EVENT_ALIGN_START, self.__evt_alignlogic_align_start)
-      Event.on(AlignLogic.EVENT_ALIGN_STOP, self.__evt_alignlogic_align_stop)
-      Event.on(AlignLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_alignlogic_align_new_frame)
-      self.ui.pushButton_video1_align.setEnabled(False)
-      self.ui.pushButton_video2_align.setEnabled(False)
+      self.__globals = Globals(self.__db)
+      self.__align_logic = AlignLogic(self.__globals, self.__camera_server)
+      self.__video_player = VideoPlayer(self.__globals, self)
 
       ''' flight callbacks and events '''
       for radio_buttons_flight in self.ui.radio_buttons_flights:
@@ -177,6 +170,43 @@ class WindowMain(QMainWindow):
       self.ui.verticalSlider_groundlevel.sliderReleased.connect(self.__cb_groundlevel_released)
       self.ui.verticalSlider_groundlevel.sliderMoved.connect(self.__cb_groundlevel_changed)
       Event.on(Globals.EVENT_GROUND_LEVEL_CHANGE, self.__evt_globals_ground_level_change)
+
+      ''' Align callbacks and events '''
+      self.ui.pushButton_video1_align.clicked.connect(self.__cb_align_cam1_clicked)
+      self.ui.pushButton_video2_align.clicked.connect(self.__cb_align_cam2_clicked)
+      Event.on(AlignLogic.EVENT_ALIGN_START, self.__evt_alignlogic_align_start)
+      Event.on(AlignLogic.EVENT_ALIGN_STOP, self.__evt_alignlogic_align_stop)
+      Event.on(AlignLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_alignlogic_align_new_frame)
+      self.ui.pushButton_video1_align.setEnabled(False)
+      self.ui.pushButton_video2_align.setEnabled(False)
+
+      ''' Video player callbacs and events '''
+      Event.on(VideoPlayer.EVENT_PLAY_NEW_FRAME, self.__evt_videoplayer_play_new_frame)
+      self.__video_slider_currently_pressed = {
+         'cam1': False,
+         'cam2': False
+      }
+
+      ''' video 1 '''
+      self.ui.pushbutton_video1_playforward.clicked.connect(self.__cb_video1_play_forward_clicked)
+      self.ui.pushbutton_video1_playbackward.clicked.connect(self.__cb_video1_play_reverse_clicked)
+      self.ui.pushbutton_video1_pause.clicked.connect(self.__cb_video1_stop_clicked)
+      self.ui.pushbutton_video1_forwardstep.clicked.connect(self.__cb_video1_step_forward)
+      self.ui.pushbutton_video1_backstep.clicked.connect(self.__cb_video1_step_reverse)
+      self.ui.slider_video['cam1'].sliderPressed.connect(self.__cb_video1_slider_pressed)
+      self.ui.slider_video['cam1'].sliderReleased.connect(self.__cb_video1_slider_released)
+      self.ui.slider_video['cam1'].sliderMoved.connect(self.__cb_video1_slider_moved)
+
+      ''' video 2 '''
+      self.ui.pushbutton_video2_playforward.clicked.connect(self.__cb_video2_play_forward_clicked)
+      self.ui.pushbutton_video2_playbackward.clicked.connect(self.__cb_video2_play_reverse_clicked)
+      self.ui.pushbutton_video2_pause.clicked.connect(self.__cb_video2_stop_clicked)
+      self.ui.pushbutton_video2_forwardstep.clicked.connect(self.__cb_video2_step_forward)
+      self.ui.pushbutton_video2_backstep.clicked.connect(self.__cb_video2_step_reverse)
+      self.ui.slider_video['cam2'].sliderPressed.connect(self.__cb_video2_slider_pressed)
+      self.ui.slider_video['cam2'].sliderReleased.connect(self.__cb_video2_slider_released)
+      self.ui.slider_video['cam2'].sliderMoved.connect(self.__cb_video2_slider_moved)
+
 
       # Show GUI
       self.show()
@@ -202,6 +232,65 @@ class WindowMain(QMainWindow):
       else:
          self.ui.label_video1_online.setText("Cam2: Offine")
          self.ui.pushButton_video2_align.setEnabled(False)
+
+   '''
+   Video player GUI
+   '''
+   def __cb_video1_slider_pressed(self):
+      self.__video_slider_currently_pressed['cam1'] = True
+   def __cb_video1_slider_released(self):
+      self.__video_slider_currently_pressed['cam1'] = False
+   def __cb_video2_slider_pressed(self):
+      self.__video_slider_currently_pressed['cam2'] = True
+   def __cb_video2_slider_released(self):
+      self.__video_slider_currently_pressed['cam2'] = False
+
+   def __cb_video1_play_forward_clicked(self): self.__video_play_forward_clicked('cam1')
+   def __cb_video2_play_forward_clicked(self): self.__video_play_forward_clicked('cam2')
+   def __video_play_forward_clicked(self, cam: str):
+      self.__video_player.play(cam, VideoPlayer.DIRECTION_FORWARD)
+
+   def __cb_video1_play_reverse_clicked(self): self.__video_play_reverse_clicked('cam1')
+   def __cb_video2_play_reverse_clicked(self): self.__video_play_reverse_clicked('cam2')
+   def __video_play_reverse_clicked(self, cam: str):
+      self.__video_player.play(cam, VideoPlayer.DIRECTION_REVERSE)
+
+   def __cb_video1_stop_clicked(self): self.__video_stop_clicked('cam1')
+   def __cb_video2_stop_clicked(self): self.__video_stop_clicked('cam2')
+   def __video_stop_clicked(self, cam: str):
+      self.__video_player.stop(cam)
+
+   def __cb_video1_step_forward(self): self.__video_step_forward('cam1')
+   def __cb_video2_step_forward(self): self.__video_step_forward('cam2')
+   def __video_step_forward(self, cam):
+      self.__video_player.step(cam, VideoPlayer.DIRECTION_FORWARD)
+
+   def __cb_video1_step_reverse(self): self.__video_step_reverse('cam1')
+   def __cb_video2_step_reverse(self): self.__video_step_reverse('cam2')
+   def __video_step_reverse(self, cam):
+      self.__video_player.step(cam, VideoPlayer.DIRECTION_REVERSE)
+
+   def __cb_video1_slider_moved(self, value): self.__video_slider_moved('cam1', value)
+   def __cb_video2_slider_moved(self, value): self.__video_slider_moved('cam2', value)
+   def __video_slider_moved(self, cam: str, value: int):
+      self.__video_player.set_position(cam, value)
+
+   def __evt_videoplayer_play_new_frame(self, frame :Frame):
+      self.display_frame(frame)
+      ''' Only set slider position if we are NOT fragging it '''
+      if self.__video_slider_currently_pressed[frame.get_cam()] == False:
+         self.ui.slider_video[frame.get_cam()].setSliderPosition(frame.get_position())
+      ''' Display time '''
+      self.ui.label_time_video[frame.get_cam()].setText(
+         self.__format_video_time(
+            self.__video_player.get_time(frame.get_cam())
+         )
+      )
+
+   def __format_video_time(self, ms):
+      return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
+
+
 
    '''
    Align GUI
@@ -247,10 +336,15 @@ class WindowMain(QMainWindow):
    def __cb_flight(self):
       for i in range(0,20):
          if self.ui.radio_buttons_flights[i].isChecked(): break
-      self.__action_logic.set_flight(i + 1)
+      self.__globals.set_flight(i + 1)
 
    def __evt_globals_flight_change(self, flight):
       self.ui.radio_buttons_flights[flight - 1].setChecked(True)
+      self.__load_flight(flight)
+
+#      self.slider.setMinimum(1)
+#      self.slider.setMaximum(self.cameras_data.get_last_frame(self.cam).get_position())
+
 
    def __load_flight(self, flight):
       self.__flight = flight
@@ -293,7 +387,7 @@ class WindowMain(QMainWindow):
       self.__ground_level_currently_pressed = False
 
    def __cb_groundlevel_changed(self, value):
-      self.__action_logic.set_ground_level(value)
+      self.__globals.set_ground_level(value)
 
    def __evt_globals_ground_level_change(self, value):
       # Forward ground level to videos
