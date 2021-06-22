@@ -104,14 +104,6 @@ class WindowMain(QMainWindow):
          self.__max_dive_angle,
          self.__blur_strength,
          self.ui.label_video1,  
-         self.ui.pushbutton_video1_playforward, 
-         self.ui.pushbutton_video1_playbackward, 
-         self.ui.pushbutton_video1_pause, 
-         self.ui.pushbutton_video1_find, 
-         self.ui.pushbutton_video1_forwardstep, 
-         self.ui.pushbutton_video1_backstep,
-         self.ui.slider_video1,
-         self.ui.pushbutton_video1_copy,
          self.ui.label_time_video1)
       self.videos['cam2'] = Video(
          self.__db,
@@ -120,14 +112,6 @@ class WindowMain(QMainWindow):
          self.__max_dive_angle,
          self.__blur_strength,
          self.ui.label_video2, 
-         self.ui.pushbutton_video2_playforward, 
-         self.ui.pushbutton_video2_playbackward, 
-         self.ui.pushbutton_video2_pause, 
-         self.ui.pushbutton_video2_find, 
-         self.ui.pushbutton_video2_forwardstep, 
-         self.ui.pushbutton_video2_backstep, 
-         self.ui.slider_video2,
-         self.ui.pushbutton_video2_copy,
          self.ui.label_time_video2)
       self.videos['cam1'].set_sibling_video(self.videos['cam2'])
       self.videos['cam2'].set_sibling_video(self.videos['cam1'])
@@ -184,7 +168,8 @@ class WindowMain(QMainWindow):
       self.ui.pushbutton_video1_pause.clicked.connect(self.__cb_video1_stop_clicked)
       self.ui.pushbutton_video1_forwardstep.clicked.connect(self.__cb_video1_step_forward)
       self.ui.pushbutton_video1_backstep.clicked.connect(self.__cb_video1_step_reverse)
-      self.ui.slider_video['cam1'].valueChanged.connect(self.__cb_video1_slider_moved)
+      self.ui.slider_video['cam1'].setMinimum(1)
+      self.ui.slider_video['cam1'].valueChanged.connect(self.__cb_video1_slider_changed)
       self.ui.pushbutton_video1_copy.clicked.connect(self.__cb_video1_copy_clicked)
       self.ui.pushbutton_video1_find.clicked.connect(self.__cb_video1_find_clicked)
 
@@ -194,7 +179,8 @@ class WindowMain(QMainWindow):
       self.ui.pushbutton_video2_pause.clicked.connect(self.__cb_video2_stop_clicked)
       self.ui.pushbutton_video2_forwardstep.clicked.connect(self.__cb_video2_step_forward)
       self.ui.pushbutton_video2_backstep.clicked.connect(self.__cb_video2_step_reverse)
-      self.ui.slider_video['cam2'].valueChanged.connect(self.__cb_video2_slider_moved)
+      self.ui.slider_video['cam2'].setMinimum(1)
+      self.ui.slider_video['cam2'].valueChanged.connect(self.__cb_video2_slider_changed)
       self.ui.pushbutton_video2_copy.clicked.connect(self.__cb_video2_copy_clicked)
       self.ui.pushbutton_video2_find.clicked.connect(self.__cb_video2_find_clicked)
 
@@ -258,9 +244,9 @@ class WindowMain(QMainWindow):
    def __video_step_reverse(self, cam):
       self.__video_player.step(cam, VideoPlayer.DIRECTION_REVERSE)
 
-   def __cb_video1_slider_moved(self, value): self.__video_slider_moved('cam1', value)
-   def __cb_video2_slider_moved(self, value): self.__video_slider_moved('cam2', value)
-   def __video_slider_moved(self, cam: str, value: int):
+   def __cb_video1_slider_changed(self, value): self.__video_slider_changed('cam1', value)
+   def __cb_video2_slider_changed(self, value): self.__video_slider_changed('cam2', value)
+   def __video_slider_changed(self, cam: str, value: int):
       self.__video_player.set_position(cam, value)
 
    def __cb_video1_copy_clicked(self): self.__video_copy('cam1', 'cam2')
@@ -374,15 +360,10 @@ class WindowMain(QMainWindow):
       self.videos['cam2'].cameras_data = self.cameras_data
       self.videos['cam1'].set_flight(self.__flight)
       self.videos['cam2'].set_flight(self.__flight)
-#      print 
-      self.ui.slider_video['cam1'].setMinimum(1)
-      self.ui.slider_video['cam2'].setMinimum(1)
-      self.ui.slider_video['cam1'].setMaximum(0 if not self.__video_player.get_last_frame("cam1") else (self.__video_player.get_last_frame('cam1').get_position() or 0))
-      self.ui.slider_video['cam2'].setMaximum(0 if not self.__video_player.get_last_frame("cam2") else (self.__video_player.get_last_frame('cam2').get_position() or 0))
-#      self.videos['cam1'].slider.setMinimum(1)
-#      self.videos['cam1'].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam1") else (self.cameras_data.get_last_frame("cam1").get_position() or 0))
-#      self.videos['cam2'].slider.setMinimum(1)
-#      self.videos['cam2'].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam2") else (self.cameras_data.get_last_frame("cam2").get_position() or 0))
+      self.ui.slider_video['cam1'].setMaximum(1 if not self.__video_player.get_last_frame("cam1") else (self.__video_player.get_last_frame('cam1').get_position() or 1))
+      self.ui.slider_video['cam2'].setMaximum(1 if not self.__video_player.get_last_frame("cam2") else (self.__video_player.get_last_frame('cam2').get_position() or 1))
+      self.__video_player.set_position('cam1', 1)
+      self.__video_player.set_position('cam2', 1)
       self.videos['cam1'].setStartTimestamp(self.cameras_data.get_start_timestamp())
       self.videos['cam2'].setStartTimestamp(self.cameras_data.get_start_timestamp())
       self.videos['cam1'].comparison_image_cv = None

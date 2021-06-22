@@ -12,7 +12,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class Video:
-   def __init__(self, db: DB, cam: str, flight: int, max_dive_angle: float, blur_strength: int, widgetVideo, buttonPlayForward, buttonPlayBackward, buttonPause, buttonFind, buttonForwardStep, buttonBackStep, slider, buttonCopy, labelTime):
+   def __init__(self, db: DB, cam: str, flight: int, max_dive_angle: float, blur_strength: int, widgetVideo, labelTime):
 
       self.__db = db
       self.__flight = flight
@@ -22,18 +22,9 @@ class Video:
       # Frame number in video
       self.current_frame_number = 0
 
-      # Find flag
-      self.find = False
-
       # Motion direction
       self.direction = 0
       self.currently_tracking = 0
-
-      # Currently shooting
-      self.shooting = False
-
-      # Forward / Backward flag
-      self.forward = True
 
       # cam1 or cam2
       self.cam = cam
@@ -44,27 +35,16 @@ class Video:
       # Ground level, no motion track below this
       self.groundlevel = 400
 
-      self.last_motion_view_frame = 0
-
       # Lots of widgets
       self.widgetVideo = widgetVideo
       self.labelTime = labelTime
 
-      # Timer for playing video
-      self.timer = QtCore.QTimer(self.widgetVideo)
-      self.timer.timeout.connect(self.__timerplay)
-
       # Setup worker thread (reason to have this is to utilize multicore)
       self.analyzer_worker = AnalyzerWorker(self.cam)
-
-   # Sibling video is the Video instance of the other camera
-   def set_sibling_video(self, sibling_video):
-      self.sibling_video = sibling_video
 
    # Reset parameters
    def reset(self):
       self.current_frame_number = 1
-      self.find = False
       self.direction = 0
 
    # Returns current frame number of video
@@ -88,94 +68,6 @@ class Video:
    # Set the start timestamp
    def setStartTimestamp(self, start_timestamp):
       self.start_timestamp = start_timestamp
-
-   # Copy button, set the timestamp of the sibling video to this on
-   def __onCopy(self):
-      timestamp_this = self.cameras_data.get_frame(self.cam, self.current_frame_number).get_timestamp()
-      for i in range(1, self.cameras_data.get_last_frame(self.sibling_video.cam).get_position() + 1):
-         timestamp_sibling = self.cameras_data.get_frame(self.sibling_video.cam, i).get_timestamp()
-         if timestamp_sibling >= timestamp_this:
-            break
-      self.sibling_video.view_frame(i)
-      self.sibling_video.direction = 0
-
-   def __onSliderChanged(self, value):
-      self.direction = 0
-      self.current_frame_number = value
-      self.__update(self.__get_frame(self.cam, self.current_frame_number))
-      self.timer.stop()
-
-   def __onPlayForward(self):
-      self.direction = 0
-      self.find = False
-      self.forward = True
-      self.timer.start(11)
-
-   def __onPlayBackward(self):
-      self.direction = 0
-      self.find = False
-      self.forward = False
-      self.timer.start(11)
-
-   def __onPause(self):
-      self.direction = 0
-      self.timer.stop()
-      self.__update(self.__get_frame(self.cam, self.current_frame_number))
-
-   def __onFind(self):
-      self.find = True
-      self.forward = True
-      self.timer.start(0)
-
-   def __onForwardStep(self):
-      self.direction = 0
-      if self.current_frame_number < self.cameras_data.get_last_frame(self.cam).get_position():
-         self.current_frame_number += 1
-      self.timer.stop()
-      self.__update(self.__get_frame(self.cam, self.current_frame_number))
-
-   def __onBackStep(self):
-      self.direction = 0
-      if self.current_frame_number > 1:
-         self.current_frame_number -= 1
-      self.timer.stop()
-      self.__update(self.__get_frame(self.cam, self.current_frame_number))
-
-   def __timerplay(self):
-      if self.forward:
-         self.current_frame_number += 1
-         if self.cameras_data.get_last_frame(self.cam) is None or self.current_frame_number > self.cameras_data.get_last_frame(self.cam).get_position():
-            self.current_frame_number = self.cameras_data.get_last_frame(self.cam).get_position()
-            self.find = False
-            self.timer.stop()
-            self.__update(self.__get_frame(self.cam, self.current_frame_number))
-      else:
-         self.current_frame_number -= 1
-         if self.cameras_data.get_last_frame(self.cam) is None or self.current_frame_number < 1:
-            self.current_frame_number = 1
-            self.find = False
-            self.timer.stop()
-            self.__update(self.__get_frame(self.cam, self.current_frame_number))
-
-      # Find motion when playing video
-      frame = self.__get_frame(self.cam, self.current_frame_number)
-      if not frame:
-         return
-      if self.forward:
-         self.analyzer_worker.wait()
-         motion = self.__have_motion(frame['image'])
-         if motion is not None and self.find:
-            frame['image'] = motion["image"]
-            if motion["motion"]:
-               self.timer.stop()
-               self.__update(frame)
-
-      if self.find and self.current_frame_number & 7 == 1:
-         self.__update(frame)
-      elif not self.find:
-         self.__update(frame)         
-
-
 
    def view_frame(self, frame_number):
       self.current_frame_number = frame_number
@@ -240,11 +132,6 @@ class Video:
       if (local_timestamp < 0):
          local_timestamp = 0
       self.labelTime.setText(self.__format_time(local_timestamp))
-
-#      if (self.shooting):
-#         self.slider.setSliderPosition(1)
-#      else:
-#         self.slider.setSliderPosition(frame["frame_number"])
 
       # Draw center line
       cv.rectangle(frame["image"], (160, 0), (160, 480), (0, 0, 0), 1)

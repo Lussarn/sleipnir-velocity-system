@@ -93,11 +93,12 @@ class VideoPlayer:
         self.__evt_globals_flight_change(self.__globals.get_flight())
 
     def __stop_timers(self):
+        ''' Stop both timers '''
         self.__timer_play.stop()
         self.__timer_find.stop()
 
     def __evt_globals_flight_change(self, flight):
-        print("FLIGHT CHANGE IN VIDEO_PLAYER")
+        ''' When flights change load new cameras_datas '''
         self.__stop_timers()
         self.__state.cameras_data = CamerasData(self.__globals.get_db(), flight)
         for cam in ['cam1', 'cam2']:
@@ -105,9 +106,6 @@ class VideoPlayer:
             self.__state.direction[cam] = VideoPlayer.DIRECTION_FORWARD
             self.__state.play[cam] = VideoPlayer.PLAY_STOPPED
         self.__state.start_timestamp = self.__state.cameras_data.get_start_timestamp()
-
-    def get_current_frame(self, cam):
-        return self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
 
     def __cb_timer_play(self):
         for cam in ['cam1', 'cam2']:
@@ -143,7 +141,6 @@ class VideoPlayer:
                     frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
                     Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
                     continue
-        
                 frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
 
                 do_message = MotionTrackerDoMessage(
@@ -223,16 +220,19 @@ class VideoPlayer:
         frame = self.__state.cameras_data.get_frame(dest_cam, self.__state.position[dest_cam])
         Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
 
-    def set_position(self, cam: str, value: int):
-        self.__state.position[cam] = value
+    def get_current_frame(self, cam):
+        return self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+
+    def set_position(self, cam: str, position: int):
+        if position < 1: raise IndexError("position out of range")
+        self.__state.position[cam] = position
         frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
         Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
 
     def get_time(self, cam: str):
-        print( self.__state.position[cam])
         t = self.__state.cameras_data.get_frame(cam, self.__state.position[cam]).get_timestamp() - self.__state.start_timestamp
         if t < 0: t =0
         return t
 
     def get_last_frame(self, cam: str):
-        self.__state.cameras_data.get_last_frame(cam)
+        return self.__state.cameras_data.get_last_frame(cam)
