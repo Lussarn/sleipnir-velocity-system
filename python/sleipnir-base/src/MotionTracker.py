@@ -101,7 +101,7 @@ class MotionTracker:
         self.__last_position = position
 
     @timer("Time to motion track", logging.INFO, identifier='cam', average=1000)
-    def motion_track(self, cam, motion_tracker_do_message: MotionTrackerDoMessage):
+    def motion_track(self, cam, motion_tracker_do_message: MotionTrackerDoMessage) -> MotionTrackerDoneMessage:
         position = motion_tracker_do_message.get_position()
 
         # We do not want to analyze the same frame twice

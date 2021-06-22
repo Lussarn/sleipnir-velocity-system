@@ -6,14 +6,12 @@ from PySide2.QtCore import QTimer
 
 import Event
 from Globals import Globals
-from database.DB import DB
 from Frame import Frame
-from CameraServer import CameraServer
 from CamerasData import CamerasData
 from Configuration import Configuration
 
 
-from MotionTracker import MotionTracker, MotionTrackerDoMessage, MotionTrackerDoneMessage
+from MotionTracker import MotionTracker, MotionTrackerDoMessage
 
 logger = logging.getLogger(__name__)
 
@@ -128,7 +126,7 @@ class VideoPlayer:
                         frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
                         Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
                         continue
-
+                
                 frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
                 Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
@@ -146,7 +144,7 @@ class VideoPlayer:
                 frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
 
                 do_message = MotionTrackerDoMessage(
-                    frame.get_image_load_if_missing(self.__globals.get_db()),
+                    frame.pop_image_load_if_missing(self.__globals.get_db()),
                     frame.get_position(),
                     self.__globals.get_ground_level(), 
                     self.__state.max_dive_angle, 
@@ -155,6 +153,7 @@ class VideoPlayer:
                 if done_message.have_motion():
                     self.stop(cam)
 
+                frame.set_image(done_message.get_image())
                 Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
        
     def __update_timer_running(self):
