@@ -48,22 +48,6 @@ class Video:
 
       # Lots of widgets
       self.widgetVideo = widgetVideo
-      self.buttonPlayForward = buttonPlayForward
-#      self.buttonPlayForward.clicked.connect(self.__onPlayForward)
-      self.buttonPlayBackward = buttonPlayBackward
-#      self.buttonPlayBackward.clicked.connect(self.__onPlayBackward)
-      self.buttonFind = buttonFind
-#      self.buttonFind.clicked.connect(self.__onFind)
-      self.buttonForwardStep = buttonForwardStep
-#      self.buttonForwardStep.clicked.connect(self.__onForwardStep)
-      self.buttonBackStep = buttonBackStep
-#      self.buttonBackStep.clicked.connect(self.__onBackStep)
-      self.buttonPause = buttonPause
-#      self.buttonPause.clicked.connect(self.__onPause)
-      self.slider = slider
-#      self.slider.sliderMoved.connect(self.__onSliderChanged)
-      self.buttonCopy = buttonCopy
-#      self.buttonCopy.clicked.connect(self.__onCopy)
       self.labelTime = labelTime
 
       # Timer for playing video
@@ -82,32 +66,6 @@ class Video:
       self.current_frame_number = 1
       self.find = False
       self.direction = 0
-
-   # Set this Video instance to shooting, mening realtime view of data
-   def set_shooting(self, shooting):
-      self.direction = 0
-      self.shooting = shooting
-      if (self.shooting):
-         self.buttonPlayForward.setEnabled(False)
-         self.buttonPlayBackward.setEnabled(False)
-         self.buttonFind.setEnabled(False)
-         self.buttonForwardStep.setEnabled(False)
-         self.buttonBackStep.setEnabled(False)
-         self.buttonPause.setEnabled(False)
-         self.slider.setEnabled(False)
-         self.buttonCopy.setEnabled(False)
-
-      if (self.shooting == False):
-         self.slider.setMinimum(1)
-         self.slider.setMaximum(self.cameras_data.get_last_frame(self.cam).get_position())
-         self.buttonPlayForward.setEnabled(True)
-         self.buttonPlayBackward.setEnabled(True)
-         self.buttonFind.setEnabled(True)
-         self.buttonForwardStep.setEnabled(True)
-         self.buttonBackStep.setEnabled(True)
-         self.buttonPause.setEnabled(True)
-         self.slider.setEnabled(True)
-         self.buttonCopy.setEnabled(True)
 
    # Returns current frame number of video
    def get_current_frame_number(self):
@@ -283,10 +241,10 @@ class Video:
          local_timestamp = 0
       self.labelTime.setText(self.__format_time(local_timestamp))
 
-      if (self.shooting):
-         self.slider.setSliderPosition(1)
-      else:
-         self.slider.setSliderPosition(frame["frame_number"])
+#      if (self.shooting):
+#         self.slider.setSliderPosition(1)
+#      else:
+#         self.slider.setSliderPosition(frame["frame_number"])
 
       # Draw center line
       cv.rectangle(frame["image"], (160, 0), (160, 480), (0, 0, 0), 1)

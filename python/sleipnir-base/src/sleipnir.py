@@ -139,8 +139,6 @@ class WindowMain(QMainWindow):
       Event.on(CameraServer.EVENT_CAMERA_ONLINE, self.__evt_camera_online)
       Event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_camera_offline)
 
-      # Load flight number 1
-      self.__load_flight(1)
 
       self.ui.label_speed.setText("")
 
@@ -199,6 +197,9 @@ class WindowMain(QMainWindow):
       self.ui.slider_video['cam2'].valueChanged.connect(self.__cb_video2_slider_moved)
       self.ui.pushbutton_video2_copy.clicked.connect(self.__cb_video2_copy_clicked)
       self.ui.pushbutton_video2_find.clicked.connect(self.__cb_video2_find_clicked)
+
+      ''' load flight number 1 '''
+      self.__load_flight(1)
 
 
       # Show GUI
@@ -272,12 +273,9 @@ class WindowMain(QMainWindow):
    def __video_find_clicked(self, cam):
       self.__video_player.find(cam)
 
-
    def __evt_videoplayer_play_new_frame(self, frame :Frame):
       self.display_frame(frame)
-#      ''' Only set slider position if we are NOT dragging it '''
-#      if self.ui.slider_video[frame.get_cam()].isSliderDown() == False:
-      ''' block signal on slider since it will do a video_player.set_poistion on change
+      ''' block signal on slider change since it will do a video_player.set_poistion on change
       and thereby intrduce a circular event '''
       self.ui.slider_video[frame.get_cam()].blockSignals(True)
       self.ui.slider_video[frame.get_cam()].setSliderPosition(frame.get_position())
@@ -289,10 +287,27 @@ class WindowMain(QMainWindow):
             self.__video_player.get_time(frame.get_cam())
          )
       )
-      pass
 
    def __format_video_time(self, ms):
       return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
+
+   def __enable_video_ui(self, enabled: bool):
+         self.ui.pushbutton_video1_find.setEnabled(enabled)
+         self.ui.pushbutton_video1_playbackward.setEnabled(enabled)
+         self.ui.pushbutton_video1_backstep.setEnabled(enabled)
+         self.ui.pushbutton_video1_pause.setEnabled(enabled)
+         self.ui.pushbutton_video1_forwardstep.setEnabled(enabled)
+         self.ui.pushbutton_video1_playforward.setEnabled(enabled)
+         self.ui.pushbutton_video1_copy.setEnabled(enabled)
+         self.ui.pushbutton_video2_find.setEnabled(enabled)
+         self.ui.pushbutton_video2_playbackward.setEnabled(enabled)
+         self.ui.pushbutton_video2_backstep.setEnabled(enabled)
+         self.ui.pushbutton_video2_pause.setEnabled(enabled)
+         self.ui.pushbutton_video2_forwardstep.setEnabled(enabled)
+         self.ui.pushbutton_video2_playforward.setEnabled(enabled)
+         self.ui.pushbutton_video2_copy.setEnabled(enabled)
+
+
 
    '''
    Align GUI
@@ -359,10 +374,15 @@ class WindowMain(QMainWindow):
       self.videos['cam2'].cameras_data = self.cameras_data
       self.videos['cam1'].set_flight(self.__flight)
       self.videos['cam2'].set_flight(self.__flight)
-      self.videos['cam1'].slider.setMinimum(1)
-      self.videos['cam1'].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam1") else (self.cameras_data.get_last_frame("cam1").get_position() or 0))
-      self.videos['cam2'].slider.setMinimum(1)
-      self.videos['cam2'].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam2") else (self.cameras_data.get_last_frame("cam2").get_position() or 0))
+#      print 
+      self.ui.slider_video['cam1'].setMinimum(1)
+      self.ui.slider_video['cam2'].setMinimum(1)
+      self.ui.slider_video['cam1'].setMaximum(0 if not self.__video_player.get_last_frame("cam1") else (self.__video_player.get_last_frame('cam1').get_position() or 0))
+      self.ui.slider_video['cam2'].setMaximum(0 if not self.__video_player.get_last_frame("cam2") else (self.__video_player.get_last_frame('cam2').get_position() or 0))
+#      self.videos['cam1'].slider.setMinimum(1)
+#      self.videos['cam1'].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam1") else (self.cameras_data.get_last_frame("cam1").get_position() or 0))
+#      self.videos['cam2'].slider.setMinimum(1)
+#      self.videos['cam2'].slider.setMaximum(0 if not self.cameras_data.get_last_frame("cam2") else (self.cameras_data.get_last_frame("cam2").get_position() or 0))
       self.videos['cam1'].setStartTimestamp(self.cameras_data.get_start_timestamp())
       self.videos['cam2'].setStartTimestamp(self.cameras_data.get_start_timestamp())
       self.videos['cam1'].comparison_image_cv = None
@@ -453,8 +473,7 @@ class WindowMain(QMainWindow):
             self.ui.pushbutton_start.setEnabled(True)
             self.videos['cam1'].view_frame(1)
             self.videos['cam2'].view_frame(1)
-            self.videos['cam1'].set_shooting(False)
-            self.videos['cam2'].set_shooting(False)
+            self.__enable_video_ui(True)
             self.timer.start(20)
             self.enable_all_gui_elements(True)
 
@@ -580,8 +599,8 @@ class WindowMain(QMainWindow):
       self.__shooting = True
       self.videos['cam1'].reset()
       self.videos['cam2'].reset()
-      self.videos['cam1'].set_shooting(True)
-      self.videos['cam2'].set_shooting(True)
+      self.__enable_video_ui(False)
+
       self.cameras_data = CamerasData(self.__db, self.__flight)
       self.videos['cam1'].cameras_data = self.cameras_data
       self.videos['cam2'].cameras_data = self.cameras_data
