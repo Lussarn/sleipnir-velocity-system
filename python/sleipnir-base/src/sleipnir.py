@@ -487,9 +487,9 @@ class WindowMain(QMainWindow):
                and (self.cameras_data.get_frame_count('cam1') or 0) >= 90 \
                and (self.cameras_data.get_frame_count('cam2') or 0) >= 90:
          # Calculate the speed
-         cam1_frame_number = self.videos['cam1'].get_current_frame_number()
-         cam2_frame_number = self.videos['cam2'].get_current_frame_number()
-         self.set_speed(cam1_frame_number, cam2_frame_number)
+         cam1_position = self.__video_player.get_current_frame('cam1').get_position()
+         cam2_position = self.__video_player.get_current_frame('cam2').get_position()
+         self.set_speed(cam1_position, cam2_position)
 
    __last_served_frame = {
       'cam1': 0,
