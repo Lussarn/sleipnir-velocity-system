@@ -113,9 +113,6 @@ class WindowMain(QMainWindow):
          self.__blur_strength,
          self.ui.label_video2, 
          self.ui.label_time_video2)
-      self.videos['cam1'].set_sibling_video(self.videos['cam2'])
-      self.videos['cam2'].set_sibling_video(self.videos['cam1'])
-
 
       # Start camera server
       self.__camera_server = CameraServer()
@@ -134,7 +131,7 @@ class WindowMain(QMainWindow):
       self.ui.lineEdit_distance.setText(str(self.distance))
       self.ui.lineEdit_distance.textChanged.connect(self.__cb_distance_changed)
 
-      self.ui.listView_anouncements.clicked.connect(self.__on_announcement_changed)
+      self.ui.listView_anouncements.clicked.connect(self.__cb_announcement_changed)
       self.ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
 
       self.__globals = Globals(self.__db)
@@ -160,7 +157,7 @@ class WindowMain(QMainWindow):
       self.ui.pushButton_video2_align.setEnabled(False)
 
       ''' Video player callbacs and events '''
-      Event.on(VideoPlayer.EVENT_PLAY_NEW_FRAME, self.__evt_videoplayer_play_new_frame)
+      Event.on(VideoPlayer.EVENT_FRAME_NEW, self.__evt_videoplayer_play_new_frame)
 
       ''' video 1 '''
       self.ui.pushbutton_video1_playforward.clicked.connect(self.__cb_video1_play_forward_clicked)
@@ -278,22 +275,20 @@ class WindowMain(QMainWindow):
       return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
 
    def __enable_video_ui(self, enabled: bool):
-         self.ui.pushbutton_video1_find.setEnabled(enabled)
-         self.ui.pushbutton_video1_playbackward.setEnabled(enabled)
-         self.ui.pushbutton_video1_backstep.setEnabled(enabled)
-         self.ui.pushbutton_video1_pause.setEnabled(enabled)
-         self.ui.pushbutton_video1_forwardstep.setEnabled(enabled)
-         self.ui.pushbutton_video1_playforward.setEnabled(enabled)
-         self.ui.pushbutton_video1_copy.setEnabled(enabled)
-         self.ui.pushbutton_video2_find.setEnabled(enabled)
-         self.ui.pushbutton_video2_playbackward.setEnabled(enabled)
-         self.ui.pushbutton_video2_backstep.setEnabled(enabled)
-         self.ui.pushbutton_video2_pause.setEnabled(enabled)
-         self.ui.pushbutton_video2_forwardstep.setEnabled(enabled)
-         self.ui.pushbutton_video2_playforward.setEnabled(enabled)
-         self.ui.pushbutton_video2_copy.setEnabled(enabled)
-
-
+      self.ui.pushbutton_video1_find.setEnabled(enabled)
+      self.ui.pushbutton_video1_playbackward.setEnabled(enabled)
+      self.ui.pushbutton_video1_backstep.setEnabled(enabled)
+      self.ui.pushbutton_video1_pause.setEnabled(enabled)
+      self.ui.pushbutton_video1_forwardstep.setEnabled(enabled)
+      self.ui.pushbutton_video1_playforward.setEnabled(enabled)
+      self.ui.pushbutton_video1_copy.setEnabled(enabled)
+      self.ui.pushbutton_video2_find.setEnabled(enabled)
+      self.ui.pushbutton_video2_playbackward.setEnabled(enabled)
+      self.ui.pushbutton_video2_backstep.setEnabled(enabled)
+      self.ui.pushbutton_video2_pause.setEnabled(enabled)
+      self.ui.pushbutton_video2_forwardstep.setEnabled(enabled)
+      self.ui.pushbutton_video2_playforward.setEnabled(enabled)
+      self.ui.pushbutton_video2_copy.setEnabled(enabled)
 
    '''
    Align GUI
@@ -407,21 +402,6 @@ class WindowMain(QMainWindow):
 
       image_qt = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], QtGui.QImage.Format_Indexed8)
       self.ui.widget_video[frame.get_cam()].setPixmap(QtGui.QPixmap.fromImage(image_qt))
-
-
-   def __on_announcement_changed(self, event):
-      self.videos['cam1'].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam1_position())
-      self.videos['cam2'].view_frame(self.announcements.get_announcement_by_index(event.row()).get_cam2_position())
-
-   def __cb_remove_announcement_clicked(self, event):
-      index = self.ui.listView_anouncements.currentIndex().row()
-      if index == -1:
-         QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
-         return
-      ret = QMessageBox.question(self, 'Sleipnir Information', "Confirm removing announcement", QMessageBox.Ok | QMessageBox.Cancel)
-      if ret == QMessageBox.Cancel: return
-      self.announcements.remove_announcement_by_index(index)
-      self.__update_announcements_gui()
 
 
    @timer("Time to run gui", logging.INFO, None, average=1000)
@@ -698,6 +678,21 @@ class WindowMain(QMainWindow):
             logger.info("Adding announcement <-- " + str(kmh) + " km/h")
          else:
             logger.warning("Do not add announcement over 500 km/h")
+
+   def __cb_announcement_changed(self, event):
+      self.__video_player.stop_all()
+      self.__video_player.set_position('cam1', self.announcements.get_announcement_by_index(event.row()).get_cam1_position())
+      self.__video_player.set_position('cam2', self.announcements.get_announcement_by_index(event.row()).get_cam2_position())
+
+   def __cb_remove_announcement_clicked(self, event):
+      index = self.ui.listView_anouncements.currentIndex().row()
+      if index == -1:
+         QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
+         return
+      ret = QMessageBox.question(self, 'Sleipnir Information', "Confirm removing announcement", QMessageBox.Ok | QMessageBox.Cancel)
+      if ret == QMessageBox.Cancel: return
+      self.announcements.remove_announcement_by_index(index)
+      self.__update_announcements_gui()
 
    def add_announcement(self, cam1_frame_number, cam2_frame_number, speed, direction):
       cam1_timestamp = self.cameras_data.get_frame("cam1", cam1_frame_number).get_timestamp()

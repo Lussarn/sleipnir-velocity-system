@@ -20,9 +20,9 @@ logger = logging.getLogger(__name__)
 '''
 VideoPlayer emits the following events
 
-VideoPlayer.EVENT_PLAY_START cam :str               : Start playing video
-VideoPlayer.EVENT_PLAY_STOP  cam :str               : Stop playing video
-VideoPlayer.EVENT_PLAY_NEW_FRAME frame :Frame       : A new frame have arived
+VideoPlayer.EVENT_PLAY_START cam: str               : Start playing video
+VideoPlayer.EVENT_PLAY_STOP  cam: str               : Stop playing video
+VideoPlayer.EVENT_FRAME_NEW  frame: Frame           : A new frame have arived
 '''
 
 class VideoPlayerState:
@@ -63,7 +63,7 @@ class VideoPlayer:
 
     EVENT_PLAY_START           = "videoplayer.play.start"
     EVENT_PLAY_STOP            = "videoplayer.play.stop"
-    EVENT_PLAY_NEW_FRAME       = "videoplayer.play.new_frame"
+    EVENT_FRAME_NEW            = "videoplayer.frame.new"
 
     def __init__(self, globals: Globals, qwidget: QWidget, configuration: Configuration):
         self.__state = VideoPlayerState()
@@ -108,6 +108,7 @@ class VideoPlayer:
         self.__state.start_timestamp = self.__state.cameras_data.get_start_timestamp()
 
     def __cb_timer_play(self):
+        ''' Play Video at normal speed, runs on self.__timer_play '''
         for cam in ['cam1', 'cam2']:
             if self.__state.play[cam] == VideoPlayer.PLAY_NORMAL:
                 if (self.__state.direction[cam] == VideoPlayer.DIRECTION_FORWARD):
@@ -116,7 +117,7 @@ class VideoPlayer:
                     if self.__state.cameras_data.get_last_frame(cam) is None or self.__state.position[cam] >= self.__state.cameras_data.get_last_frame(cam).get_position():
                         self.stop(cam)
                         frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
-                        Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
+                        Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
                         continue
                 else:
                     ''' Play reverse '''
@@ -125,13 +126,14 @@ class VideoPlayer:
                         self.__state.position[cam] = 1
                         self.stop(cam)
                         frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
-                        Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
+                        Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
                         continue
 
                 frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
-                Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
+                Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
     def __cb_timer_find(self):
+        ''' Find motion at full speed, runs on self.__timer_find '''
         for cam in ['cam1', 'cam2']:
             if self.__state.play[cam] == VideoPlayer.PLAY_FIND:
                 ''' Finding '''
@@ -139,7 +141,7 @@ class VideoPlayer:
                 if self.__state.cameras_data.get_last_frame(cam) is None or self.__state.position[cam] >= self.__state.cameras_data.get_last_frame(cam).get_position():
                     self.stop(cam)
                     frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
-                    Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
+                    Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
                     continue
                 frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
 
@@ -153,10 +155,11 @@ class VideoPlayer:
                 if done_message.have_motion():
                     self.stop(cam)
 
-                Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
+                Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
        
-
     def __update_timer_running(self):
+        ''' Enable and disable the timers according to the __state.play '''
+
         ''' The play timer should run if any of the videos are playing '''
         if (self.__state.play['cam1'] == VideoPlayer.PLAY_NORMAL or self.__state.play['cam2'] == VideoPlayer.PLAY_NORMAL):
             ''' 11 Is an aproximatin to get correct framerate since 
@@ -173,6 +176,7 @@ class VideoPlayer:
             self.__timer_find.stop()           
 
     def play(self, cam: str, direction: int):
+        ''' Play from current position in either direction '''
         if (self.__state.play[cam] == VideoPlayer.PLAY_NORMAL and self.__state.direction[cam] == direction): return
         self.__state.direction[cam] = direction
         self.__state.play[cam] = VideoPlayer.PLAY_NORMAL
@@ -180,19 +184,27 @@ class VideoPlayer:
         Event.emit(VideoPlayer.EVENT_PLAY_START, cam)
 
     def find(self, cam: str):
+        ''' Find from current position '''
         if (self.__state.play[cam] == VideoPlayer.PLAY_FIND): return
         self.__motion_trackers[cam].set_position(self.__state.position[cam])
         self.__state.direction[cam] = VideoPlayer.DIRECTION_FORWARD
         self.__state.play[cam] = VideoPlayer.PLAY_FIND
         self.__update_timer_running()
 
+    def stop_all(self):
+        ''' Stop both videos if they are running '''
+        self.stop('cam1')
+        self.stop('cam2')
+
     def stop(self, cam: str):
+        ''' Stop video '''
         if (self.__state.play[cam] == VideoPlayer.PLAY_STOPPED): return
         self.__state.play[cam] = VideoPlayer.PLAY_STOPPED
         self.__update_timer_running()
         Event.emit(VideoPlayer.EVENT_PLAY_STOP, cam)
 
     def step(self, cam: str, direction: int):
+        ''' Step one frame in either direction '''
         self.stop(cam)
 
         if direction == VideoPlayer.DIRECTION_REVERSE:
@@ -203,11 +215,11 @@ class VideoPlayer:
             self.__state.position[cam] += 1
 
         frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
-        Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
+        Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
     def copy(self, source_cam: str, dest_cam: str):
-        self.stop('cam1')
-        self.stop('cam2')
+        ''' Copy video the the other side based on timestamp '''
+        self.stop_all()
         timestamp_source = self.__state.cameras_data.get_frame(source_cam, self.__state.position[source_cam]).get_timestamp()
 
         ''' Start at beginning of dest and move until timestamp is bigger than source '''
@@ -218,21 +230,25 @@ class VideoPlayer:
         self.__state.position[dest_cam] = i
 
         frame = self.__state.cameras_data.get_frame(dest_cam, self.__state.position[dest_cam])
-        Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
+        Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
-    def get_current_frame(self, cam):
+    def get_current_frame(self, cam) -> Frame:
+        ''' Get frame on current position '''
         return self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
 
     def set_position(self, cam: str, position: int):
+        ''' Set current position '''
         if position < 1: raise IndexError("position out of range")
         self.__state.position[cam] = position
         frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
-        Event.emit(VideoPlayer.EVENT_PLAY_NEW_FRAME, frame)
+        Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
     def get_time(self, cam: str):
+        ''' get time on current position '''
         t = self.__state.cameras_data.get_frame(cam, self.__state.position[cam]).get_timestamp() - self.__state.start_timestamp
         if t < 0: t =0
         return t
 
     def get_last_frame(self, cam: str):
+        ''' Get last frame of video '''
         return self.__state.cameras_data.get_last_frame(cam)
