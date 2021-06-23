@@ -87,26 +87,24 @@ class RequestHandler(tornado.web.RequestHandler):
 
          self.__server_state.camera_last_seen[cam] = time.time()
 
-         frame = Frame(
-            self.__server_state.flight,
-            cam,
-            int(self.get_argument("position", None, True)),
-            int(self.get_argument("timestamp", None, True)),
-            self.request.body
-         )
-         ''' Store to SQLite Database '''
-         frame_dao.store(self.__server_state.db, frame)
-
-         ''' Emit new frame event '''
-         Event.emit(CameraServer.EVENT_NEW_FRAME, frame)
-
-         ''' Clear the image for memory reasons '''
-         frame.set_image(None)
-         if not self.__server_state.cameras_data.add_frame(frame):
-            logger.critical("Shooting stoped after failed add frame!")
-            self.__server_state.camera_server.stop_shooting()
-
          if (self.__server_state.request_pictures_from_camera):
+            frame = Frame(
+               self.__server_state.flight,
+               cam,
+               int(self.get_argument("position", None, True)),
+               int(self.get_argument("timestamp", None, True)),
+               self.request.body
+            )
+
+            ''' Store to SQLite Database '''
+            frame_dao.store(self.__server_state.db, frame)
+
+            ''' Clear the image for memory reasons '''
+            frame.set_image(None)
+            self.__server_state.cameras_data.add_frame(frame)
+            ''' Emit new frame event '''
+            Event.emit(CameraServer.EVENT_NEW_FRAME, frame)
+
             self.__send_200("OK-CONTINUE")
          else:
             self.__send_200("OK-STOP")
