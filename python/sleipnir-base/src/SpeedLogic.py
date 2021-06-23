@@ -232,7 +232,7 @@ class SpeedLogic:
 
         ''' Check for end of RIGHT pass on camera 2 '''
         if cam == 'cam2' and self.__state.pass_direction == 'RIGHT' and motion_tracker_done_message.get_direction() == 1:
-            # Ending run on Cam 2
+            ''' Ending run on Cam 2 '''
             self.__state.pass_position['cam2'] = motion_tracker_done_message.get_position()
             self.__state.pass_direction = None
             logger.info("Timed run completed on cam 2 -->")
@@ -256,11 +256,10 @@ class SpeedLogic:
             self.__state.pass_abort_time = time.time() + 6.0
             logger.info("Initiating time run from cam 2 <--")
             Event.emit(SpeedLogic.EVENT_PASS_START, cam)
-#            self.__sound.play_gate_1()
 
         ''' Check for end of LEFT pass on camera 1 '''
         if cam == 'cam1' and self.__state.pass_direction == "LEFT" and motion_tracker_done_message.get_direction() == -1:
-            # Ending run on Cam 1
+            ''' Ending run on Cam 1 '''
             self.__state.pass_position['cam1'] = motion_tracker_done_message.get_position()
             self.__state.pass_direction = None
             logger.info("Timed run completed on cam 2 <--")
