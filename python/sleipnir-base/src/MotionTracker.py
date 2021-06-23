@@ -48,42 +48,9 @@ class MotionTrackerDoneMessage:
     def get_position(self):
         return self.__position
     def have_motion(self):
-        return self.__position != -1
-
-''' Worker thread doing the actual motion tracking '''
-class MotionTrackerWorker(QtCore.QThread):
-    def __init__(self, cam: str):
-        # "cam1" or "cam2"
-        self.__cam = cam
-
-        # Comparision for motion tracking
-        self.__comparison_image_cv = None
-
-        # Motion boxes for all frames
-        self.__motion_boxes = {}
-
-        # Last frame analyzed
-        self.__last_position = 0
-
-        self.__motion_tracker_do_message = None
-        # Message to transfer back to main program
-        self.__motion_tracker_done_message = MotionTrackerDoneMessage(None, 0, -1)
-
-        QtCore.QThread.__init__(self)
-        self.setObjectName("MotionTrack-" + self.__cam + "-QThread")
-
-    def get_motion_tracker_done_message(self):
-        return self.__motion_tracker_done_message
-
-    def do_processing(self, motion_tracker_do_message: MotionTrackerDoMessage):
-        self.__motion_tracker_do_message = motion_tracker_do_message
-        self.start()
-
-    def run(self):
-        self.motion_track(self.__cam)
+        return self.__direction != 0
     
 class MotionTracker:
-
     def __init__(self):
         ''' Motion boxes for all frames '''
         self.__motion_boxes = {}
@@ -170,7 +137,7 @@ class MotionTracker:
         return MotionTrackerDoneMessage(
             image_gray_cv, 
             direction,
-            position if direction != 0 else -1)
+            position)
 
     def __check_overlap_previous(self, x, y, w, h, x1, w1, position, iterations, rect):
 #      print "check overlap: " + str(frame_number) + " iteration: " + str(iterations)

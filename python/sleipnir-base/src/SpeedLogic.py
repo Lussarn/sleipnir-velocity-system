@@ -1,7 +1,7 @@
 import logging
 
 from PySide2.QtWidgets import QWidget
-from PySide2.QtCore import QTimer
+from PySide2.QtCore import QTimer, QThread
 
 import Event
 from Configuration import Configuration
@@ -10,7 +10,7 @@ from CameraServer import CameraServer
 from CamerasData import CamerasData
 from Frame import Frame
 from Errors import *
-from MotionTracker import MotionTracker, MotionTrackerDoMessage
+from MotionTracker import MotionTracker, MotionTrackerDoMessage, MotionTrackerDoneMessage
 import time
 
 logger = logging.getLogger(__name__)
@@ -49,7 +49,7 @@ class SpeedLogic:
     EVENT_SPEED_STOP            = "speedlogic.speed.stop"
     EVENT_SPEED_NEW_FRAME       = "speedlogic.speed.new_frame"
 
-    __MAX_ALLOWED_LAG = 30
+    __MAX_ALLOWED_LAG = 15
 
     def __init__(self, globals: Globals, camera_server: CameraServer, configuration: Configuration):
         self.__globals = globals
@@ -61,6 +61,12 @@ class SpeedLogic:
         logger.info("Max dive angle is set at " + str(self.__state.max_dive_angle) + "°")
         self.__state.blur_strength = configuration.get_blur_strength()
         logger.info("Blur strength is set at t at " + str(self.__state.blur_strength))
+
+        ''' setup motion tracker threads '''
+        self.__motion_tracker_threads = {
+            'cam1': MotionTrackerWorker('cam1'),
+            'cam2': MotionTrackerWorker('cam2')
+        }
 
         ''' setup motion trackers '''
         self.__motion_trackers = {
@@ -87,8 +93,8 @@ class SpeedLogic:
         Event.on(CameraServer.EVENT_NEW_FRAME, self.__cameraserver_evt_new_frame)
         self.__state.running = True
 
-        self.__motion_trackers['cam1'].reset()
-        self.__motion_trackers['cam2'].reset()
+        self.__motion_tracker_threads['cam1'].reset()
+        self.__motion_tracker_threads['cam2'].reset()
 
         self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_flight())
         self.__camera_server.start_shooting(
@@ -126,28 +132,35 @@ class SpeedLogic:
             logger.warning("Lag detected when fetching new frame " + cam + ": " + str(frame.get_position()) + ", skipping ahead " + str(SpeedLogic.__MAX_ALLOWED_LAG) + " frames")
             ''' Enable the lag recovery for __MAX_ALLOWED_LAG * 2 frames 
             We double up since there are two cameras that are sending images '''
-            self.__state.lag_recovery = SpeedLogic.__MAX_ALLOWED_LAG * 10
+            self.__state.lag_recovery = SpeedLogic.__MAX_ALLOWED_LAG * 2
             return
+                
+        worker = self.__motion_tracker_threads[cam]
+
+        ''' Wait for the motion tracker to finnish before trying a new one '''
+        worker.wait()
+        done_message = worker.get_motion_tracker_done_message()
         
-        ''' This will make the thread yield a little bit if we are overloaded '''
-        QTimer.singleShot(1, lambda arg=frame: self.__cb_timer_frame_processing(arg))
-
-    def __cb_timer_frame_processing(self, frame: Frame):
-
         do_message = MotionTrackerDoMessage(
             frame.pop_image_load_if_missing(self.__globals.get_db()),
             frame.get_position(),
             self.__globals.get_ground_level(), 
             self.__state.max_dive_angle,
             self.__state.blur_strength)
-        done_message = self.__motion_trackers[frame.get_cam()].motion_track(frame.get_cam(), do_message)
-        if done_message.have_motion():
-            print("we have motion!")
+        worker.do_motion_tracking(do_message)
+
+        try:
+            frame = self.__state.cameras_data.get_frame(cam, done_message.get_position())
+        except IndexError:
+            ''' This happens when reaching this the first time after reset 
+            because we fetch a done_messsage which hasn't been processed '''
+            return
+
+        frame.set_image(done_message.get_image())
+        if (done_message.have_motion()):
+            print ("have motion")
 
         Event.emit(SpeedLogic.EVENT_SPEED_NEW_FRAME, frame)
-
-
-
 
     def get_time(self, frame: Frame) -> int:
         ''' get time on frame position '''
@@ -173,3 +186,36 @@ class SpeedLogic:
             self.__state.last_served_position[cam] = cameras_data_last_position
 
         return self.__state.cameras_data.get_frame(cam, self.__state.last_served_position[cam]) 
+
+''' Worker thread doing the actual motion tracking '''
+class MotionTrackerWorker(QThread):
+    def __init__(self, cam: str):
+        # "cam1" or "cam2"
+        self.__cam = cam
+
+        ''' The Motion tracker '''
+        self.__motion_tracker = MotionTracker()
+
+        ''' Message to pass into motion tracker '''
+        self.__motion_tracker_do_message = None
+
+        ''' Message to transfer back to the program '''
+        self.__motion_tracker_done_message = MotionTrackerDoneMessage(None, 0, 0)
+
+        QThread.__init__(self)
+        self.setObjectName("MotionTrack-" + self.__cam + "-QThread")
+
+    def reset(self):
+        self.wait()
+        self.__motion_tracker.reset()
+
+    def get_motion_tracker_done_message(self):
+        return self.__motion_tracker_done_message
+
+    def do_motion_tracking(self, motion_tracker_do_message: MotionTrackerDoMessage):
+        self.__motion_tracker_do_message = motion_tracker_do_message
+        self.start()
+
+    def run(self):
+        self.__motion_tracker_done_message = self.__motion_tracker.motion_track(self.__cam, self.__motion_tracker_do_message)
+    
