@@ -1,4 +1,5 @@
 import queue
+import time
 import copy
 
 from PySide2 import QtCore
@@ -29,6 +30,9 @@ class EventServer:
     def on(self, event, func=None, ttl=-1):
         self.__ee.on(event, func, ttl)
 
+    def off(self, event, func=None):
+        self.__ee.off(event, func)
+
     def emit(self, event, args, kwargs):
         self.__evt_queue.put(
             Evt(event, args, kwargs)
@@ -54,6 +58,10 @@ def create_event_server(qobject):
 def on(event, func=None, ttl=-1):
     global __event_server__
     __event_server__.on(event, func, ttl)
+
+def off(event, func=None):
+    global __event_server__
+    __event_server__.off(event, func)
 
 def emit(event, *args, **kwargs):
     global __event_server__

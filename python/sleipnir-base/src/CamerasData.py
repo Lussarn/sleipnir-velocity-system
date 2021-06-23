@@ -59,10 +59,18 @@ class CamerasData:
    def get_start_timestamp(self):
       logger.debug("get_start_timestamp()")
       self.__acquire_lock()
-      frame1_cam1 = self.get_frame('cam1', 1)
-      timestamp_cam1 = frame1_cam1.get_timestamp() if frame1_cam1 is not None else 0
-      frame1_cam2 = self.get_frame('cam2', 1)
-      timestamp_cam2 = frame1_cam2.get_timestamp() if frame1_cam2 is not None else 0
+      try:
+         frame1_cam1 = self.get_frame('cam1', 1)
+         timestamp_cam1 = frame1_cam1.get_timestamp()
+      except IndexError:
+         timestamp_cam1 = 0
+
+      try:
+         frame1_cam2 = self.get_frame('cam2', 1)
+         timestamp_cam2 = frame1_cam2.get_timestamp()
+      except IndexError:
+         timestamp_cam2 = 0
+
       self.__release_lock()
       return max(timestamp_cam1 or 0, timestamp_cam2 or 0)
 
@@ -73,11 +81,16 @@ class CamerasData:
          self.__release_lock()
          return None
       self.__release_lock()
-      return self.get_frame(cam, self.__frame_count[cam])
+      try:
+         return self.get_frame(cam, self.__frame_count[cam])
+      except IndexError:
+         return None
 
    def get_frame(self, cam: str, position: int) -> Frame:
       if self.__frames[cam].get(position): return self.__frames[cam][position]
       timestamp = frame_dao.load_timestamp(self.__db, self.__flight, cam, position)
+      if timestamp is None:
+         raise IndexError("position out of range")
       self.__frames[cam][position] = Frame(self.__flight, cam, position, timestamp, None)
       return self.__frames[cam][position]
 

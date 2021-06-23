@@ -239,7 +239,10 @@ class VideoPlayer:
         ''' Set current position '''
         if position < 1: raise IndexError("position out of range")
         self.__state.position[cam] = position
-        frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+        try:
+            frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+        except IndexError:
+            return
         Event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
     def get_time(self, cam: str):

@@ -58,7 +58,10 @@ class Video:
    # Returns a video frame as a cv image and it's timestamp
    @timer("Time to read jpeg", logging.INFO, identifier='cam', average=1000)
    def __get_frame(self, cam, position):
-      timestamp = self.cameras_data.get_frame(cam, position).get_timestamp()
+      try:
+         timestamp = self.cameras_data.get_frame(cam, position).get_timestamp()
+      except IndexError:
+         return None
       frame = frame_dao.load(self.__db, self.__flight, self.cam, position)
       if frame is None: return
       image_cv = simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
@@ -143,6 +146,17 @@ class Video:
 
    def __format_time(self, ms):
       return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
+
+
+
+
+
+
+
+
+
+
+
 
 class AnalyzerDoMessage:
    __image = None

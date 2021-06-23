@@ -6,6 +6,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 import cv2 as cv
 
 from SleipnirWindow import SleipnirWindow
+from SpeedLogic import SpeedLogic
 from Video import Video
 from CamerasData import CamerasData
 from Configuration import Configuration, ConfigurationError
@@ -19,6 +20,7 @@ from AlignLogic import AlignLogic
 from VideoPlayer import VideoPlayer
 from Sound import Sound
 from function_timer import timer
+from Errors import *
 
 import logging
 import logger
@@ -65,10 +67,6 @@ class WindowMain(QMainWindow):
 
       # Currently shooting
       self.__shooting = False
-
-      # Frame number from shooting cameras
-      self.shooting_frame_number_cam1 = 0
-      self.shooting_frame_number_cam2 = 0
 
       # Waiting for cameras to stop
       self.stop_camera_wait = False
@@ -123,10 +121,6 @@ class WindowMain(QMainWindow):
 
       self.ui.label_speed.setText("")
 
-      # Start / Stop connects
-      self.ui.pushbutton_start.clicked.connect(self.cb_start_cameras)
-      self.ui.pushbutton_stop.clicked.connect(self.stopCameras)
-
       # distance connect
       self.ui.lineEdit_distance.setText(str(self.distance))
       self.ui.lineEdit_distance.textChanged.connect(self.__cb_distance_changed)
@@ -134,9 +128,11 @@ class WindowMain(QMainWindow):
       self.ui.listView_anouncements.clicked.connect(self.__cb_announcement_changed)
       self.ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
 
+      ''' Initalize components '''
       self.__globals = Globals(self.__db)
-      self.__align_logic = AlignLogic(self.__globals, self.__camera_server)
       self.__video_player = VideoPlayer(self.__globals, self, self.configuration)
+      self.__align_logic = AlignLogic(self.__globals, self.__camera_server)
+      self.__speed_logic = SpeedLogic(self.__globals, self.__camera_server, self.configuration)
 
       ''' flight callbacks and events '''
       for radio_buttons_flight in self.ui.radio_buttons_flights:
@@ -181,18 +177,23 @@ class WindowMain(QMainWindow):
       self.ui.pushbutton_video2_copy.clicked.connect(self.__cb_video2_copy_clicked)
       self.ui.pushbutton_video2_find.clicked.connect(self.__cb_video2_find_clicked)
 
+      ''' Speed callbacks and events '''
+      self.ui.pushbutton_start.clicked.connect(self.__cb_start_cameras)
+      self.ui.pushbutton_stop.clicked.connect(self.__cb_stop_cameras)
+      Event.on(SpeedLogic.EVENT_SPEED_STOP, self.__evt_speedlogic_speed_stop)
+      Event.on(SpeedLogic.EVENT_SPEED_NEW_FRAME, self.__evt_speedlogic_speed_new_frame)
+
       ''' load flight number 1 '''
       self.__load_flight(1)
 
-
-      # Show GUI
+      ''' Show GUI '''
       self.show()
       self.raise_()
 
       # Run Gui
       self.timer = QtCore.QTimer(self)
       self.timer.timeout.connect(self.__timerGui)
-      self.timer.start(20)
+#      self.timer.start(20)
 
    '''
    Camera online GUI
@@ -391,6 +392,31 @@ class WindowMain(QMainWindow):
       if self.ui.verticalSlider_groundlevel.isSliderDown() == False:
          self.ui.verticalSlider_groundlevel.setValue(value)
 
+   ''' speed GUI '''
+   def __cb_start_cameras(self):
+      try:
+         self.__speed_logic.start_run()
+      except IllegalStateError as e:
+         logger.error(e)
+
+   def __cb_stop_cameras(self):
+      self.__speed_logic.stop_run()
+
+   def __evt_speedlogic_speed_stop(self):
+      self.__load_flight(self.__globals.get_flight())
+
+   def __evt_speedlogic_speed_new_frame(self, frame: Frame):
+      self.display_frame(frame)
+
+      ''' Display time '''
+      self.ui.label_time_video[frame.get_cam()].setText(
+         self.__format_video_time(
+            self.__speed_logic.get_time(frame)
+         )
+      )
+
+
+
    ''' display video frame '''
    def display_frame(self, frame :Frame):
       image = frame.pop_image_load_if_missing(self.__db)
@@ -402,6 +428,16 @@ class WindowMain(QMainWindow):
 
       image_qt = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], QtGui.QImage.Format_Indexed8)
       self.ui.widget_video[frame.get_cam()].setPixmap(QtGui.QPixmap.fromImage(image_qt))
+
+
+
+
+
+
+
+
+
+
 
 
    @timer("Time to run gui", logging.INFO, None, average=1000)
@@ -509,6 +545,16 @@ class WindowMain(QMainWindow):
          self.__last_served_frame[cam] = min(self.__last_served_frame[cam] + 1, position) 
       return self.cameras_data.get_frame(cam, self.__last_served_frame[cam])
 
+
+
+
+
+
+
+
+
+
+
    def set_speed(self, cam1_position, cam2_position):
       """
       Set speed from camera frame numbers
@@ -551,8 +597,6 @@ class WindowMain(QMainWindow):
       self.announcements.clear()
       self.__update_announcements_gui()
 
-      self.shooting_frame_number_cam1 = 1
-      self.shooting_frame_number_cam2 = 1
       self.timer.start(10)
 
       self.ui.label_speed.setText("")
@@ -575,23 +619,7 @@ class WindowMain(QMainWindow):
       self.__save_announcements()
 
    def enable_all_gui_elements(self, enabled):
-      self.ui.pushbutton_video1_playforward.setEnabled(enabled)
-      self.ui.pushbutton_video1_playbackward.setEnabled(enabled)
-      self.ui.pushbutton_video1_pause.setEnabled(enabled)
-      self.ui.pushbutton_video1_find.setEnabled(enabled) 
-      self.ui.pushbutton_video1_forwardstep.setEnabled(enabled)
-      self.ui.pushbutton_video1_backstep.setEnabled(enabled)
-      self.ui.slider_video1.setEnabled(enabled)
-      self.ui.pushbutton_video1_copy.setEnabled(enabled)
-
-      self.ui.pushbutton_video2_playforward.setEnabled(enabled)
-      self.ui.pushbutton_video2_playbackward.setEnabled(enabled)
-      self.ui.pushbutton_video2_pause.setEnabled(enabled)
-      self.ui.pushbutton_video2_find.setEnabled(enabled) 
-      self.ui.pushbutton_video2_forwardstep.setEnabled(enabled)
-      self.ui.pushbutton_video2_backstep.setEnabled(enabled)
-      self.ui.slider_video2.setEnabled(enabled)
-      self.ui.pushbutton_video2_copy.setEnabled(enabled)
+      self.__enable_video_ui(enabled)
 
       self.ui.pushbutton_stop.setEnabled(enabled)
       self.ui.pushbutton_start.setEnabled(enabled)
@@ -604,6 +632,17 @@ class WindowMain(QMainWindow):
 
       for i in range(0, len(self.ui.radio_buttons_flights)):
          self.ui.radio_buttons_flights[i].setEnabled(enabled)
+
+
+
+
+
+
+
+
+
+
+
 
    def check_run(self, cam, motion):
       """
@@ -652,7 +691,6 @@ class WindowMain(QMainWindow):
          else:
             logger.warning("Do not add announcement over 500 km/h")
       
-
       # Check left run
       if cam == "cam2" and self.run_direction == None and motion["direction"] == -1:
          # Starting run from cam 2
@@ -678,6 +716,17 @@ class WindowMain(QMainWindow):
             logger.info("Adding announcement <-- " + str(kmh) + " km/h")
          else:
             logger.warning("Do not add announcement over 500 km/h")
+
+
+
+
+
+
+
+
+
+
+
 
    def __cb_announcement_changed(self, event):
       self.__video_player.stop_all()
@@ -731,6 +780,16 @@ class WindowMain(QMainWindow):
    def __load_announcements(self, flight):
       logger.info("Loading announcements")
       self.announcements = announcement_dao.fetch(self.__db, flight)
+
+
+
+
+
+
+
+
+
+
 
    def __del__(self):
       logger.debug("Mainwindow destructor called")
