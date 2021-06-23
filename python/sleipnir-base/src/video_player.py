@@ -1,5 +1,4 @@
 import logging
-import time
 
 from PySide2.QtWidgets import QWidget
 from PySide2.QtCore import QTimer
@@ -99,6 +98,7 @@ class VideoPlayer:
         ''' When flights change load new cameras_datas '''
         self.__stop_timers()
         self.__state.cameras_data = CamerasData(self.__globals.get_db(), flight)
+        self.__state.cameras_data.load()
         for cam in ['cam1', 'cam2']:
             self.__state.position[cam] = 1
             self.__state.direction[cam] = VideoPlayer.DIRECTION_FORWARD

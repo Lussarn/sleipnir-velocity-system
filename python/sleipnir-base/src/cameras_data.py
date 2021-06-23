@@ -97,7 +97,7 @@ class CamerasData:
       return self.__frame_count[cam]
 
    @timer("Time to load last position")
-   def load(self, db: DB, flight):
-      logger.info("Lazy loading flight " + str(flight) + "...")
+   def load(self):
+      logger.info("Lazy loading flight " + str(self.__flight) + "...")
       for cam in ['cam1', 'cam2']:
-         self.__frame_count[cam] = frame_dao.load_frame_count(db, flight, cam)
+         self.__frame_count[cam] = frame_dao.load_frame_count(self.__db, self.__flight, cam)
