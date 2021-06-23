@@ -2,14 +2,13 @@ from logging import setLoggerClass
 import requests
 import time
 import sys
-import base64
 
 sys.path.insert(0, '../sleipnir-base/src')
 
-from Configuration import Configuration
-from database.DB import DB
+from configuration import Configuration
+from database.db import DB
 import database.frame_dao as frame_dao
-from Frame import Frame
+from frame import Frame
 
 def usage():
     print ('Usage:')

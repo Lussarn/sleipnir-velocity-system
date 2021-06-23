@@ -1,5 +1,3 @@
-import sys 
-
 import yaml
 import os
 

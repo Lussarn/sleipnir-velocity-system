@@ -1,6 +1,6 @@
 import simplejpeg
 
-from database.DB import DB
+from database.db import DB
 import database.frame_dao as frame_dao
 
 class Frame:

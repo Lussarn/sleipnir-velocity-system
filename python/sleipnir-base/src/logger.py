@@ -1,6 +1,6 @@
 import sys
 import logging
-from PySide2.QtCore import QThread, Qt
+from PySide2.QtCore import QThread
 import re
 
 ''' Custom formatter to find QTThread names '''
@@ -25,4 +25,4 @@ log_handler = logging.StreamHandler(sys.stderr)
 log_handler.setFormatter(SleipnirFormatter('%(asctime)s -  %(levelname)s - %(name)s - %(threadName)s - %(message)s'))
 log_root.addHandler(log_handler)
 
-logging.getLogger("CamerasData").setLevel(logging.INFO)
+logging.getLogger("cameras_data").setLevel(logging.INFO)

@@ -1,8 +1,8 @@
 import logging 
 
-import Event
-from database.DB import DB
-from CameraServer import CameraServer
+import event
+from database.db import DB
+from camera_server import CameraServer
 
 '''
 Globals.EVENT_FLIGHT_CHANGE flight: int          : the flight have changed
@@ -35,8 +35,8 @@ class Globals:
         self.__state = GlobalState()
         self.__state.db = db
 
-        Event.on(CameraServer.EVENT_CAMERA_ONLINE, self.__evt_camera_online)
-        Event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_camera_offline)
+        event.on(CameraServer.EVENT_CAMERA_ONLINE, self.__evt_camera_online)
+        event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_camera_offline)
 
     def __evt_camera_online(self, cam):
         self.__state.camera_online[cam] = True
@@ -55,7 +55,7 @@ class Globals:
     '''
     def set_flight(self, flight):
         self.__state.flight = flight
-        Event.emit(Globals.EVENT_FLIGHT_CHANGE, flight)
+        event.emit(Globals.EVENT_FLIGHT_CHANGE, flight)
 
     def get_flight(self):
         return self.__state.flight
@@ -65,7 +65,7 @@ class Globals:
     '''
     def set_ground_level(self, ground_level):
         self.__state.ground_level = ground_level
-        Event.emit(Globals.EVENT_GROUND_LEVEL_CHANGE, ground_level)
+        event.emit(Globals.EVENT_GROUND_LEVEL_CHANGE, ground_level)
     
     def get_ground_level(self):
         return self.__state.ground_level
