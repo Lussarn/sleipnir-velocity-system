@@ -33,27 +33,23 @@ class WindowMain(QMainWindow):
       event.create_event_server(self)
 
       try:
-         self.configuration = Configuration("sleipnir.yml")
+         self.__configuration = Configuration("sleipnir.yml")
       except IOError as e:
          raise ConfigurationError("Unable to open configuration file sleipnir.yml")
 
       try:
-         self.configuration.check_configuration()
+         self.__configuration.check_configuration()
       except ConfigurationError as e:
          raise e
-      self.__db = DB(self.configuration.get_save_path())
+      self.__db = DB(self.__configuration.get_save_path())
 
-      # Sound effects
+      ''' Setup Sound '''
       self.__sound = Sound()
 
+      ''' Main window setup '''
       self.__ui = SleipnirWindow()
       self.__ui.setupUi(self)
       self.setWindowTitle("Sleipnir Velocity - Go Fast!")
-
-      self.announcements = Announcements()
-      self.model_announcements = QtGui.QStandardItemModel()
-      self.__ui.listView_anouncements.setModel(self.model_announcements)
-      self.__update_announcements_gui()
 
       ''' Start camera server '''
       self.__camera_server = CameraServer()
@@ -66,12 +62,16 @@ class WindowMain(QMainWindow):
       ''' Announcement '''
       self.__ui.listView_anouncements.clicked.connect(self.__cb_announcement_changed)
       self.__ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
+      self.announcements = Announcements()
+      self.model_announcements = QtGui.QStandardItemModel()
+      self.__ui.listView_anouncements.setModel(self.model_announcements)
+      self.__update_announcements_gui()
 
       ''' Initalize components '''
       self.__globals = Globals(self.__db)
-      self.__video_player = VideoPlayer(self.__globals, self, self.configuration)
+      self.__video_player = VideoPlayer(self.__globals, self, self.__configuration)
       self.__align_logic = AlignLogic(self.__globals, self.__camera_server)
-      self.__speed_logic = SpeedLogic(self.__globals, self.__camera_server, self.configuration)
+      self.__speed_logic = SpeedLogic(self.__globals, self.__camera_server, self.__configuration)
 
       ''' flight callbacks and events '''
       for radio_buttons_flight in self.__ui.radio_buttons_flights:
