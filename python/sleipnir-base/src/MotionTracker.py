@@ -1,4 +1,4 @@
-from PySide2 import QtCore
+from PySide2.QtCore import QThread
 import cv2 as cv
 import math
 
@@ -194,3 +194,34 @@ class Rect:
     w = 0
     h = 0
 
+''' Worker thread doing the actual motion tracking '''
+class MotionTrackerWorker(QThread):
+    def __init__(self, cam: str):
+        # "cam1" or "cam2"
+        self.__cam = cam
+
+        ''' The Motion tracker '''
+        self.__motion_tracker = MotionTracker()
+
+        ''' Message to pass into motion tracker '''
+        self.__motion_tracker_do_message = None
+
+        ''' Message to transfer back to the program '''
+        self.__motion_tracker_done_message = MotionTrackerDoneMessage(None, 0, 0)
+
+        QThread.__init__(self)
+        self.setObjectName("MotionTrack-" + self.__cam + "-QThread")
+
+    def reset(self):
+        self.wait()
+        self.__motion_tracker.reset()
+
+    def get_motion_tracker_done_message(self):
+        return self.__motion_tracker_done_message
+
+    def do_motion_tracking(self, motion_tracker_do_message: MotionTrackerDoMessage):
+        self.__motion_tracker_do_message = motion_tracker_do_message
+        self.start()
+
+    def run(self):
+        self.__motion_tracker_done_message = self.__motion_tracker.motion_track(self.__cam, self.__motion_tracker_do_message)

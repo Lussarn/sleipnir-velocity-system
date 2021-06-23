@@ -6,7 +6,7 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 import cv2 as cv
 
 from SleipnirWindow import SleipnirWindow
-from SpeedLogic import SpeedLogic
+from SpeedLogic import SpeedLogic, SpeedPassMessage
 from Video import Video
 from CamerasData import CamerasData
 from Configuration import Configuration, ConfigurationError
@@ -182,6 +182,8 @@ class WindowMain(QMainWindow):
       self.ui.pushbutton_stop.clicked.connect(self.__cb_stop_cameras)
       Event.on(SpeedLogic.EVENT_SPEED_STOP, self.__evt_speedlogic_speed_stop)
       Event.on(SpeedLogic.EVENT_SPEED_NEW_FRAME, self.__evt_speedlogic_speed_new_frame)
+      Event.on(SpeedLogic.EVENT_PASS_START, self.__evt_speedlogic_pass_start)
+      Event.on(SpeedLogic.EVENT_PASS_END, self.__evt_speedlogic_pass_end)
 
       ''' load flight number 1 '''
       self.__load_flight(1)
@@ -190,10 +192,6 @@ class WindowMain(QMainWindow):
       self.show()
       self.raise_()
 
-      # Run Gui
-      self.timer = QtCore.QTimer(self)
-      self.timer.timeout.connect(self.__timerGui)
-#      self.timer.start(20)
 
    '''
    Camera online GUI
@@ -404,6 +402,7 @@ class WindowMain(QMainWindow):
 
    def __evt_speedlogic_speed_stop(self):
       self.__load_flight(self.__globals.get_flight())
+      self.__save_announcements()
 
    def __evt_speedlogic_speed_new_frame(self, frame: Frame):
       self.display_frame(frame)
@@ -414,6 +413,38 @@ class WindowMain(QMainWindow):
             self.__speed_logic.get_time(frame)
          )
       )
+
+   def __evt_speedlogic_pass_start(self, cam):
+      self.__sound.play_gate_1()
+
+   def __evt_speedlogic_pass_end(self, speed_pass_message: SpeedPassMessage):
+      print("start:",speed_pass_message.timestamp_start, "end:", speed_pass_message.timestamp_end)
+      kmh = self.set_speed(speed_pass_message.timestamp_start, speed_pass_message.timestamp_end)
+      self.__sound.play_gate_2()
+
+      if (kmh >= 500):
+         logger.warning("Do not add announcement exceeding 500 km/h")
+         return
+
+#      if speed_pass_message.direction == 'RIGHT':
+#         logger.info("Adding announcement --> " + str(kmh) + " km/h")
+#      else:
+#         self.add_announcement(speed_pass_message.position_end, speed_pass_message.position_start, kmh, -1)
+#         logger.info("Adding announcement <-- " + str(kmh) + " km/h")
+      self.add_announcement(
+         speed_pass_message.position_end, 
+         speed_pass_message.timestamp_end, 
+         speed_pass_message.position_start,
+         speed_pass_message.timestamp_start, 
+         kmh,
+         1 if speed_pass_message.direction == 'RIGHT' else -1)
+
+
+#                self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
+#                self.run_tell_speed = kmh
+#                self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, -1)
+#                logger.info("Adding announcement <-- " + str(kmh) + " km/h")
+#            else:
 
 
 
@@ -440,127 +471,15 @@ class WindowMain(QMainWindow):
 
 
 
-   @timer("Time to run gui", logging.INFO, None, average=1000)
-   def __timerGui(self):
-      online = self.__camera_server.is_online("cam1") and self.__camera_server.is_online("cam2")
-
-      if (self.__shooting and not online):
-         # Camera lost?
-         self.__shooting = False
-         self.__camera_server.stop_shooting()
-
-      if not online:
-         self.ui.pushbutton_start.setEnabled(False)
-         self.ui.pushbutton_stop.setEnabled(False)
-      elif self.__shooting:
-         self.ui.pushbutton_start.setEnabled(False)
-         self.ui.pushbutton_stop.setEnabled(True)
-      else:
-         self.ui.pushbutton_start.setEnabled(True)
-         self.ui.pushbutton_stop.setEnabled(False)
-
-
-      if (self.stop_camera_wait):
-         self.ui.pushbutton_stop.setText("Waiting...")
-         self.ui.pushbutton_stop.setEnabled(False)
-         if not self.__camera_server.is_shooting():
-            self.stop_camera_wait = False
-            self.__shooting = False
-            self.ui.pushbutton_stop.setText("Stop cameras")
-            self.ui.pushbutton_start.setEnabled(True)
-            self.videos['cam1'].view_frame(1)
-            self.videos['cam2'].view_frame(1)
-            self.__enable_video_ui(True)
-            self.timer.start(20)
-            self.enable_all_gui_elements(True)
-
-      # Update the video view
-      if self.__camera_server.is_shooting():
-         if self.__shooting:
-            ''' Motion Track '''
-            if self.ui.checkBox_motion_track.isChecked():
-               for i in range(2):
-                  cam = 'cam' + str(i+1)
-                  video = self.videos[cam]
-                  video.setStartTimestamp(self.cameras_data.get_start_timestamp())
-                  if not video.is_analyzer_running():
-                     last_frame = self.cameras_data.get_last_frame(cam)
-                     if last_frame is not None:
-                        frame_to_motion_check = self.get_frame_allow_lag(cam, last_frame.get_position())
-                        if frame_to_motion_check is not None:
-                           motion = video.view_frame_motion_track(
-                              frame_to_motion_check.get_position(),
-                              self.ui.checkBox_live.isChecked())                  
-                           if motion is not None:
-                              self.check_run(cam, motion)
-                        else:
-                           logger.warning("Frame to motioncheck is None on camera " +cam)
-                     else:
-                        logger.warning("Last frame is None on camera " +cam)
-
-            else:
-               ''' No motion track '''
-               for i in range(2):
-                  cam = 'cam' + str(i+1)
-                  self.videos[cam].setStartTimestamp(self.cameras_data.get_start_timestamp())
-                  if self.ui.checkBox_live.isChecked():
-                     last_frame = self.cameras_data.get_last_frame(cam)
-                     if last_frame is not None:
-                        self.videos[cam].view_frame(last_frame.get_position())
-
-         if self.run_direction is not None and self.run_abort_timestamp < int(round(time.time() * 1000)):
-            # Abort run
-            logger.info("Aborting run due to timeout")
-            self.run_direction = None
-            self.__sound.play_error()
-
-         if self.run_tell_speed != 0 and self.run_tell_speed_timestamp < int(round(time.time() * 1000)):
-            self.__sound.play_number(self.run_tell_speed)
-            self.run_tell_speed = 0
-
-      if self.cameras_data \
-               and not self.__shooting \
-               and (self.cameras_data.get_frame_count('cam1') or 0) >= 90 \
-               and (self.cameras_data.get_frame_count('cam2') or 0) >= 90:
-         # Calculate the speed
-         cam1_position = self.__video_player.get_current_frame('cam1').get_position()
-         cam2_position = self.__video_player.get_current_frame('cam2').get_position()
-         self.set_speed(cam1_position, cam2_position)
-
-   __last_served_frame = {
-      'cam1': 0,
-      'cam2': 0
-   }
-   def get_frame_allow_lag(self, cam: str, position: int) -> Frame:
-      # Served frame can be larger than position if we stop and start camera, detect this
-      # and reset served frame
-      if position == 0: return None
-      if self.__last_served_frame[cam] > position: self.__last_served_frame[cam] = 0
-      if self.__last_served_frame[cam] < position - 30:
-         # lag detected, jump
-         self.__last_served_frame[cam] = position
-         logger.warning("Lag detected when motion tracking " + cam + ": " + str(position))
-      else:
-         # Clamp __last_served_frame to position
-         self.__last_served_frame[cam] = min(self.__last_served_frame[cam] + 1, position) 
-      return self.cameras_data.get_frame(cam, self.__last_served_frame[cam])
 
 
 
-
-
-
-
-
-
-
-
-   def set_speed(self, cam1_position, cam2_position):
+   def set_speed(self, cam1_timestamp, cam2_timestamp):
       """
       Set speed from camera frame numbers
       """
-      cam1_timestamp = self.cameras_data.get_frame('cam1', cam1_position).get_timestamp()
-      cam2_timestamp = self.cameras_data.get_frame('cam2', cam2_position).get_timestamp()
+#      cam1_timestamp = self.cameras_data.get_frame('cam1', cam1_position).get_timestamp()
+#      cam2_timestamp = self.cameras_data.get_frame('cam2', cam2_position).get_timestamp()
       milliseconds = abs((cam1_timestamp or 0)- (cam2_timestamp or 0))
 
       kilometer = float(self.distance) / 1000
@@ -644,88 +563,6 @@ class WindowMain(QMainWindow):
 
 
 
-   def check_run(self, cam, motion):
-      """
-      Checking the motion tracking
-      """
-      if cam == "cam1" and self.run_direction == None and motion["direction"] == -1:
-         # Camera 1 triggered LEFT run without being on a timed run. Reset the camera
-         self.videos['cam1'].currently_tracking = 0
-         logger.info("Camera 1 triggered the wrong way for start of run, reseting")
-      if cam == "cam2" and self.run_direction == None and motion["direction"] == 1:
-         # Camera 1 triggered RIGHT run without being on a timed run. Reset the camera
-         self.videos['cam2'].currently_tracking = 0
-         logger.info("Camera 2 triggered the wrong way for start of run, reseting")
-      if cam == "cam1" and self.run_direction == 'LEFT' and motion["direction"] == 1:
-         # Camera 1 triggered LEFT run without being on a timed run. Reset the camera
-         self.videos['cam1'].currently_tracking = 0
-         logger.info("Camera 1 triggered the wrong way in run, reseting")
-      if cam == "cam2" and self.run_direction == 'RIGHT' and motion["direction"] == -1:
-         # Camera 1 triggered RIGHT run without being on a timed run. Reset the camera
-         self.videos['cam2'].currently_tracking = 0
-         logger.info("Camera 2 triggered the wrong way in run, reseting")
-
-      # Check right run
-      if cam == "cam1" and self.run_direction == None and motion["direction"] == 1:
-         # Starting run from cam 1
-         self.run_frame_number_cam1 = motion["frame_number"]
-         self.run_frame_number_cam2 = 0
-         self.run_direction = "RIGHT"
-         # Max 6 second run
-         self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
-         self.__sound.play_gate_1()
-         logger.info("Initiating time run from cam 1 -->")
-
-      if cam == "cam2" and self.run_direction == "RIGHT" and motion["direction"] == 1:
-         # Ending run on Cam 2
-         self.run_frame_number_cam2 = motion["frame_number"]
-         self.run_direction = None
-         kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
-         logger.info("Timed run completed on cam 2 -->")
-         self.__sound.play_gate_2()
-         if (kmh < 500):
-            self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
-            self.run_tell_speed = kmh
-            logger.info("Adding announcement --> " + str(kmh) + " km/h")
-            self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, 1)
-         else:
-            logger.warning("Do not add announcement over 500 km/h")
-      
-      # Check left run
-      if cam == "cam2" and self.run_direction == None and motion["direction"] == -1:
-         # Starting run from cam 2
-         self.run_frame_number_cam2 = motion["frame_number"]
-         self.run_frame_number_cam1 = 0
-         self.run_direction = "LEFT"
-         # Max 6 second run
-         self.run_abort_timestamp = int(round(time.time() * 1000)) + 6000
-         self.__sound.play_gate_1()
-         logger.info("Initiating time run from cam 2 <--")
-
-      if cam == "cam1" and self.run_direction == "LEFT" and motion["direction"] == -1:
-         # Ending run on Cam 1
-         self.run_frame_number_cam1 = motion["frame_number"]
-         self.run_direction = None
-         kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
-         self.__sound.play_gate_2()
-         logger.info("Timed run completed on cam 2 <--")
-         if (kmh < 500):
-            self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
-            self.run_tell_speed = kmh
-            self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, -1)
-            logger.info("Adding announcement <-- " + str(kmh) + " km/h")
-         else:
-            logger.warning("Do not add announcement over 500 km/h")
-
-
-
-
-
-
-
-
-
-
 
 
    def __cb_announcement_changed(self, event):
@@ -743,9 +580,7 @@ class WindowMain(QMainWindow):
       self.announcements.remove_announcement_by_index(index)
       self.__update_announcements_gui()
 
-   def add_announcement(self, cam1_frame_number, cam2_frame_number, speed, direction):
-      cam1_timestamp = self.cameras_data.get_frame("cam1", cam1_frame_number).get_timestamp()
-      cam2_timestamp = self.cameras_data.get_frame("cam2", cam2_frame_number).get_timestamp()
+   def add_announcement(self, cam1_frame_number, cam1_timestamp, cam2_frame_number, cam2_timestamp, speed, direction):
       milliseconds = abs(cam1_timestamp - cam2_timestamp)
 
       self.announcements.append(Announcement(
