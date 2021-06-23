@@ -39,7 +39,7 @@ class Announcements:
    def append(self, announcement: Announcement):
       self.__announcements.append(announcement)
 
-   def get_announcement_by_index(self, index):
+   def get_announcement_by_index(self, index: int) -> Announcement:
       return self.__announcements[index]
 
    def get_announcements(self):

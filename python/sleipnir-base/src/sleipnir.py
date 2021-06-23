@@ -7,7 +7,6 @@ import cv2 as cv
 
 from SleipnirWindow import SleipnirWindow
 from SpeedLogic import SpeedLogic, SpeedPassMessage
-from CamerasData import CamerasData
 from Configuration import Configuration, ConfigurationError
 from database.DB import DB
 from Announcements import Announcements, Announcement
@@ -18,7 +17,6 @@ from Globals import Globals
 from AlignLogic import AlignLogic
 from VideoPlayer import VideoPlayer
 from Sound import Sound
-from function_timer import timer
 from Errors import *
 
 import logging
@@ -34,8 +32,6 @@ class WindowMain(QMainWindow):
       # Bootstrap event system
       Event.create_event_server(self)
 
-      self.__db = None
-
       try:
          self.configuration = Configuration("sleipnir.yml")
       except IOError as e:
@@ -45,26 +41,18 @@ class WindowMain(QMainWindow):
          self.configuration.check_configuration()
       except ConfigurationError as e:
          raise e
-
-      # Distance
-      self.distance = 100
-
-      self.run_tell_speed_timestamp = 0
-      self.run_tell_speed = 0
+      self.__db = DB(self.configuration.get_save_path())
 
       # Sound effects
       self.__sound = Sound()
 
-      self.ui = SleipnirWindow()
-      self.ui.setupUi(self)
+      self.__ui = SleipnirWindow()
+      self.__ui.setupUi(self)
       self.setWindowTitle("Sleipnir Velocity - Go Fast!")
-
-      self.ui.label_video1_online.setText("Cam1: Offline")
-      self.ui.label_video2_online.setText("Cam2: Offline")
 
       self.announcements = Announcements()
       self.model_announcements = QtGui.QStandardItemModel()
-      self.ui.listView_anouncements.setModel(self.model_announcements)
+      self.__ui.listView_anouncements.setModel(self.model_announcements)
       self.__update_announcements_gui()
 
       ''' Start camera server '''
@@ -72,15 +60,12 @@ class WindowMain(QMainWindow):
       self.__camera_server.start_server(self.__db)
       Event.on(CameraServer.EVENT_CAMERA_ONLINE, self.__evt_cameraserver_camera_online)
       Event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_cameraserver_camera_offline)
+      self.__ui.label_video1_online.setText("Cam1: Offline")
+      self.__ui.label_video2_online.setText("Cam2: Offline")
 
-
-      # distance connect
-      self.ui.label_speed.setText("")
-      self.ui.lineEdit_distance.setText(str(self.distance))
-      self.ui.lineEdit_distance.textChanged.connect(self.__cb_distance_changed)
-
-      self.ui.listView_anouncements.clicked.connect(self.__cb_announcement_changed)
-      self.ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
+      ''' Announcement '''
+      self.__ui.listView_anouncements.clicked.connect(self.__cb_announcement_changed)
+      self.__ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
 
       ''' Initalize components '''
       self.__globals = Globals(self.__db)
@@ -89,58 +74,65 @@ class WindowMain(QMainWindow):
       self.__speed_logic = SpeedLogic(self.__globals, self.__camera_server, self.configuration)
 
       ''' flight callbacks and events '''
-      for radio_buttons_flight in self.ui.radio_buttons_flights:
+      for radio_buttons_flight in self.__ui.radio_buttons_flights:
          radio_buttons_flight.clicked.connect(self.__cb_flight)
       Event.on(Globals.EVENT_FLIGHT_CHANGE, self.__evt_globals_flight_change)
 
       ''' ground level callbacks and events '''
-      self.ui.verticalSlider_groundlevel.valueChanged.connect(self.__cb_groundlevel_changed)
+      self.__ui.verticalSlider_groundlevel.valueChanged.connect(self.__cb_groundlevel_changed)
       Event.on(Globals.EVENT_GROUND_LEVEL_CHANGE, self.__evt_globals_ground_level_change)
 
       ''' Align callbacks and events '''
-      self.ui.pushButton_video1_align.clicked.connect(self.__cb_align_cam1_clicked)
-      self.ui.pushButton_video2_align.clicked.connect(self.__cb_align_cam2_clicked)
+      self.__ui.pushButton_video1_align.clicked.connect(self.__cb_align_cam1_clicked)
+      self.__ui.pushButton_video2_align.clicked.connect(self.__cb_align_cam2_clicked)
       Event.on(AlignLogic.EVENT_ALIGN_START, self.__evt_alignlogic_align_start)
       Event.on(AlignLogic.EVENT_ALIGN_STOP, self.__evt_alignlogic_align_stop)
       Event.on(AlignLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_alignlogic_align_new_frame)
-      self.ui.pushButton_video1_align.setEnabled(False)
-      self.ui.pushButton_video2_align.setEnabled(False)
+      self.__ui.pushButton_video1_align.setEnabled(False)
+      self.__ui.pushButton_video2_align.setEnabled(False)
 
       ''' Video player callbacs and events '''
       Event.on(VideoPlayer.EVENT_FRAME_NEW, self.__evt_videoplayer_play_new_frame)
 
       ''' video 1 '''
-      self.ui.pushbutton_video1_playforward.clicked.connect(self.__cb_video1_play_forward_clicked)
-      self.ui.pushbutton_video1_playbackward.clicked.connect(self.__cb_video1_play_reverse_clicked)
-      self.ui.pushbutton_video1_pause.clicked.connect(self.__cb_video1_stop_clicked)
-      self.ui.pushbutton_video1_forwardstep.clicked.connect(self.__cb_video1_step_forward)
-      self.ui.pushbutton_video1_backstep.clicked.connect(self.__cb_video1_step_reverse)
-      self.ui.slider_video['cam1'].setMinimum(1)
-      self.ui.slider_video['cam1'].valueChanged.connect(self.__cb_video1_slider_changed)
-      self.ui.pushbutton_video1_copy.clicked.connect(self.__cb_video1_copy_clicked)
-      self.ui.pushbutton_video1_find.clicked.connect(self.__cb_video1_find_clicked)
+      self.__ui.pushbutton_video1_playforward.clicked.connect(self.__cb_video1_play_forward_clicked)
+      self.__ui.pushbutton_video1_playbackward.clicked.connect(self.__cb_video1_play_reverse_clicked)
+      self.__ui.pushbutton_video1_pause.clicked.connect(self.__cb_video1_stop_clicked)
+      self.__ui.pushbutton_video1_forwardstep.clicked.connect(self.__cb_video1_step_forward)
+      self.__ui.pushbutton_video1_backstep.clicked.connect(self.__cb_video1_step_reverse)
+      self.__ui.slider_video['cam1'].setMinimum(1)
+      self.__ui.slider_video['cam1'].valueChanged.connect(self.__cb_video1_slider_changed)
+      self.__ui.pushbutton_video1_copy.clicked.connect(self.__cb_video1_copy_clicked)
+      self.__ui.pushbutton_video1_find.clicked.connect(self.__cb_video1_find_clicked)
 
       ''' video 2 '''
-      self.ui.pushbutton_video2_playforward.clicked.connect(self.__cb_video2_play_forward_clicked)
-      self.ui.pushbutton_video2_playbackward.clicked.connect(self.__cb_video2_play_reverse_clicked)
-      self.ui.pushbutton_video2_pause.clicked.connect(self.__cb_video2_stop_clicked)
-      self.ui.pushbutton_video2_forwardstep.clicked.connect(self.__cb_video2_step_forward)
-      self.ui.pushbutton_video2_backstep.clicked.connect(self.__cb_video2_step_reverse)
-      self.ui.slider_video['cam2'].setMinimum(1)
-      self.ui.slider_video['cam2'].valueChanged.connect(self.__cb_video2_slider_changed)
-      self.ui.pushbutton_video2_copy.clicked.connect(self.__cb_video2_copy_clicked)
-      self.ui.pushbutton_video2_find.clicked.connect(self.__cb_video2_find_clicked)
+      self.__ui.pushbutton_video2_playforward.clicked.connect(self.__cb_video2_play_forward_clicked)
+      self.__ui.pushbutton_video2_playbackward.clicked.connect(self.__cb_video2_play_reverse_clicked)
+      self.__ui.pushbutton_video2_pause.clicked.connect(self.__cb_video2_stop_clicked)
+      self.__ui.pushbutton_video2_forwardstep.clicked.connect(self.__cb_video2_step_forward)
+      self.__ui.pushbutton_video2_backstep.clicked.connect(self.__cb_video2_step_reverse)
+      self.__ui.slider_video['cam2'].setMinimum(1)
+      self.__ui.slider_video['cam2'].valueChanged.connect(self.__cb_video2_slider_changed)
+      self.__ui.pushbutton_video2_copy.clicked.connect(self.__cb_video2_copy_clicked)
+      self.__ui.pushbutton_video2_find.clicked.connect(self.__cb_video2_find_clicked)
 
       ''' Speed callbacks and events '''
-      self.ui.pushbutton_start.clicked.connect(self.__cb_start_cameras)
-      self.ui.pushbutton_stop.clicked.connect(self.__cb_stop_cameras)
+      self.__ui.pushbutton_start.clicked.connect(self.__cb_start_cameras)
+      self.__ui.pushbutton_stop.clicked.connect(self.__cb_stop_cameras)
       Event.on(SpeedLogic.EVENT_SPEED_START, self.__evt_speedlogic_speed_start)
       Event.on(SpeedLogic.EVENT_SPEED_STOP, self.__evt_speedlogic_speed_stop)
       Event.on(SpeedLogic.EVENT_SPEED_NEW_FRAME, self.__evt_speedlogic_speed_new_frame)
       Event.on(SpeedLogic.EVENT_PASS_START, self.__evt_speedlogic_pass_start)
       Event.on(SpeedLogic.EVENT_PASS_END, self.__evt_speedlogic_pass_end)
-      self.ui.pushbutton_stop.setEnabled(False)
-      self.ui.pushbutton_start.setEnabled(False)
+      Event.on(SpeedLogic.EVENT_PASS_ABORT, self.__evt_speedlogic_pass_abort)
+      self.__ui.pushbutton_stop.setEnabled(False)
+      self.__ui.pushbutton_start.setEnabled(False)
+      self.__speedgui_speak_speed = None
+      self.__speedgui_speak_speed_timestamp = None
+      self.__speed_gui_distance = 100
+      self.__ui.lineEdit_distance.setText(str(self.__speed_gui_distance))
+      self.__ui.lineEdit_distance.textChanged.connect(self.__cb_distance_changed)
+
 
       ''' load flight number 1 '''
       self.__load_flight(1)
@@ -159,26 +151,26 @@ class WindowMain(QMainWindow):
 
    def __evt_cameraserver_camera_online(self, cam):
       if (cam == 'cam1'):
-         self.ui.label_video1_online.setText("Cam1: Online")
-         self.ui.pushButton_video1_align.setEnabled(True)
+         self.__ui.label_video1_online.setText("Cam1: Online")
+         self.__ui.pushButton_video1_align.setEnabled(True)
       else:
-         self.ui.pushButton_video2_align.setEnabled(True)
-         self.ui.label_video1_online.setText("Cam2: Online")
+         self.__ui.pushButton_video2_align.setEnabled(True)
+         self.__ui.label_video1_online.setText("Cam2: Online")
 
       if self.__camera_server.is_ready_to_shoot():
-         self.ui.pushbutton_start.setEnabled(True)
-         self.ui.pushbutton_stop.setEnabled(False)
+         self.__ui.pushbutton_start.setEnabled(True)
+         self.__ui.pushbutton_stop.setEnabled(False)
       
    def __evt_cameraserver_camera_offline(self, cam):
       if (cam == 'cam1'):
-         self.ui.label_video1_online.setText("Cam1: Offline")
-         self.ui.pushButton_video1_align.setEnabled(False)
+         self.__ui.label_video1_online.setText("Cam1: Offline")
+         self.__ui.pushButton_video1_align.setEnabled(False)
       else:
-         self.ui.label_video1_online.setText("Cam2: Offine")
-         self.ui.pushButton_video2_align.setEnabled(False)
+         self.__ui.label_video1_online.setText("Cam2: Offine")
+         self.__ui.pushButton_video2_align.setEnabled(False)
 
-      self.ui.pushbutton_start.setEnabled(False)
-      self.ui.pushbutton_stop.setEnabled(False)
+      self.__ui.pushbutton_start.setEnabled(False)
+      self.__ui.pushbutton_stop.setEnabled(False)
 
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤    Video Player GUI    ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
@@ -227,12 +219,12 @@ class WindowMain(QMainWindow):
       self.display_frame(frame)
       ''' block signal on slider change since it will do a video_player.set_poistion on change
       and thereby intrduce a circular event '''
-      self.ui.slider_video[frame.get_cam()].blockSignals(True)
-      self.ui.slider_video[frame.get_cam()].setSliderPosition(frame.get_position())
-      self.ui.slider_video[frame.get_cam()].blockSignals(False)
+      self.__ui.slider_video[frame.get_cam()].blockSignals(True)
+      self.__ui.slider_video[frame.get_cam()].setSliderPosition(frame.get_position())
+      self.__ui.slider_video[frame.get_cam()].blockSignals(False)
 
       ''' Display time '''
-      self.ui.label_time_video[frame.get_cam()].setText(
+      self.__ui.label_time_video[frame.get_cam()].setText(
          self.__format_video_time(
             self.__video_player.get_time(frame.get_cam())
          )
@@ -242,32 +234,32 @@ class WindowMain(QMainWindow):
       return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
 
    def __enable_video_ui(self, enabled: bool):
-      self.ui.pushbutton_video1_find.setEnabled(enabled)
-      self.ui.pushbutton_video1_playbackward.setEnabled(enabled)
-      self.ui.pushbutton_video1_backstep.setEnabled(enabled)
-      self.ui.pushbutton_video1_pause.setEnabled(enabled)
-      self.ui.pushbutton_video1_forwardstep.setEnabled(enabled)
-      self.ui.pushbutton_video1_playforward.setEnabled(enabled)
-      self.ui.pushbutton_video1_copy.setEnabled(enabled)
-      self.ui.pushbutton_video2_find.setEnabled(enabled)
-      self.ui.pushbutton_video2_playbackward.setEnabled(enabled)
-      self.ui.pushbutton_video2_backstep.setEnabled(enabled)
-      self.ui.pushbutton_video2_pause.setEnabled(enabled)
-      self.ui.pushbutton_video2_forwardstep.setEnabled(enabled)
-      self.ui.pushbutton_video2_playforward.setEnabled(enabled)
-      self.ui.pushbutton_video2_copy.setEnabled(enabled)
+      self.__ui.pushbutton_video1_find.setEnabled(enabled)
+      self.__ui.pushbutton_video1_playbackward.setEnabled(enabled)
+      self.__ui.pushbutton_video1_backstep.setEnabled(enabled)
+      self.__ui.pushbutton_video1_pause.setEnabled(enabled)
+      self.__ui.pushbutton_video1_forwardstep.setEnabled(enabled)
+      self.__ui.pushbutton_video1_playforward.setEnabled(enabled)
+      self.__ui.pushbutton_video1_copy.setEnabled(enabled)
+      self.__ui.pushbutton_video2_find.setEnabled(enabled)
+      self.__ui.pushbutton_video2_playbackward.setEnabled(enabled)
+      self.__ui.pushbutton_video2_backstep.setEnabled(enabled)
+      self.__ui.pushbutton_video2_pause.setEnabled(enabled)
+      self.__ui.pushbutton_video2_forwardstep.setEnabled(enabled)
+      self.__ui.pushbutton_video2_playforward.setEnabled(enabled)
+      self.__ui.pushbutton_video2_copy.setEnabled(enabled)
 
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Align GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
    def __cb_align_cam1_clicked(self):
-      if self.ui.pushButton_video1_align.text() == 'Align Camera':
+      if self.__ui.pushButton_video1_align.text() == 'Align Camera':
          self.__align_logic.start_align_camera('cam1')
       else:
          self.__align_logic.stop_align_camera('cam1')
 
    def __cb_align_cam2_clicked(self):
-      if self.ui.pushButton_video2_align.text() == 'Align Camera':
+      if self.__ui.pushButton_video2_align.text() == 'Align Camera':
          self.__align_logic.start_align_camera('cam2')
       else:
          self.__align_logic.stop_align_camera('cam2')
@@ -275,27 +267,27 @@ class WindowMain(QMainWindow):
    def __evt_alignlogic_align_start(self, cam):
       self.enable_all_gui_elements(False)
       if cam == 'cam1':
-         self.ui.pushButton_video1_align.setText('Stop')
-         self.ui.pushButton_video2_align.setEnabled(False)
+         self.__ui.pushButton_video1_align.setText('Stop')
+         self.__ui.pushButton_video2_align.setEnabled(False)
       else:
-         self.ui.pushButton_video2_align.setText('Stop')
-         self.ui.pushButton_video1_align.setEnabled(False)
+         self.__ui.pushButton_video2_align.setText('Stop')
+         self.__ui.pushButton_video1_align.setEnabled(False)
 
    def __evt_alignlogic_align_stop(self, cam):
       self.enable_all_gui_elements(True)
 
-      self.ui.pushButton_video1_align.setText('Align Camera')
-      self.ui.pushButton_video2_align.setText('Align Camera')
+      self.__ui.pushButton_video1_align.setText('Align Camera')
+      self.__ui.pushButton_video2_align.setText('Align Camera')
       
       if self.__camera_server.is_online('cam1'): 
-         self.ui.pushButton_video1_align.setEnabled(True)
+         self.__ui.pushButton_video1_align.setEnabled(True)
       if self.__camera_server.is_online('cam2'): 
-         self.ui.pushButton_video2_align.setEnabled(True)
+         self.__ui.pushButton_video2_align.setEnabled(True)
 
       ''' Check status for start stop buttons '''
-      self.ui.pushbutton_stop.setEnabled(False)
+      self.__ui.pushbutton_stop.setEnabled(False)
       if not self.__camera_server.is_ready_to_shoot():
-         self.ui.pushbutton_start.setEnabled(False)
+         self.__ui.pushbutton_start.setEnabled(False)
 
 
    def __evt_alignlogic_align_new_frame(self, frame :Frame):
@@ -306,24 +298,24 @@ class WindowMain(QMainWindow):
 
    def __cb_flight(self):
       for i in range(0,20):
-         if self.ui.radio_buttons_flights[i].isChecked(): break
+         if self.__ui.radio_buttons_flights[i].isChecked(): break
       self.__globals.set_flight(i + 1)
 
    def __evt_globals_flight_change(self, flight):
-      self.ui.radio_buttons_flights[flight - 1].setChecked(True)
+      self.__ui.radio_buttons_flights[flight - 1].setChecked(True)
       self.__load_flight(flight)
 
 
    def __load_flight(self, flight):
       self.__flight = flight
-      self.ui.radio_buttons_flights[self.__flight - 1].setChecked(True)
+      self.__ui.radio_buttons_flights[self.__flight - 1].setChecked(True)
 
       self.__load_announcements(self.__flight)
       self.__update_announcements_gui()
 
       # FIXME: Clean this shit up to some kind of API
-      self.ui.slider_video['cam1'].setMaximum(1 if not self.__video_player.get_last_frame("cam1") else (self.__video_player.get_last_frame('cam1').get_position() or 1))
-      self.ui.slider_video['cam2'].setMaximum(1 if not self.__video_player.get_last_frame("cam2") else (self.__video_player.get_last_frame('cam2').get_position() or 1))
+      self.__ui.slider_video['cam1'].setMaximum(1 if not self.__video_player.get_last_frame("cam1") else (self.__video_player.get_last_frame('cam1').get_position() or 1))
+      self.__ui.slider_video['cam2'].setMaximum(1 if not self.__video_player.get_last_frame("cam2") else (self.__video_player.get_last_frame('cam2').get_position() or 1))
       self.__video_player.set_position('cam1', 1)
       self.__video_player.set_position('cam2', 1)
 
@@ -332,7 +324,7 @@ class WindowMain(QMainWindow):
          value = int(value)
       except:
          value = 100
-      self.distance = value
+      self.__speed_gui_distance = value
 
    ''' ground level GUI '''
    def __cb_groundlevel_changed(self, value):
@@ -344,8 +336,8 @@ class WindowMain(QMainWindow):
       self.display_frame(self.__video_player.get_current_frame('cam2'))
 
       ''' Do not try to set position if we are currently dragging '''
-      if self.ui.verticalSlider_groundlevel.isSliderDown() == False:
-         self.ui.verticalSlider_groundlevel.setValue(value)
+      if self.__ui.verticalSlider_groundlevel.isSliderDown() == False:
+         self.__ui.verticalSlider_groundlevel.setValue(value)
 
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Speed GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
@@ -363,22 +355,42 @@ class WindowMain(QMainWindow):
       self.announcements.clear()
       self.__update_announcements_gui()
       self.enable_all_gui_elements(False)
-      self.ui.pushbutton_stop.setEnabled(True)
+      self.__ui.pushbutton_stop.setEnabled(True)
+      self.__ui.pushButton_video1_align.setEnabled(False)
+      self.__ui.pushButton_video2_align.setEnabled(False)
+      self.__ui.pushbutton_stop.setEnabled(True)
+      self.__speedgui_speak_speed = None
+      self.__speedgui_speak_speed_timestamp = None
 
    def __evt_speedlogic_speed_stop(self):
       self.__save_announcements()
       self.__load_flight(self.__globals.get_flight())
       self.enable_all_gui_elements(True)
+      self.__ui.pushbutton_stop.setEnabled(False)
+      self.__ui.pushButton_video1_align.setEnabled(True)
+      self.__ui.pushButton_video2_align.setEnabled(True)
 
    def __evt_speedlogic_speed_new_frame(self, frame: Frame):
-      self.display_frame(frame)
+      if self.__ui.checkBox_live.isChecked():
+         self.display_frame(frame)
 
       ''' Display time '''
-      self.ui.label_time_video[frame.get_cam()].setText(
+      self.__ui.label_time_video[frame.get_cam()].setText(
          self.__format_video_time(
             self.__speed_logic.get_time(frame)
          )
       )
+
+      ''' Since frames are arriving all th time we hook on here 
+      for the speed speak, which needs to happen a second after 
+      making a correct pass '''
+      if self.__speedgui_speak_speed != None and time.time() > self.__speedgui_speak_speed_timestamp:
+         self.__sound.play_number(self.__speedgui_speak_speed)
+         self.__speedgui_speak_speed = None
+         self.__speedgui_speak_speed_timestamp = None
+
+   def __evt_speedlogic_pass_abort(self):
+      self.__sound.play_error()
 
    def __evt_speedlogic_pass_start(self, cam):
       self.__sound.play_gate_1()
@@ -408,8 +420,12 @@ class WindowMain(QMainWindow):
             kmh,
             -1)
 
-   ''' display video frame '''
+      if self.__ui.checkBox_speak.isChecked():
+         self.__speedgui_speak_speed = kmh
+         self.__speedgui_speak_speed_timestamp = time.time() + 1.0
+
    def display_frame(self, frame :Frame):
+      ''' display video frame '''
       image = frame.pop_image_load_if_missing(self.__db)
 
       # Draw center line
@@ -418,13 +434,13 @@ class WindowMain(QMainWindow):
       cv.rectangle(image, (0, self.__globals.get_ground_level()), (320, self.__globals.get_ground_level()), (0, 0, 0), 1)
 
       image_qt = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], QtGui.QImage.Format_Indexed8)
-      self.ui.widget_video[frame.get_cam()].setPixmap(QtGui.QPixmap.fromImage(image_qt))
+      self.__ui.widget_video[frame.get_cam()].setPixmap(QtGui.QPixmap.fromImage(image_qt))
 
    def set_speed(self, cam1_timestamp, cam2_timestamp):
       ''' Set speed from camera frame numbers '''
       milliseconds = abs((cam1_timestamp or 0)- (cam2_timestamp or 0))
 
-      kilometer = float(self.distance) / 1000
+      kilometer = float(self.__speed_gui_distance) / 1000
       hours = float(milliseconds) / 1000 / 60  / 60
 
       if (hours > 0):
@@ -438,36 +454,24 @@ class WindowMain(QMainWindow):
          speed_text = '{1:.{0}f} km/h'.format(1, kmh)
          time_text = '{1:.{0}f} sec'.format(3, float(milliseconds) / 1000)
 
-      self.ui.label_speed.setText(speed_text)
-      self.ui.label_time.setText(time_text)
+      self.__ui.label_speed.setText(speed_text)
+      self.__ui.label_time.setText(time_text)
       return int(kmh)
-
-   def enable_all_gui_elements(self, enabled):
-      self.__enable_video_ui(enabled)
-
-      self.ui.pushbutton_stop.setEnabled(enabled)
-      self.ui.pushbutton_start.setEnabled(enabled)
-      self.ui.checkBox_motion_track.setEnabled(enabled)
-      self.ui.listView_anouncements.setEnabled(enabled)
-      self.ui.verticalSlider_groundlevel.setEnabled(enabled)
-
-      self.ui.lineEdit_distance.setEnabled(enabled)
-      self.ui.checkBox_live.setEnabled(enabled)
-      self.ui.pushButton_remove_announcement.setEnabled(enabled)
-
-      for i in range(0, len(self.ui.radio_buttons_flights)):
-         self.ui.radio_buttons_flights[i].setEnabled(enabled)
 
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤    Announcements GUI    ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
    def __cb_announcement_changed(self, event):
       self.__video_player.stop_all()
-      self.__video_player.set_position('cam1', self.announcements.get_announcement_by_index(event.row()).get_cam1_position())
-      self.__video_player.set_position('cam2', self.announcements.get_announcement_by_index(event.row()).get_cam2_position())
-
+      announcements = self.announcements.get_announcement_by_index(event.row())
+      self.__video_player.set_position('cam1', announcements.get_cam1_position())
+      self.__video_player.set_position('cam2', announcements.get_cam2_position())
+      self.set_speed(
+         self.__video_player.get_frame('cam1', announcements.get_cam1_position()).get_timestamp(),
+         self.__video_player.get_frame('cam2', announcements.get_cam2_position()).get_timestamp()
+      )
    def __cb_remove_announcement_clicked(self, event):
-      index = self.ui.listView_anouncements.currentIndex().row()
+      index = self.__ui.listView_anouncements.currentIndex().row()
       if index == -1:
          QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
          return
@@ -501,7 +505,7 @@ class WindowMain(QMainWindow):
          if announcement.get_direction() == -1: max_left = max(max_left, announcement.get_speed())
 
       average = (max_left + max_right) / 2 if max_left > 0 and max_right > 0 else 0
-      self.ui.label_average.setText("Average: " + "%.1f" % average + " km/h")
+      self.__ui.label_average.setText("Average: " + "%.1f" % average + " km/h")
 
 
    def __save_announcements(self):
@@ -511,6 +515,23 @@ class WindowMain(QMainWindow):
    def __load_announcements(self, flight):
       logger.info("Loading announcements")
       self.announcements = announcement_dao.fetch(self.__db, flight)
+
+
+   def enable_all_gui_elements(self, enabled):
+      self.__enable_video_ui(enabled)
+
+      self.__ui.pushbutton_stop.setEnabled(enabled)
+      self.__ui.pushbutton_start.setEnabled(enabled)
+      self.__ui.checkBox_speak.setEnabled(enabled)
+      self.__ui.listView_anouncements.setEnabled(enabled)
+      self.__ui.verticalSlider_groundlevel.setEnabled(enabled)
+
+      self.__ui.lineEdit_distance.setEnabled(enabled)
+      self.__ui.checkBox_live.setEnabled(enabled)
+      self.__ui.pushButton_remove_announcement.setEnabled(enabled)
+
+      for i in range(0, len(self.__ui.radio_buttons_flights)):
+         self.__ui.radio_buttons_flights[i].setEnabled(enabled)
 
 
 

@@ -254,3 +254,6 @@ class VideoPlayer:
     def get_last_frame(self, cam: str):
         ''' Get last frame of video '''
         return self.__state.cameras_data.get_last_frame(cam)
+
+    def get_frame(self, cam: str, position: int) -> Frame:
+        return self.__state.cameras_data.get_frame(cam, position)

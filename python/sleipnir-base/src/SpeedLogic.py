@@ -9,6 +9,7 @@ from CamerasData import CamerasData
 from Frame import Frame
 from Errors import *
 from MotionTracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
+from VideoPlayer import VideoPlayer
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +21,7 @@ SpeedLogic.EVENT_SPEED_STOP                         : Stop timed run camera
 SpeedLogic.EVENT_SPEED_NEW_FRAME frame :Frame       : A camera have a new frame
 SpeedLogic.EVENT_PASS_START : str                   : A speed pass have started on cam
 SpeedLogic.EVENT_PASS_END : SpeedPassMessage        : A speed pass have ended
+SpeedLogic.EVENT_PASS_ABORT :                       : A speed pass have been aborted
 '''
 
 class SpeedState: 
@@ -59,7 +61,7 @@ class SpeedState:
         }
 
         ''' timestamp when to abort pass if not completed '''
-        self.pass_abort_timestamp = 0 
+        self.pass_abort_time = None
 
 class SpeedPassMessage:
     def __init__(self, direction: str, position_start: int, timestamp_start: int, position_end: int, timestamp_end: int):
@@ -75,6 +77,7 @@ class SpeedLogic:
     EVENT_SPEED_NEW_FRAME       = 'speedlogic.speed.new_frame'
     EVENT_PASS_START            = 'speedlogic.pass.start'
     EVENT_PASS_END              = 'speedlogic.pass.end'
+    EVENT_PASS_ABORT            = 'speedlogic.pass.abort'
 
     __MAX_ALLOWED_LAG = 15
 
@@ -116,6 +119,7 @@ class SpeedLogic:
         self.__motion_tracker_threads['cam2'].reset()
         self.__state.pass_direction = None
         self.__state.lag_recovery = 0
+        self.__state.pass_abort_time = None
 
 
         Event.on(CameraServer.EVENT_NEW_FRAME, self.__cameraserver_evt_new_frame)
@@ -146,6 +150,11 @@ class SpeedLogic:
         if self.__state.lag_recovery > 0:
             self.__state.lag_recovery -= 1
             return
+
+        ''' Speed pass timeout? '''
+        if self.__state.pass_abort_time != None and time.time() > self.__state.pass_abort_time:
+            self.__state.pass_abort_time = None
+            Event.emit(SpeedLogic.EVENT_PASS_ABORT)
 
         cam = frame.get_cam()
 
@@ -217,10 +226,9 @@ class SpeedLogic:
             self.__state.pass_position['cam2'] == 0
             self.__state.pass_direction = 'RIGHT'
             ''' Max 6 second run '''
-            self.__state.pass_abort_timestamp = int(round(time.time() * 1000)) + 6000
+            self.__state.pass_abort_time = time.time() + 6.0
             logger.info("Initiating time run from cam 1 -->")
             Event.emit(SpeedLogic.EVENT_PASS_START, cam)
-#            self.__sound.play_gate_1()
 
         ''' Check for end of RIGHT pass on camera 2 '''
         if cam == 'cam2' and self.__state.pass_direction == 'RIGHT' and motion_tracker_done_message.get_direction() == 1:
@@ -228,6 +236,8 @@ class SpeedLogic:
             self.__state.pass_position['cam2'] = motion_tracker_done_message.get_position()
             self.__state.pass_direction = None
             logger.info("Timed run completed on cam 2 -->")
+            ''' Clear the abort time since the pass is complete '''
+            self.__state.pass_abort_time = None
             Event.emit(SpeedLogic.EVENT_PASS_END, SpeedPassMessage(
                 'RIGHT',
                 self.__state.pass_position['cam1'],
@@ -236,17 +246,6 @@ class SpeedLogic:
                 self.__state.cameras_data.get_frame('cam2', self.__state.pass_position['cam2']).get_timestamp(),                
             ))
 
-#            kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
-#            logger.info("Timed run completed on cam 2 -->")
-#            self.__sound.play_gate_2()
-#            if (kmh < 500):
-#                self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
-#                self.run_tell_speed = kmh
-#                logger.info("Adding announcement --> " + str(kmh) + " km/h")
-#                self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, 1)
-#            else:
-#                logger.warning("Do not add announcement over 500 km/h")
-      
         ''' Check for start of LEFT pass from camera 2 '''
         if cam == 'cam2' and  self.__state.pass_direction == None and motion_tracker_done_message.get_direction() == -1:
             ''' Starting pass from cam 2 '''
@@ -254,7 +253,7 @@ class SpeedLogic:
             self.__state.pass_position['cam1'] = 0
             self.__state.pass_direction = "LEFT"
             ''' Max 6 second run '''
-            self.__state.pass_abort_timestamp = int(round(time.time() * 1000)) + 6000
+            self.__state.pass_abort_time = time.time() + 6.0
             logger.info("Initiating time run from cam 2 <--")
             Event.emit(SpeedLogic.EVENT_PASS_START, cam)
 #            self.__sound.play_gate_1()
@@ -265,6 +264,8 @@ class SpeedLogic:
             self.__state.pass_position['cam1'] = motion_tracker_done_message.get_position()
             self.__state.pass_direction = None
             logger.info("Timed run completed on cam 2 <--")
+            ''' Clear the abort time since the pass is complete '''
+            self.__state.pass_abort_time = None
             Event.emit(SpeedLogic.EVENT_PASS_END, SpeedPassMessage(
                 'LEFT',
                 self.__state.pass_position['cam2'],
@@ -272,18 +273,6 @@ class SpeedLogic:
                 self.__state.pass_position['cam1'],
                 self.__state.cameras_data.get_frame('cam1', self.__state.pass_position['cam1']).get_timestamp(),                
             ))
-
-#            kmh = self.set_speed(self.run_frame_number_cam1, self.run_frame_number_cam2)
-#            self.__sound.play_gate_2()
-#            logger.info("Timed run completed on cam 2 <--")
-#            if (kmh < 500):
-#                self.run_tell_speed_timestamp = int(round(time.time() * 1000)) + 1000
-#                self.run_tell_speed = kmh
-#                self.add_announcement(self.run_frame_number_cam1, self.run_frame_number_cam2, kmh, -1)
-#                logger.info("Adding announcement <-- " + str(kmh) + " km/h")
-#            else:
-#                logger.warning("Do not add announcement over 500 km/h")
-
 
     def get_time(self, frame: Frame) -> int:
         ''' get time on frame position '''

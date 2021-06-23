@@ -209,7 +209,7 @@
             <item>
              <widget class="QPushButton" name="pushbutton_video1_copy">
               <property name="text">
-               <string>Copy right</string>
+               <string>Copy Right</string>
               </property>
              </widget>
             </item>
@@ -349,7 +349,7 @@
             <item>
              <widget class="QPushButton" name="pushbutton_video2_copy">
               <property name="text">
-               <string>Copy left</string>
+               <string>Copy Left</string>
               </property>
              </widget>
             </item>
@@ -482,7 +482,7 @@
           <item>
            <widget class="QLabel" name="label_distance">
             <property name="text">
-             <string>Distance meters</string>
+             <string>Distance Meters</string>
             </property>
            </widget>
           </item>
@@ -492,7 +492,7 @@
           <item>
            <widget class="QCheckBox" name="checkBox_live">
             <property name="text">
-             <string>Live preview</string>
+             <string>Live Feed</string>
             </property>
             <property name="checked">
              <bool>true</bool>
@@ -505,7 +505,7 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QCheckBox" name="checkBox_motion_track">
+             <widget class="QCheckBox" name="checkBox_speak">
               <property name="sizePolicy">
                <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                 <horstretch>0</horstretch>
@@ -577,7 +577,7 @@
           <item>
            <widget class="QLabel" name="label_flightnumber">
             <property name="text">
-             <string>Flight number</string>
+             <string>Flight Number</string>
             </property>
            </widget>
           </item>
@@ -786,7 +786,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Start cameras</string>
+           <string>Start </string>
           </property>
          </widget>
         </item>
@@ -799,7 +799,7 @@
            </size>
           </property>
           <property name="text">
-           <string>Stop Cameras</string>
+           <string>Stop</string>
           </property>
          </widget>
         </item>
@@ -821,19 +821,6 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="label_time">
-            <property name="styleSheet">
-             <string notr="true">font-size: 24px;</string>
-            </property>
-            <property name="text">
-             <string>1.423 sec</string>
-            </property>
-            <property name="alignment">
-             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="0">
            <widget class="QLabel" name="label_time_label">
             <property name="styleSheet">
@@ -847,13 +834,26 @@
             </property>
            </widget>
           </item>
+          <item row="0" column="1">
+           <widget class="QLabel" name="label_time">
+            <property name="styleSheet">
+             <string notr="true">font-size: 24px;</string>
+            </property>
+            <property name="text">
+             <string/>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="1">
            <widget class="QLabel" name="label_speed">
             <property name="styleSheet">
              <string notr="true">font-size: 24px;</string>
             </property>
             <property name="text">
-             <string>888.88 kmh</string>
+             <string/>
             </property>
             <property name="alignment">
              <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
