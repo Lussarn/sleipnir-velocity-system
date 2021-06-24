@@ -305,15 +305,12 @@ class WindowMain(QMainWindow):
       self.__ui.radio_buttons_flights[flight - 1].setChecked(True)
       self.__load_flight(flight)
 
-
    def __load_flight(self, flight):
-      self.__flight = flight
-      self.__ui.radio_buttons_flights[self.__flight - 1].setChecked(True)
+      self.__ui.radio_buttons_flights[flight - 1].setChecked(True)
 
-      self.__load_announcements(self.__flight)
+      self.__load_announcements(flight)
       self.__update_announcements_gui()
 
-      # FIXME: Clean this shit up to some kind of API
       self.__ui.slider_video['cam1'].setMaximum(1 if not self.__video_player.get_last_frame("cam1") else (self.__video_player.get_last_frame('cam1').get_position() or 1))
       self.__ui.slider_video['cam2'].setMaximum(1 if not self.__video_player.get_last_frame("cam2") else (self.__video_player.get_last_frame('cam2').get_position() or 1))
       self.__video_player.set_position('cam1', 1)
@@ -371,7 +368,8 @@ class WindowMain(QMainWindow):
       self.__ui.pushButton_video2_align.setEnabled(True)
 
    def __evt_speedlogic_speed_new_frame(self, frame: Frame):
-      if self.__ui.checkBox_live.isChecked():
+      ''' Only display every third frame when live trackng - 30 fps '''
+      if self.__ui.checkBox_live.isChecked() and frame.get_position() % 3 == 0:
          self.display_frame(frame)
 
       ''' Display time '''

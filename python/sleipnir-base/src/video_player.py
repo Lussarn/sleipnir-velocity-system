@@ -41,8 +41,6 @@ class VideoPlayerState:
 
         ''' frame collection '''
         self.cameras_data = None        # type: CamerasData
-        ''' first timestamp in frames collection '''
-        self.start_timestamp = None
 
         ''' Max angle of aircraft a motion track will register '''
         self.max_dive_angle = 0
@@ -103,7 +101,6 @@ class VideoPlayer:
             self.__state.position[cam] = 1
             self.__state.direction[cam] = VideoPlayer.DIRECTION_FORWARD
             self.__state.play[cam] = VideoPlayer.PLAY_STOPPED
-        self.__state.start_timestamp = self.__state.cameras_data.get_start_timestamp()
 
     def __cb_timer_play(self):
         ''' Play Video at normal speed, runs on self.__timer_play '''
@@ -247,7 +244,7 @@ class VideoPlayer:
 
     def get_time(self, cam: str):
         ''' get time on current position '''
-        t = self.__state.cameras_data.get_frame(cam, self.__state.position[cam]).get_timestamp() - self.__state.start_timestamp
+        t = self.__state.cameras_data.get_frame(cam, self.__state.position[cam]).get_timestamp() - self.__state.cameras_data.get_start_timestamp()
         if t < 0: t =0
         return t
 
