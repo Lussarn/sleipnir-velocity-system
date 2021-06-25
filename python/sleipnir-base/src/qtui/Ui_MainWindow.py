@@ -17,7 +17,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1205, 976)
+        MainWindow.resize(1195, 839)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
@@ -332,6 +332,20 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.pushButton_remove_announcement)
 
+        self.label_time = QLabel(self.speed_measure)
+        self.label_time.setObjectName(u"label_time")
+        self.label_time.setStyleSheet(u"font-size: 24px;")
+        self.label_time.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
+
+        self.verticalLayout.addWidget(self.label_time)
+
+        self.label_speed = QLabel(self.speed_measure)
+        self.label_speed.setObjectName(u"label_speed")
+        self.label_speed.setStyleSheet(u"font-size: 24px;")
+        self.label_speed.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
+
+        self.verticalLayout.addWidget(self.label_speed)
+
         self.label_average = QLabel(self.speed_measure)
         self.label_average.setObjectName(u"label_average")
         self.label_average.setStyleSheet(u"font-size: 24px")
@@ -504,9 +518,28 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addLayout(self.gridLayout_flights)
 
-        self.verticalSpacer_5 = QSpacerItem(20, 80, QSizePolicy.Minimum, QSizePolicy.Fixed)
+        self.horizontalLayout = QHBoxLayout()
+        self.horizontalLayout.setObjectName(u"horizontalLayout")
+        self.horizontalLayout.setContentsMargins(-1, 6, -1, 0)
+        self.pushbutton_start = QPushButton(self.centralwidget)
+        self.pushbutton_start.setObjectName(u"pushbutton_start")
+        self.pushbutton_start.setMinimumSize(QSize(0, 60))
+        self.pushbutton_start.setBaseSize(QSize(0, 0))
+        font = QFont()
+        font.setPointSize(12)
+        self.pushbutton_start.setFont(font)
 
-        self.verticalLayout_4.addItem(self.verticalSpacer_5)
+        self.horizontalLayout.addWidget(self.pushbutton_start)
+
+        self.pushbutton_stop = QPushButton(self.centralwidget)
+        self.pushbutton_stop.setObjectName(u"pushbutton_stop")
+        self.pushbutton_stop.setMinimumSize(QSize(0, 60))
+        self.pushbutton_stop.setFont(font)
+
+        self.horizontalLayout.addWidget(self.pushbutton_stop)
+
+
+        self.verticalLayout_4.addLayout(self.horizontalLayout)
 
 
         self.horizontalLayout_top.addLayout(self.verticalLayout_4)
@@ -515,65 +548,6 @@ class Ui_MainWindow(object):
         self.horizontalLayout_top.setStretch(2, 1)
 
         self.verticalLayout_3.addLayout(self.horizontalLayout_top)
-
-        self.horizontalLayout_bottom = QHBoxLayout()
-        self.horizontalLayout_bottom.setObjectName(u"horizontalLayout_bottom")
-        self.horizontalLayout_bottom.setContentsMargins(0, 0, -1, 1)
-        self.pushbutton_start = QPushButton(self.centralwidget)
-        self.pushbutton_start.setObjectName(u"pushbutton_start")
-        self.pushbutton_start.setMinimumSize(QSize(0, 60))
-        self.pushbutton_start.setBaseSize(QSize(0, 0))
-
-        self.horizontalLayout_bottom.addWidget(self.pushbutton_start)
-
-        self.pushbutton_stop = QPushButton(self.centralwidget)
-        self.pushbutton_stop.setObjectName(u"pushbutton_stop")
-        self.pushbutton_stop.setMinimumSize(QSize(0, 60))
-
-        self.horizontalLayout_bottom.addWidget(self.pushbutton_stop)
-
-        self.gridLayout = QGridLayout()
-        self.gridLayout.setObjectName(u"gridLayout")
-        self.gridLayout.setContentsMargins(-1, -1, 20, -1)
-        self.label_speed_label = QLabel(self.centralwidget)
-        self.label_speed_label.setObjectName(u"label_speed_label")
-        self.label_speed_label.setStyleSheet(u"font-size: 24px;")
-        self.label_speed_label.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.gridLayout.addWidget(self.label_speed_label, 1, 0, 1, 1)
-
-        self.label_time_label = QLabel(self.centralwidget)
-        self.label_time_label.setObjectName(u"label_time_label")
-        self.label_time_label.setStyleSheet(u"font-size: 24px;")
-        self.label_time_label.setAlignment(Qt.AlignRight|Qt.AlignTrailing|Qt.AlignVCenter)
-
-        self.gridLayout.addWidget(self.label_time_label, 0, 0, 1, 1)
-
-        self.label_time = QLabel(self.centralwidget)
-        self.label_time.setObjectName(u"label_time")
-        self.label_time.setStyleSheet(u"font-size: 24px;")
-        self.label_time.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
-
-        self.gridLayout.addWidget(self.label_time, 0, 1, 1, 1)
-
-        self.label_speed = QLabel(self.centralwidget)
-        self.label_speed.setObjectName(u"label_speed")
-        self.label_speed.setStyleSheet(u"font-size: 24px;")
-        self.label_speed.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
-
-        self.gridLayout.addWidget(self.label_speed, 1, 1, 1, 1)
-
-        self.gridLayout.setColumnStretch(0, 1)
-
-        self.horizontalLayout_bottom.addLayout(self.gridLayout)
-
-        self.horizontalSpacer = QSpacerItem(170, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
-
-        self.horizontalLayout_bottom.addItem(self.horizontalSpacer)
-
-        self.horizontalLayout_bottom.setStretch(2, 1)
-
-        self.verticalLayout_3.addLayout(self.horizontalLayout_bottom)
 
 
         self.verticalLayout_2.addLayout(self.verticalLayout_3)
@@ -612,13 +586,15 @@ class Ui_MainWindow(object):
         self.pushbutton_video2_pause.setText(QCoreApplication.translate("MainWindow", u"||", None))
         self.pushbutton_video2_forwardstep.setText(QCoreApplication.translate("MainWindow", u">", None))
         self.pushbutton_video2_playforward.setText(QCoreApplication.translate("MainWindow", u">>", None))
-        self.combo_box_game_select.setItemText(0, QCoreApplication.translate("MainWindow", u"Speed Measure", None))
+        self.combo_box_game_select.setItemText(0, QCoreApplication.translate("MainWindow", u"Speed Trap", None))
         self.combo_box_game_select.setItemText(1, QCoreApplication.translate("MainWindow", u"Gate Crasher", None))
 
-        self.combo_box_game_select.setCurrentText(QCoreApplication.translate("MainWindow", u"Speed Measure", None))
+        self.combo_box_game_select.setCurrentText(QCoreApplication.translate("MainWindow", u"Speed Trap", None))
         self.label_distance.setText(QCoreApplication.translate("MainWindow", u"Distance Meters", None))
         self.checkBox_speak.setText(QCoreApplication.translate("MainWindow", u"Realtime Announcements", None))
         self.pushButton_remove_announcement.setText(QCoreApplication.translate("MainWindow", u"Remove Announcement", None))
+        self.label_time.setText(QCoreApplication.translate("MainWindow", u"Time: ---", None))
+        self.label_speed.setText(QCoreApplication.translate("MainWindow", u"Speed: ---", None))
         self.label_average.setText(QCoreApplication.translate("MainWindow", u"Average: ---", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Select Level", None))
         self.checkBox_live.setText(QCoreApplication.translate("MainWindow", u"Live Video Feed", None))
@@ -645,9 +621,5 @@ class Ui_MainWindow(object):
         self.radioButton_flight_7.setText(QCoreApplication.translate("MainWindow", u"7", None))
         self.pushbutton_start.setText(QCoreApplication.translate("MainWindow", u"Start ", None))
         self.pushbutton_stop.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
-        self.label_speed_label.setText(QCoreApplication.translate("MainWindow", u"Speed:", None))
-        self.label_time_label.setText(QCoreApplication.translate("MainWindow", u"Time:", None))
-        self.label_time.setText("")
-        self.label_speed.setText("")
     # retranslateUi
 

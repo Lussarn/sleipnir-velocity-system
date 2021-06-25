@@ -64,6 +64,10 @@ class WindowMain(QMainWindow):
       self.__align_logic = AlignLogic(self.__globals, self.__camera_server)
       self.__speed_logic = SpeedLogic(self.__globals, self.__camera_server, self.__configuration)
 
+      ''' game callbacks and events '''
+      event.on(Globals.EVENT_GAME_CHANGE, self.__evt_globals_game_change)
+      self.__ui.combo_box_game_select.currentIndexChanged.connect(self.__cb_game_changed)
+
       ''' flight callbacks and events '''
       for radio_buttons_flight in self.__ui.radio_buttons_flights:
          radio_buttons_flight.clicked.connect(self.__cb_flight)
@@ -118,8 +122,7 @@ class WindowMain(QMainWindow):
       event.on(SpeedLogic.EVENT_PASS_ABORT, self.__evt_speedlogic_pass_abort)
       self.__ui.pushbutton_stop.setEnabled(False)
       self.__ui.pushbutton_start.setEnabled(False)
-      self.__speed_gui_distance = 100
-      self.__ui.lineEdit_distance.setText(str(self.__speed_gui_distance))
+      self.__ui.lineEdit_distance.setText(str(self.__speed_logic.get_distance()))
       self.__ui.lineEdit_distance.textChanged.connect(self.__cb_distance_changed)
       ''' Announcement '''
       event.on(SpeedLogic.EVENT_ANNOUNCEMENT_NEW, self.__evt_speedlogic_announcement_new)
@@ -288,6 +291,14 @@ class WindowMain(QMainWindow):
    def __evt_alignlogic_align_new_frame(self, frame :Frame):
       self.display_frame(frame)
 
+   ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Game GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
+
+   def __cb_game_changed(self, index):
+      if index == 0: self.__globals.set_game(Globals.GAME_SPEED_TRAP)
+      if index == 1: self.__globals.set_game(Globals.GAME_GATE_CRASHER)
+
+   def __evt_globals_game_change(self, game):
+      print(game)
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Flight GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
@@ -405,15 +416,15 @@ class WindowMain(QMainWindow):
 
    def __speedlogic_speed_update_gui(self, announcement: Announcement):
       if announcement is None:
-         self.__ui.label_time.setText('---')
-         self.__ui.label_speed.setText('---')
+         self.__ui.label_time.setText('Time: ---')
+         self.__ui.label_speed.setText('Speed: ---')
          return
 
       ''' Set speed from camera frame numbers '''
       duration_sec = announcement.get_duration() / 1000
       speed_kmh = self.__speed_logic.get_distance() / (announcement.get_duration() / 1000) * 3.6
-      self.__ui.label_time.setText("%.3f" % duration_sec + "sec")
-      self.__ui.label_speed.setText("%d" % speed_kmh + " km/h")
+      self.__ui.label_time.setText("Time: %.3f" % duration_sec + "sec")
+      self.__ui.label_speed.setText("Speed: %d" % speed_kmh + " km/h")
 
    def __speedlogic_average_update_gui(self):
       ''' update the average speed GUI '''
