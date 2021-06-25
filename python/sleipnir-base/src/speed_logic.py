@@ -9,6 +9,8 @@ from cameras_data import CamerasData
 from frame import Frame
 from errors import *
 from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
+from announcements import Announcements, Announcement
+import database.announcement_dao as announcement_dao
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +23,8 @@ SpeedLogic.EVENT_SPEED_NEW_FRAME frame :Frame       : A camera have a new frame
 SpeedLogic.EVENT_PASS_START : str                   : A speed pass have started on cam
 SpeedLogic.EVENT_PASS_END : SpeedPassMessage        : A speed pass have ended
 SpeedLogic.EVENT_PASS_ABORT :                       : A speed pass have been aborted
+SpeedLogic.EVENT_ANNOUNCEMENT_NEW : Announcement    : An announcement has been added
+SpeedLogic.EVENT_ANNOUNCEMENT_LOAD : Announcements  : announcemnet loaded
 '''
 
 class SpeedState: 
@@ -62,6 +66,13 @@ class SpeedState:
         ''' timestamp when to abort pass if not completed '''
         self.pass_abort_time = None
 
+        ''' Distance between cameras in meters '''
+        self.distance = None
+
+        ''' Announcements '''
+        self.announcements = Announcements()
+
+
 class SpeedPassMessage:
     def __init__(self, direction: str, position_start: int, timestamp_start: int, position_end: int, timestamp_end: int):
         self.direction = direction
@@ -77,12 +88,15 @@ class SpeedLogic:
     EVENT_PASS_START            = 'speedlogic.pass.start'
     EVENT_PASS_END              = 'speedlogic.pass.end'
     EVENT_PASS_ABORT            = 'speedlogic.pass.abort'
+    EVENT_ANNOUNCEMENT_NEW      = 'speedlogic.announcement.new'
+    EVENT_ANNOUNCEMENT_LOAD     = 'speedlogic.announcement.load'
 
     __MAX_ALLOWED_LAG = 15
 
     def __init__(self, globals: Globals, camera_server: CameraServer, configuration: Configuration):
         self.__globals = globals
         self.__state = SpeedState()
+        self.__state.distance = 100
         self.__camera_server = camera_server
 
         ''' read from configuration '''
@@ -98,10 +112,17 @@ class SpeedLogic:
         }
 
         event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_camerserver_camera_offline)
-        
+        event.on(Globals.EVENT_FLIGHT_CHANGE, self.__evt_globals_flight_change)
+
     def __evt_camerserver_camera_offline(self, cam):
         ''' Camera have gone offline '''
         self.stop_run()
+
+    def __evt_globals_flight_change(self, flight):
+        ''' Loading announcement '''
+        logger.info("Loading announcements for flight %d" % flight)
+        self.__state.announcements = announcement_dao.fetch(self.__globals.get_db(), flight)
+        event.emit(SpeedLogic.EVENT_ANNOUNCEMENT_LOAD, self.__state.announcements)
 
     def start_run(self):
         ''' Starting run '''
@@ -119,7 +140,7 @@ class SpeedLogic:
         self.__state.pass_direction = None
         self.__state.lag_recovery = 0
         self.__state.pass_abort_time = None
-
+        self.__state.announcements.clear()
 
         event.on(CameraServer.EVENT_NEW_FRAME, self.__cameraserver_evt_new_frame)
         self.__state.running = True
@@ -140,7 +161,13 @@ class SpeedLogic:
         ''' Stop the camera server '''
         self.__camera_server.stop_shooting()
 
+        ''' Disable the new frame event '''
         event.off(CameraServer.EVENT_NEW_FRAME, self.__cameraserver_evt_new_frame)
+
+        ''' Save the announcements '''
+        logger.info("Saving %d announcements" % self.__state.announcements.count())
+        announcement_dao.store(self.__globals.get_db(), self.__globals.get_flight(), self.__state.announcements)
+
         self.__state.running = False
         event.emit(SpeedLogic.EVENT_SPEED_STOP)
 
@@ -237,13 +264,16 @@ class SpeedLogic:
             logger.info("Timed run completed on cam 2 -->")
             ''' Clear the abort time since the pass is complete '''
             self.__state.pass_abort_time = None
-            event.emit(SpeedLogic.EVENT_PASS_END, SpeedPassMessage(
+
+            speed_pass_message = SpeedPassMessage(
                 'RIGHT',
                 self.__state.pass_position['cam1'],
                 self.__state.cameras_data.get_frame('cam1', self.__state.pass_position['cam1']).get_timestamp(),
                 self.__state.pass_position['cam2'],
                 self.__state.cameras_data.get_frame('cam2', self.__state.pass_position['cam2']).get_timestamp(),                
-            ))
+            )
+            event.emit(SpeedLogic.EVENT_PASS_END, speed_pass_message)
+            self.__check_announcement(speed_pass_message)
 
         ''' Check for start of LEFT pass from camera 2 '''
         if cam == 'cam2' and  self.__state.pass_direction == None and motion_tracker_done_message.get_direction() == -1:
@@ -264,13 +294,97 @@ class SpeedLogic:
             logger.info("Timed run completed on cam 2 <--")
             ''' Clear the abort time since the pass is complete '''
             self.__state.pass_abort_time = None
-            event.emit(SpeedLogic.EVENT_PASS_END, SpeedPassMessage(
+
+            speed_pass_message = SpeedPassMessage(
                 'LEFT',
                 self.__state.pass_position['cam2'],
                 self.__state.cameras_data.get_frame('cam2', self.__state.pass_position['cam2']).get_timestamp(),
                 self.__state.pass_position['cam1'],
                 self.__state.cameras_data.get_frame('cam1', self.__state.pass_position['cam1']).get_timestamp(),                
-            ))
+            )
+            self.__check_announcement(speed_pass_message)
+            event.emit(SpeedLogic.EVENT_PASS_END, speed_pass_message)
+
+    def set_distance(self, distance: int):
+        self.__state.distance = distance
+
+    def get_distance(self):
+        return self.__state.distance
+
+    def __check_announcement(self, speed_pass_message: SpeedPassMessage):
+      milliseconds = speed_pass_message.timestamp_end - speed_pass_message.timestamp_start
+
+      kilometer = float(self.__state.distance) / 1000
+      hours = float(milliseconds) / 1000 / 60  / 60
+
+      if (hours > 0):
+         kmh = kilometer / hours
+      else:
+         kmh = 0
+
+      if (kmh >= 500):
+         logger.warning("Do not add announcement exceeding 500 km/h")
+         return
+
+      if speed_pass_message.direction == 'RIGHT':
+         self.__add_announcement(
+            speed_pass_message.position_start, 
+            speed_pass_message.timestamp_start, 
+            speed_pass_message.position_end,
+            speed_pass_message.timestamp_end, 
+            kmh,
+            1)
+      else:
+         self.__add_announcement(
+            speed_pass_message.position_end, 
+            speed_pass_message.timestamp_end, 
+            speed_pass_message.position_start,
+            speed_pass_message.timestamp_start, 
+            kmh,
+            -1)
+
+    def __add_announcement(self, cam1_frame_number, cam1_timestamp, cam2_frame_number, cam2_timestamp, speed, direction):
+        milliseconds = abs(cam1_timestamp - cam2_timestamp)
+        announcement = Announcement(
+            cam1_frame_number,
+            cam2_frame_number,
+            milliseconds,
+            speed,
+            direction
+        )
+        self.__state.announcements.append(announcement)
+        event.emit(self.EVENT_ANNOUNCEMENT_NEW, announcement)
+
+    def get_announcement_max_speeds(self):
+        max_right = None  # type: Announcement
+        max_left = None   # type: Announcement
+        for announcement in self.__state.announcements.get_announcements():
+            ''' Check right direction '''
+            if announcement.get_direction() == 1: 
+                if max_right is None:
+                    max_right = announcement
+                    continue
+                if max_right.get_speed() > announcement.get_speed(): continue
+                max_right = announcement
+                continue
+            ''' Check left direction '''
+            if max_left is None:
+                max_left = announcement
+                continue
+            if max_left.get_speed() > announcement.get_speed(): continue
+            max_left = announcement
+
+        return {
+            'RIGHT': max_right,
+            'LEFT': max_left
+        }
+        
+    def get_announcement_by_index(self, index) -> Announcement:
+        return self.__state.announcements.get_announcement_by_index(index)
+
+    def remove_announcement_by_index(self, index):
+        self.__state.announcements.remove_announcement_by_index(index)
+
 
     def get_time(self, frame: Frame) -> int:
         ''' get time on frame position '''

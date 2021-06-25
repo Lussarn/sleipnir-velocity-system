@@ -8,8 +8,7 @@ from globals import Globals
 from frame import Frame
 from cameras_data import CamerasData
 from configuration import Configuration
-
-
+from speed_logic import SpeedLogic
 from motion_tracker import MotionTracker, MotionTrackerDoMessage
 
 logger = logging.getLogger(__name__)
