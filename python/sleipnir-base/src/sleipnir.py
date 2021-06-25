@@ -10,7 +10,6 @@ from speed_logic import SpeedLogic, SpeedPassMessage
 from configuration import Configuration, ConfigurationError
 from database.db import DB
 from announcements import Announcements, Announcement
-import database.announcement_dao as announcement_dao
 from frame import Frame
 from camera_server import CameraServer
 from globals import Globals
@@ -29,7 +28,7 @@ import event
 class WindowMain(QMainWindow):
    def __init__(self):
       QMainWindow.__init__(self)
-      # Bootstrap event system
+      ''' Bootstrap event system '''
       event.create_event_server(self)
 
       try:
@@ -58,14 +57,6 @@ class WindowMain(QMainWindow):
       event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_cameraserver_camera_offline)
       self.__ui.label_video1_online.setText("Cam1: Offline")
       self.__ui.label_video2_online.setText("Cam2: Offline")
-
-      ''' Announcement '''
-      self.__ui.listView_anouncements.clicked.connect(self.__cb_announcement_changed)
-      self.__ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
-      self.announcements = Announcements()
-      self.model_announcements = QtGui.QStandardItemModel()
-      self.__ui.listView_anouncements.setModel(self.model_announcements)
-      self.__update_announcements_gui()
 
       ''' Initalize components '''
       self.__globals = Globals(self.__db)
@@ -130,10 +121,16 @@ class WindowMain(QMainWindow):
       self.__speed_gui_distance = 100
       self.__ui.lineEdit_distance.setText(str(self.__speed_gui_distance))
       self.__ui.lineEdit_distance.textChanged.connect(self.__cb_distance_changed)
-
+      ''' Announcement '''
+      event.on(SpeedLogic.EVENT_ANNOUNCEMENT_NEW, self.__evt_speedlogic_announcement_new)
+      event.on(SpeedLogic.EVENT_ANNOUNCEMENT_LOAD, self.__evt_speedlogic_announcement_load)
+      self.__ui.listView_anouncements.clicked.connect(self.__cb_speed_logic_announcement_changed)
+      self.__ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
+      self.__speed_logic_model_announcements = QtGui.QStandardItemModel()
+      self.__ui.listView_anouncements.setModel(self.__speed_logic_model_announcements)
 
       ''' load flight number 1 '''
-      self.__load_flight(1)
+      self.__globals.set_flight(1)
 
       ''' Show GUI '''
       self.show()
@@ -306,9 +303,6 @@ class WindowMain(QMainWindow):
    def __load_flight(self, flight):
       self.__ui.radio_buttons_flights[flight - 1].setChecked(True)
 
-      self.__load_announcements(flight)
-      self.__update_announcements_gui()
-
       self.__ui.slider_video['cam1'].setMaximum(1 if not self.__video_player.get_last_frame("cam1") else (self.__video_player.get_last_frame('cam1').get_position() or 1))
       self.__ui.slider_video['cam2'].setMaximum(1 if not self.__video_player.get_last_frame("cam2") else (self.__video_player.get_last_frame('cam2').get_position() or 1))
       self.__video_player.set_position('cam1', 1)
@@ -319,7 +313,7 @@ class WindowMain(QMainWindow):
          value = int(value)
       except:
          value = 100
-      self.__speed_gui_distance = value
+      self.__speed_logic.set_distance(value)
 
    ''' ground level GUI '''
    def __cb_groundlevel_changed(self, value):
@@ -347,8 +341,9 @@ class WindowMain(QMainWindow):
       self.__speed_logic.stop_run()
 
    def __evt_speedlogic_speed_start(self):
-      self.announcements.clear()
-      self.__update_announcements_gui()
+      self.__speed_logic_model_announcements.clear()
+      self.__speedlogic_average_update_gui()
+      self.__speedlogic_speed_update_gui(None)
       self.enable_all_gui_elements(False)
       self.__ui.pushbutton_stop.setEnabled(True)
       self.__ui.pushButton_video1_align.setEnabled(False)
@@ -356,8 +351,11 @@ class WindowMain(QMainWindow):
       self.__ui.pushbutton_stop.setEnabled(True)
 
    def __evt_speedlogic_speed_stop(self):
-      self.__save_announcements()
-      self.__load_flight(self.__globals.get_flight())
+      ''' Stop event for speed logic'''
+
+      ''' Load the just stopped flight, this will load the video player etc. '''
+      self.__globals.set_flight(self.__globals.get_flight())
+
       self.enable_all_gui_elements(True)
       self.__ui.pushbutton_stop.setEnabled(False)
       self.__ui.pushButton_video1_align.setEnabled(True)
@@ -382,34 +380,76 @@ class WindowMain(QMainWindow):
       self.__sound.play_gate_1()
 
    def __evt_speedlogic_pass_end(self, speed_pass_message: SpeedPassMessage):
-      kmh = self.set_speed(speed_pass_message.timestamp_start, speed_pass_message.timestamp_end)
       self.__sound.play_gate_2()
 
-      if (kmh >= 500):
-         logger.warning("Do not add announcement exceeding 500 km/h")
-         return
+   def __speedlogic_append_row(self, announcement: Announcement):
+      out = ("--> " if (announcement.get_direction() == 1) else "<-- ") + \
+         "%.3f" % (float(announcement.get_duration()) / 1000) + " - %d" % announcement.get_speed() + " km/h "
+      self.__speed_logic_model_announcements.appendRow(QtGui.QStandardItem(out))
 
-      if speed_pass_message.direction == 'RIGHT':
-         self.add_announcement(
-            speed_pass_message.position_start, 
-            speed_pass_message.timestamp_start, 
-            speed_pass_message.position_end,
-            speed_pass_message.timestamp_end, 
-            kmh,
-            1)
-      else:
-         self.add_announcement(
-            speed_pass_message.position_end, 
-            speed_pass_message.timestamp_end, 
-            speed_pass_message.position_start,
-            speed_pass_message.timestamp_start, 
-            kmh,
-            -1)
-
+   def __evt_speedlogic_announcement_new(self, announcement: Announcement):
+      self.__speedlogic_append_row(announcement)
       if self.__ui.checkBox_speak.isChecked():
          ''' Speak speed one second after second gate signal '''
-         self.__sound.play_number(kmh, 1000)
+         self.__sound.play_number(int(announcement.get_speed()), 1000)
 
+      self.__speedlogic_speed_update_gui(announcement)
+      self.__speedlogic_average_update_gui()
+
+   def __evt_speedlogic_announcement_load(self, announcements: Announcements):
+      self.__speed_logic_model_announcements.clear()
+      for announcement in announcements.get_announcements():
+         self.__speedlogic_append_row(announcement)
+      self.__speedlogic_average_update_gui()
+      self.__speedlogic_speed_update_gui(None)
+
+   def __speedlogic_speed_update_gui(self, announcement: Announcement):
+      if announcement is None:
+         self.__ui.label_time.setText('---')
+         self.__ui.label_speed.setText('---')
+         return
+
+      ''' Set speed from camera frame numbers '''
+      duration_sec = announcement.get_duration() / 1000
+      speed_kmh = self.__speed_logic.get_distance() / (announcement.get_duration() / 1000) * 3.6
+      self.__ui.label_time.setText("%.3f" % duration_sec + "sec")
+      self.__ui.label_speed.setText("%d" % speed_kmh + " km/h")
+
+   def __speedlogic_average_update_gui(self):
+      ''' update the average speed GUI '''
+      max_speeds = self.__speed_logic.get_announcement_max_speeds()
+
+      if max_speeds['LEFT'] == None or max_speeds['RIGHT'] == None:
+         self.__ui.label_average.setText('Average: ---')
+         return
+      average_speed = (max_speeds['LEFT'].get_speed() + max_speeds['RIGHT'].get_speed()) / 2 
+      self.__ui.label_average.setText("Average: %.1f mk/h" % average_speed)
+
+   def __cb_speed_logic_announcement_changed(self, evt):
+      self.__video_player.stop_all()
+      announcement = self.__speed_logic.get_announcement_by_index(evt.row())
+      self.__video_player.set_position('cam1', announcement.get_cam1_position())
+      self.__video_player.set_position('cam2', announcement.get_cam2_position())
+      self.__speedlogic_speed_update_gui(announcement)
+
+   def __cb_remove_announcement_clicked(self, evt):
+      index = self.__ui.listView_anouncements.currentIndex().row()
+      if index == -1:
+         QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
+         return
+      ret = QMessageBox.question(self, 'Sleipnir Information', "Confirm removing announcement", QMessageBox.Ok | QMessageBox.Cancel)
+      if ret == QMessageBox.Cancel: return
+      self.__speed_logic_model_announcements.removeRow(index)
+
+      ''' Remove both from actual index, and model for list 
+      The actual index is used when valulating average '''
+      self.__speed_logic.remove_announcement_by_index(index)
+      self.__speedlogic_average_update_gui()
+      current_row = self.__ui.listView_anouncements.currentIndex().row()
+      if (current_row == -1):
+         self.__speedlogic_speed_update_gui(None)
+      else:
+         self.__speedlogic_speed_update_gui(self.__speed_logic.get_announcement_by_index(current_row))
 
    def display_frame(self, frame :Frame):
       ''' display video frame '''
@@ -423,85 +463,9 @@ class WindowMain(QMainWindow):
       image_qt = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], QtGui.QImage.Format_Indexed8)
       self.__ui.widget_video[frame.get_cam()].setPixmap(QtGui.QPixmap.fromImage(image_qt))
 
-   def set_speed(self, cam1_timestamp, cam2_timestamp):
-      ''' Set speed from camera frame numbers '''
-      milliseconds = abs((cam1_timestamp or 0)- (cam2_timestamp or 0))
-
-      kilometer = float(self.__speed_gui_distance) / 1000
-      hours = float(milliseconds) / 1000 / 60  / 60
-
-      if (hours > 0):
-         kmh = kilometer / hours
-      else:
-         kmh = 0
-      if (kmh > 999 or kmh  < 10):
-         speed_text = "Out of range"
-         time_text = "Out of range"
-      else:
-         speed_text = '{1:.{0}f} km/h'.format(1, kmh)
-         time_text = '{1:.{0}f} sec'.format(3, float(milliseconds) / 1000)
-
-      self.__ui.label_speed.setText(speed_text)
-      self.__ui.label_time.setText(time_text)
-      return int(kmh)
 
 
-   ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤    Announcements GUI    ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
-   def __cb_announcement_changed(self, evt):
-      self.__video_player.stop_all()
-      announcements = self.announcements.get_announcement_by_index(evt.row())
-      self.__video_player.set_position('cam1', announcements.get_cam1_position())
-      self.__video_player.set_position('cam2', announcements.get_cam2_position())
-      self.set_speed(
-         self.__video_player.get_frame('cam1', announcements.get_cam1_position()).get_timestamp(),
-         self.__video_player.get_frame('cam2', announcements.get_cam2_position()).get_timestamp()
-      )
-   def __cb_remove_announcement_clicked(self, evt):
-      index = self.__ui.listView_anouncements.currentIndex().row()
-      if index == -1:
-         QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
-         return
-      ret = QMessageBox.question(self, 'Sleipnir Information', "Confirm removing announcement", QMessageBox.Ok | QMessageBox.Cancel)
-      if ret == QMessageBox.Cancel: return
-      self.announcements.remove_announcement_by_index(index)
-      self.__update_announcements_gui()
-
-   def add_announcement(self, cam1_frame_number, cam1_timestamp, cam2_frame_number, cam2_timestamp, speed, direction):
-      milliseconds = abs(cam1_timestamp - cam2_timestamp)
-
-      self.announcements.append(Announcement(
-         cam1_frame_number,
-         cam2_frame_number,
-         milliseconds,
-         speed,
-         direction
-      ))
-      self.__update_announcements_gui()
-
-   def __update_announcements_gui(self):
-      self.model_announcements.clear()
-      max_left = 0
-      max_right = 0
-      for announcement in self.announcements.get_announcements():
-         out = ("--> " if (announcement.get_direction() == 1) else "<-- ") + \
-            "%.3f" % (float(announcement.get_duration()) / 1000) + "s " + \
-            str(announcement.get_speed()) + " km/h "
-         self.model_announcements.appendRow(QtGui.QStandardItem(out))
-         if announcement.get_direction() == 1: max_right = max(max_right, announcement.get_speed())
-         if announcement.get_direction() == -1: max_left = max(max_left, announcement.get_speed())
-
-      average = (max_left + max_right) / 2 if max_left > 0 and max_right > 0 else 0
-      self.__ui.label_average.setText("Average: " + "%.1f" % average + " km/h")
-
-
-   def __save_announcements(self):
-      logger.info("Saving announcements")
-      announcement_dao.store(self.__db, self.__globals.get_flight(), self.announcements)
-
-   def __load_announcements(self, flight):
-      logger.info("Loading announcements")
-      self.announcements = announcement_dao.fetch(self.__db, flight)
 
 
    def enable_all_gui_elements(self, enabled):

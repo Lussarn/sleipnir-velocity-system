@@ -38,11 +38,19 @@ class Globals:
         event.on(CameraServer.EVENT_CAMERA_ONLINE, self.__evt_camera_online)
         event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_camera_offline)
 
+        ''' Listen to the stop event from speed_logic, to load the newly flown flight '''
+        from speed_logic import SpeedLogic
+        event.on(SpeedLogic.EVENT_SPEED_STOP, self.__evt_speedlogic_speed_stop)
+
     def __evt_camera_online(self, cam):
         self.__state.camera_online[cam] = True
 
     def __evt_camera_offline(self, cam):
         self.__state.camera_online[cam] = False
+
+    def __evt_speedlogic_speed_stop(self):
+        ''' Load the flight if a speed stop event occurs '''
+        self.set_flight(self.__state.flight)
 
     '''
     db functions

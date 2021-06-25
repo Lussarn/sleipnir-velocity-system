@@ -47,3 +47,6 @@ class Announcements:
 
    def remove_announcement_by_index(self, index):
       del self.__announcements[index]
+
+   def count(self):
+      return len(self.__announcements)
