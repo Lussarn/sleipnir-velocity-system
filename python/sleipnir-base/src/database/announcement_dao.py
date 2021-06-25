@@ -1,7 +1,7 @@
 import sqlite3
 from sqlite3.dbapi2 import OperationalError
 
-from announcements import Announcements, Announcement
+from speed_announcements import Announcements, Announcement
 from database.db import DB
 
 import logging
@@ -11,10 +11,10 @@ def store(db: DB, flight_number: int, announcements: Announcements):
     db.acquire_write_lock()
     cur = db.get_conn().cursor()
     try:
-        cur.execute("DELETE FROM announcement WHERE flight=?", [str(flight_number)])
+        cur.execute("DELETE FROM speed_trap_announcement WHERE flight=?", [str(flight_number)])
         db.get_conn().commit()
         for announcement in announcements.get_announcements():
-            cur.execute('''INSERT INTO announcement
+            cur.execute('''INSERT INTO speed_trap_announcement
                 (flight, cam1_position, cam2_position, duration, speed, direction)
                 VALUES (?, ?, ?, ?, ?, ?)
                 ''',[
@@ -38,13 +38,13 @@ def fetch(db: DB, flight: int):
     announcements = Announcements()
     try:
         for row in cur.execute(
-            '''SELECT cam1_position, cam2_position, duration, speed, direction FROM announcement WHERE flight=?''',
+            '''SELECT cam1_position, cam2_position, duration, speed, direction FROM speed_trap_announcement WHERE flight=?''',
             [str(flight)]):
                   announcements.append(Announcement(
                      int(row[0]),
                      int(row[1]),
                      int(row[2]),
-                     int(row[3]),
+                     float(row[3]),
                      int(row[4])
                   ))
     except sqlite3.Error as e:
@@ -53,3 +53,18 @@ def fetch(db: DB, flight: int):
     finally:
         cur.close()
     return announcements
+
+def delete_flight(db: DB, flight: int):
+    db.acquire_write_lock()
+    cur = db.get_conn().cursor()
+    try:
+        logger.debug("Deleting announcements for flight " + str(flight))
+        cur.execute('DELETE FROM speed_trap_announcement WHERE flight=?', [str(flight)])
+        db.get_conn().commit()
+    except OperationalError as e:
+        logger.error(str(e))
+        db.release_write_lock()
+        raise e
+    finally:
+        cur.close()
+        db.release_write_lock()

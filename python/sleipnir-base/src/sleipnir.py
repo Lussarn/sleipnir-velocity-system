@@ -7,9 +7,10 @@ import cv2 as cv
 
 from sleipnir_window import SleipnirWindow
 from speed_logic import SpeedLogic, SpeedPassMessage
+from gate_crasher_logic import GateCrasherHitMessage, GateCrasherLogic
 from configuration import Configuration, ConfigurationError
 from database.db import DB
-from announcements import Announcements, Announcement
+from speed_announcements import Announcements, Announcement
 from frame import Frame
 from camera_server import CameraServer
 from globals import Globals
@@ -50,19 +51,20 @@ class WindowMain(QMainWindow):
       self.__ui.setupUi(self)
       self.setWindowTitle("Sleipnir Velocity - Go Fast!")
 
+      ''' Initalize components '''
+      self.__globals = Globals(self.__db)
+      self.__camera_server = CameraServer(self.__globals)
+      self.__video_player = VideoPlayer(self.__globals, self, self.__configuration)
+      self.__align_logic = AlignLogic(self.__globals, self.__camera_server)
+      self.__speed_logic = SpeedLogic(self.__globals, self.__camera_server, self.__configuration)
+      self.__gate_crasher_logic = GateCrasherLogic(self.__globals, self.__camera_server, self.__configuration)
+
       ''' Start camera server '''
-      self.__camera_server = CameraServer()
       self.__camera_server.start_server(self.__db)
       event.on(CameraServer.EVENT_CAMERA_ONLINE, self.__evt_cameraserver_camera_online)
       event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_cameraserver_camera_offline)
       self.__ui.label_video1_online.setText("Cam1: Offline")
       self.__ui.label_video2_online.setText("Cam2: Offline")
-
-      ''' Initalize components '''
-      self.__globals = Globals(self.__db)
-      self.__video_player = VideoPlayer(self.__globals, self, self.__configuration)
-      self.__align_logic = AlignLogic(self.__globals, self.__camera_server)
-      self.__speed_logic = SpeedLogic(self.__globals, self.__camera_server, self.__configuration)
 
       ''' game callbacks and events '''
       event.on(Globals.EVENT_GAME_CHANGE, self.__evt_globals_game_change)
@@ -131,6 +133,13 @@ class WindowMain(QMainWindow):
       self.__ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
       self.__speed_logic_model_announcements = QtGui.QStandardItemModel()
       self.__ui.listView_anouncements.setModel(self.__speed_logic_model_announcements)
+
+      ''' Gate Crasher callbacks and events '''
+      event.on(GateCrasherLogic.EVENT_GATE_CRASHER_START, self.__evt_gatecrasherlogic_run_start)
+      event.on(GateCrasherLogic.EVENT_GATE_CRASHER_STOP, self.__evt_gatecrasherlogic_run_stop)
+      event.on(GateCrasherLogic.EVENT_GATE_CRASHER_FINISH, self.__evt_gatecrasherlogic_run_finish)
+      event.on(GateCrasherLogic.EVENT_GATE_CRASHER_NEW_FRAME, self.__evt_gatecrasherlogic_run_new_frame)
+      event.on(GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE, self.__evt_gatecrasherlogic_run_hit_gate)
 
       ''' load flight number 1 '''
       self.__globals.set_flight(1)
@@ -229,7 +238,7 @@ class WindowMain(QMainWindow):
       )
 
    def __format_video_time(self, ms):
-      return "%02d:%02d:%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
+      return "%02d:%02d.%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
 
    def __enable_video_ui(self, enabled: bool):
       self.__ui.pushbutton_video1_find.setEnabled(enabled)
@@ -298,7 +307,12 @@ class WindowMain(QMainWindow):
       if index == 1: self.__globals.set_game(Globals.GAME_GATE_CRASHER)
 
    def __evt_globals_game_change(self, game):
-      print(game)
+      self.__ui.stacked_widget_game.setCurrentIndex(
+         {
+            self.__globals.GAME_SPEED_TRAP: 0,
+            self.__globals.GAME_GATE_CRASHER: 1
+         }[game]
+      )
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Flight GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
@@ -344,12 +358,21 @@ class WindowMain(QMainWindow):
 
    def __cb_start_cameras(self):
       try:
-         self.__speed_logic.start_run()
+         if self.__globals.get_game() == Globals.GAME_SPEED_TRAP:
+            self.__speed_logic.start_run()
+         if self.__globals.get_game() == Globals.GAME_GATE_CRASHER:
+            self.__gate_crasher_logic.start_run()
       except IllegalStateError as e:
          logger.error(e)
 
    def __cb_stop_cameras(self):
-      self.__speed_logic.stop_run()
+      try:
+         if self.__globals.get_game() == Globals.GAME_SPEED_TRAP:
+            self.__speed_logic.stop_run()
+         if self.__globals.get_game() == Globals.GAME_GATE_CRASHER:
+            self.__gate_crasher_logic.stop_run()
+      except IllegalStateError as e:
+         logger.error(e)
 
    def __evt_speedlogic_speed_start(self):
       self.__speed_logic_model_announcements.clear()
@@ -395,7 +418,7 @@ class WindowMain(QMainWindow):
 
    def __speedlogic_append_row(self, announcement: Announcement):
       out = ("--> " if (announcement.get_direction() == 1) else "<-- ") + \
-         "%.3f" % (float(announcement.get_duration()) / 1000) + " - %d" % announcement.get_speed() + " km/h "
+         "%.3f" % (announcement.get_duration() / 1000) + " - %.1f" % announcement.get_speed() + " km/h "
       self.__speed_logic_model_announcements.appendRow(QtGui.QStandardItem(out))
 
    def __evt_speedlogic_announcement_new(self, announcement: Announcement):
@@ -416,15 +439,15 @@ class WindowMain(QMainWindow):
 
    def __speedlogic_speed_update_gui(self, announcement: Announcement):
       if announcement is None:
-         self.__ui.label_time.setText('Time: ---')
-         self.__ui.label_speed.setText('Speed: ---')
+         self.__ui.label_time.setText('Time:    ---')
+         self.__ui.label_speed.setText('Speed:   ---')
          return
 
       ''' Set speed from camera frame numbers '''
       duration_sec = announcement.get_duration() / 1000
       speed_kmh = self.__speed_logic.get_distance() / (announcement.get_duration() / 1000) * 3.6
-      self.__ui.label_time.setText("Time: %.3f" % duration_sec + "sec")
-      self.__ui.label_speed.setText("Speed: %d" % speed_kmh + " km/h")
+      self.__ui.label_time.setText("Time:    %.3f sec" % duration_sec)
+      self.__ui.label_speed.setText("Speed:   %.1f km/h" % speed_kmh)
 
    def __speedlogic_average_update_gui(self):
       ''' update the average speed GUI '''
@@ -434,7 +457,7 @@ class WindowMain(QMainWindow):
          self.__ui.label_average.setText('Average: ---')
          return
       average_speed = (max_speeds['LEFT'].get_speed() + max_speeds['RIGHT'].get_speed()) / 2 
-      self.__ui.label_average.setText("Average: %.1f mk/h" % average_speed)
+      self.__ui.label_average.setText("Average: %.1f km/h" % average_speed)
 
    def __cb_speed_logic_announcement_changed(self, evt):
       self.__video_player.stop_all()
@@ -464,7 +487,7 @@ class WindowMain(QMainWindow):
 
    def display_frame(self, frame :Frame):
       ''' display video frame '''
-      image = frame.pop_image_load_if_missing(self.__db)
+      image = frame.pop_image_load_if_missing(self.__db, self.__globals.get_game())
 
       # Draw center line
       cv.rectangle(image, (160, 0), (160, 480), (0, 0, 0), 1)
@@ -475,7 +498,51 @@ class WindowMain(QMainWindow):
       self.__ui.widget_video[frame.get_cam()].setPixmap(QtGui.QPixmap.fromImage(image_qt))
 
 
+   ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸    Gate Crasher GUI    ¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
+   def __evt_gatecrasherlogic_run_start(self):
+#      self.__speedlogic_speed_update_gui(None)
+      self.enable_all_gui_elements(False)
+      self.__ui.pushbutton_stop.setEnabled(True)
+      self.__ui.pushButton_video1_align.setEnabled(False)
+      self.__ui.pushButton_video2_align.setEnabled(False)
+      self.__ui.pushbutton_stop.setEnabled(True)
+
+   def __evt_gatecrasherlogic_run_stop(self):
+      ''' Stop event for speed logic'''
+
+      ''' Load the just stopped flight, this will load the video player etc. '''
+      self.__globals.set_flight(self.__globals.get_flight())
+
+      self.enable_all_gui_elements(True)
+      self.__ui.pushbutton_stop.setEnabled(False)
+      self.__ui.pushButton_video1_align.setEnabled(True)
+      self.__ui.pushButton_video2_align.setEnabled(True)
+
+   def __evt_gatecrasherlogic_run_hit_gate(self, gate_crasher_hit_message: GateCrasherHitMessage):
+      self.__sound.play_gate_2()
+
+   def __evt_gatecrasherlogic_run_finish(self, time_ms):
+#      self.__sound.play_gate_2()
+      pass
+
+
+   def __evt_gatecrasherlogic_run_new_frame(self, frame: Frame):
+      ''' Only display every third frame when live trackng - 30 fps '''
+      if self.__ui.checkBox_live.isChecked() and frame.get_position() % 3 == 0:
+         self.display_frame(frame)
+
+      ''' Display time in videos '''
+      self.__ui.label_time_video[frame.get_cam()].setText(
+         self.__format_video_time(
+            self.__gate_crasher_logic.get_time(frame)
+         )
+      )
+
+      self.__ui.label_gate_crasher_time.setText('Time: ' + 
+         self.__format_video_time(self.__gate_crasher_logic.get_current_runtime())
+      )
+      
 
 
 

@@ -7,14 +7,14 @@ from frame import Frame
 import logging
 logger = logging.getLogger(__name__)
 
-def store(db: DB, frame: Frame):
+def store(db: DB, game: str, frame: Frame):
     db.acquire_write_lock()
     cur = db.get_conn().cursor()
     try:
-        cur.execute('''INSERT INTO frame
+        cur.execute('''INSERT INTO %s_frame
             (flight, camera, position, timestamp, image)
             VALUES (?, ?, ?, ?, ?)
-            ''',[
+            ''' % game,[
             str(frame.get_flight()),
             str(1 if frame.get_cam() == 'cam1' else 2),
             str(frame.get_position()),
@@ -29,11 +29,11 @@ def store(db: DB, frame: Frame):
         cur.close()
         db.release_write_lock()
 
-def load(db: DB, flight: int, cam: str, position: int) -> Frame:
+def load(db: DB, game: str, flight: int, cam: str, position: int) -> Frame:
     cur = db.get_conn().cursor()
     try:
         row = cur.execute(
-            '''SELECT timestamp, image FROM frame WHERE position=? AND flight=? AND camera=?''',
+            '''SELECT timestamp, image FROM %s_frame WHERE position=? AND flight=? AND camera=?''' % game,
             [str(position),
             str(flight),
             str(1 if cam == 'cam1' else 2)]).fetchone()
@@ -45,27 +45,26 @@ def load(db: DB, flight: int, cam: str, position: int) -> Frame:
     finally:
         cur.close()
 
-def delete_flight(db: DB, flight: int):
+def delete_flight(db: DB, game: str, flight: int):
     db.acquire_write_lock()
     cur = db.get_conn().cursor()
     try:
         logger.debug("Deleting frames for flight " + str(flight))
-        cur.execute('DELETE FROM frame WHERE flight=?', [str(flight)])
-        logger.debug("Deleting announcements for flight " + str(flight))
-        cur.execute('DELETE FROM announcement WHERE flight=?', [str(flight)])
+        cur.execute('DELETE FROM %s_frame WHERE flight=?' % game, [str(flight)])
         db.get_conn().commit()
     except OperationalError as e:
         logger.error(str(e))
+        db.release_write_lock()
         raise e
     finally:
         cur.close()
         db.release_write_lock()
 
-def load_flight_timestamps(db: DB, flight: int, cam: str):
+def load_flight_timestamps(db: DB, game: str, flight: int, cam: str):
     cur = db.get_conn().cursor()
     try:
         return cur.execute(
-            '''SELECT position, timestamp FROM frame WHERE flight=? AND camera=?''',
+            '''SELECT position, timestamp FROM %s_frame WHERE flight=? AND camera=?''' % game,
             [str(flight),
             str(1 if cam == 'cam1' else 2)]).fetchall()
     except sqlite3.Error as e:
@@ -74,11 +73,11 @@ def load_flight_timestamps(db: DB, flight: int, cam: str):
     finally:
         cur.close()
 
-def load_frame_count(db: DB, flight: int, cam: str) -> int:
+def load_frame_count(db: DB, game: str, flight: int, cam: str) -> int:
     cur = db.get_conn().cursor()
     try:
         rs = cur.execute(
-            '''SELECT position FROM frame WHERE flight=? AND camera=? ORDER BY id DESC LIMIT 1''',
+            '''SELECT position FROM %s_frame WHERE flight=? AND camera=? ORDER BY id DESC LIMIT 1''' % game,
             [str(flight),
             str(1 if cam == 'cam1' else 2)]).fetchone()
         if rs is None: return None
@@ -89,11 +88,11 @@ def load_frame_count(db: DB, flight: int, cam: str) -> int:
     finally:
         cur.close()
 
-def load_timestamp(db: DB, flight: int, cam: str, position: int) -> int:
+def load_timestamp(db: DB, game: str, flight: int, cam: str, position: int) -> int:
     cur = db.get_conn().cursor()
     try:
         row = cur.execute(
-            '''SELECT timestamp FROM frame WHERE position=? AND flight=? and camera=?''',
+            '''SELECT timestamp FROM %s_frame WHERE position=? AND flight=? and camera=?''' % game,
             [str(position),
             str(flight),
             str(1 if cam == 'cam1' else 2)]).fetchone()

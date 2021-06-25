@@ -14,6 +14,7 @@ class CamerasData:
 
    __db = None # type: DB
    __flight = None # type: int
+   __game = None # type: str
 
    __frames = {
       'cam1': {},
@@ -25,8 +26,9 @@ class CamerasData:
       'cam2': 0
    }
 
-   def __init__(self, db: DB, flight: int):
+   def __init__(self, db: DB, game: str, flight: int):
       self.__db = db
+      self.__game = game
       self.__flight = flight
       self.__frames['cam1'] = {}
       self.__frames['cam2'] = {}
@@ -87,7 +89,7 @@ class CamerasData:
 
    def get_frame(self, cam: str, position: int) -> Frame:
       if self.__frames[cam].get(position): return self.__frames[cam][position]
-      timestamp = frame_dao.load_timestamp(self.__db, self.__flight, cam, position)
+      timestamp = frame_dao.load_timestamp(self.__db, self.__game, self.__flight, cam, position)
       if timestamp is None:
          raise IndexError("position out of range")
       self.__frames[cam][position] = Frame(self.__flight, cam, position, timestamp, None)
@@ -100,4 +102,4 @@ class CamerasData:
    def load(self):
       logger.info("Lazy loading flight " + str(self.__flight) + "...")
       for cam in ['cam1', 'cam2']:
-         self.__frame_count[cam] = frame_dao.load_frame_count(self.__db, self.__flight, cam)
+         self.__frame_count[cam] = frame_dao.load_frame_count(self.__db, self.__game, self.__flight, cam)

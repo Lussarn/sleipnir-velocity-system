@@ -6,13 +6,14 @@ import sqlite3
 from sqlite3.dbapi2 import OperationalError, connect
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 class DB():
     __write_lock = Lock()
 
     def __init__(self, save_path):
-        self.__db_version = 1
+        self.__db_version = 2
         logger.info("Opening database" + os.path.join(save_path, 'sleipnir.db'))
         self.__conn = sqlite3.connect(os.path.join(save_path, 'sleipnir.db'), check_same_thread = False)
 
@@ -61,37 +62,58 @@ class DB():
         try:
             ''' DROP tables '''
             cur.execute('DROP TABLE IF EXISTS version')
-            cur.execute('DROP INDEX IF EXISTS frame_position_idx')
-            cur.execute('DROP INDEX IF EXISTS frame_flight_idx')
+#            cur.execute('DROP INDEX IF EXISTS frame_position_idx')
+#            cur.execute('DROP INDEX IF EXISTS frame_flight_idx')
             cur.execute('DROP TABLE IF EXISTS frame')
+            cur.execute('DROP TABLE IF EXISTS speed_trap_frame')
+            cur.execute('DROP TABLE IF EXISTS gate_crasher_frame')
             cur.execute('DROP TABLE IF EXISTS announcement')
+            cur.execute('DROP TABLE IF EXISTS speed_trap_announcement')
+            cur.execute('DROP TABLE IF EXISTS gate_crasher_gate_hit')
 
-            ''' CREATE image table '''
-            cur.execute('''
-                CREATE TABLE frame (
-                    id INTEGER PRIMARY KEY,
-                    flight INTEGER,
-                    camera INTEGER,
-                    position INTEGER,
-                    timestamp INTEGER,
-                    image BLOB
-                )
-            ''')
-            ''' Index needed for retrieval of image '''
-            cur.execute('CREATE INDEX frame_position_idx ON frame (position, flight, camera)')
-            ''' Index needed for deleting flight '''
-            cur.execute('CREATE INDEX frame_flight_idx ON frame (flight)')
+            ''' CREATE frame tables for the games '''
+            for game in ['speed_trap', 'gate_crasher']:
+                cur.execute('''
+                    CREATE TABLE %s_frame (
+                        id INTEGER PRIMARY KEY,
+                        flight INTEGER,
+                        camera INTEGER,
+                        position INTEGER,
+                        timestamp INTEGER,
+                        image BLOB
+                    )
+                ''' % game)
+                ''' Index needed for retrieval of image '''
+                cur.execute("CREATE INDEX %s_frame_position_idx ON %s_frame (position, flight, camera)" % (game, game))
+                ''' Index needed for deleting flight '''
+                cur.execute('CREATE INDEX %s_frame_flight_idx ON %s_frame (flight)' % (game, game))
 
-            ''' CREATE announcement table '''
+            ''' CREATE speed trap announcement table '''
             cur.execute('''
-                CREATE TABLE announcement (
+                CREATE TABLE speed_trap_announcement (
                     id INTEGER PRIMARY KEY,
                     flight INTEGER,
                     cam1_position INTEGER,
                     cam2_position INTEGER,
                     duration INTEGER,
-                    speed INTEGER,
+                    speed REAL,
                     direction INTEGER
+                )
+            ''')
+
+            ''' CREATE gate table for gate crasher '''
+            cur.execute(''' 
+                CREATE TABLE gate_crasher_gate_hit (
+                    id INTEGER PRIMARY KEY,
+                    flight INTEGER,
+                    level_name TEXT,
+                    gate_number INTEGER,
+                    camera INTEGER,
+                    position INTEGER,
+                    timestamp INTEGER,
+                    direction INTEGER,
+                    angle INTEGER,
+                    altitude INTEGER
                 )
             ''')
 

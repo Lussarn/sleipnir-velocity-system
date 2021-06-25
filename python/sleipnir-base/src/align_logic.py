@@ -52,11 +52,8 @@ class AlignLogic:
         event.on(CameraServer.EVENT_NEW_FRAME, self.__cameraserver_evt_new_frame)
         self.__state.cam_aligning = cam
 
-        self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_flight())
-        self.__camera_server.start_shooting(
-            self.__globals.get_flight(),
-            self.__state.cameras_data
-        )
+        self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_game(), self.__globals.get_flight())
+        self.__camera_server.start_shooting(self.__state.cameras_data)
         event.emit(AlignLogic.EVENT_ALIGN_START, cam)
     
     def stop_align_camera(self, cam: str) -> bool:

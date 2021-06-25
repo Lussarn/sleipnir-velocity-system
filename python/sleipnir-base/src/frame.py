@@ -29,11 +29,11 @@ class Frame:
     def set_image(self, image):
         self.__image = image
 
-    def pop_image_load_if_missing(self, db :DB):
+    def pop_image_load_if_missing(self, db :DB, game: str):
         ''' If there is and image set, returns the image and blank the memory
             If there is no image, trye to load and return it '''
         if self.__image is None:
-            frame = frame_dao.load(db, self.__flight, self.__cam, self.__position)
+            frame = frame_dao.load(db, game, self.__flight, self.__cam, self.__position)
             if frame is None: return
             return simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
         else:

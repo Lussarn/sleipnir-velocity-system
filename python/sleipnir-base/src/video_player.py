@@ -8,7 +8,6 @@ from globals import Globals
 from frame import Frame
 from cameras_data import CamerasData
 from configuration import Configuration
-from speed_logic import SpeedLogic
 from motion_tracker import MotionTracker, MotionTrackerDoMessage
 
 logger = logging.getLogger(__name__)
@@ -94,7 +93,7 @@ class VideoPlayer:
     def __evt_globals_flight_change(self, flight):
         ''' When flights change load new cameras_datas '''
         self.__stop_timers()
-        self.__state.cameras_data = CamerasData(self.__globals.get_db(), flight)
+        self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_game(), flight)
         self.__state.cameras_data.load()
         for cam in ['cam1', 'cam2']:
             self.__state.position[cam] = 1
@@ -140,7 +139,7 @@ class VideoPlayer:
                 frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
 
                 do_message = MotionTrackerDoMessage(
-                    frame.pop_image_load_if_missing(self.__globals.get_db()),
+                    frame.pop_image_load_if_missing(self.__globals.get_db(), self.__globals.get_game()),
                     frame.get_position(),
                     self.__globals.get_ground_level(), 
                     self.__state.max_dive_angle, 

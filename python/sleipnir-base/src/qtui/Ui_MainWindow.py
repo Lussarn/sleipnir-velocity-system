@@ -272,18 +272,18 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_4.addWidget(self.combo_box_game_select)
 
-        self.stackedWidget = QStackedWidget(self.centralwidget)
-        self.stackedWidget.setObjectName(u"stackedWidget")
-        self.stackedWidget.setEnabled(True)
+        self.stacked_widget_game = QStackedWidget(self.centralwidget)
+        self.stacked_widget_game.setObjectName(u"stacked_widget_game")
+        self.stacked_widget_game.setEnabled(True)
         sizePolicy = QSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
         sizePolicy.setHorizontalStretch(0)
         sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.stackedWidget.sizePolicy().hasHeightForWidth())
-        self.stackedWidget.setSizePolicy(sizePolicy)
-        self.stackedWidget.setMinimumSize(QSize(0, 0))
-        self.stackedWidget.setMaximumSize(QSize(16777215, 16777215))
-        self.stackedWidget.setLayoutDirection(Qt.LeftToRight)
-        self.stackedWidget.setAutoFillBackground(False)
+        sizePolicy.setHeightForWidth(self.stacked_widget_game.sizePolicy().hasHeightForWidth())
+        self.stacked_widget_game.setSizePolicy(sizePolicy)
+        self.stacked_widget_game.setMinimumSize(QSize(0, 0))
+        self.stacked_widget_game.setMaximumSize(QSize(16777215, 16777215))
+        self.stacked_widget_game.setLayoutDirection(Qt.LeftToRight)
+        self.stacked_widget_game.setAutoFillBackground(False)
         self.speed_measure = QWidget()
         self.speed_measure.setObjectName(u"speed_measure")
         self.speed_measure.setMinimumSize(QSize(250, 500))
@@ -334,13 +334,20 @@ class Ui_MainWindow(object):
 
         self.label_time = QLabel(self.speed_measure)
         self.label_time.setObjectName(u"label_time")
-        self.label_time.setStyleSheet(u"font-size: 24px;")
+        font = QFont()
+        font.setFamily(u"Consolas")
+        font.setPointSize(18)
+        self.label_time.setFont(font)
+        self.label_time.setStyleSheet(u"")
         self.label_time.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
 
         self.verticalLayout.addWidget(self.label_time)
 
         self.label_speed = QLabel(self.speed_measure)
         self.label_speed.setObjectName(u"label_speed")
+        font1 = QFont()
+        font1.setFamily(u"Consolas")
+        self.label_speed.setFont(font1)
         self.label_speed.setStyleSheet(u"font-size: 24px;")
         self.label_speed.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
 
@@ -348,6 +355,7 @@ class Ui_MainWindow(object):
 
         self.label_average = QLabel(self.speed_measure)
         self.label_average.setObjectName(u"label_average")
+        self.label_average.setFont(font1)
         self.label_average.setStyleSheet(u"font-size: 24px")
 
         self.verticalLayout.addWidget(self.label_average)
@@ -359,7 +367,7 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addLayout(self.verticalLayoutSpeed)
 
-        self.stackedWidget.addWidget(self.speed_measure)
+        self.stacked_widget_game.addWidget(self.speed_measure)
         self.gate_crasher = QWidget()
         self.gate_crasher.setObjectName(u"gate_crasher")
         self.verticalLayout_5 = QVBoxLayout(self.gate_crasher)
@@ -380,9 +388,16 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_5.addWidget(self.table_view_gate_crasher_result)
 
-        self.stackedWidget.addWidget(self.gate_crasher)
+        self.label_gate_crasher_time = QLabel(self.gate_crasher)
+        self.label_gate_crasher_time.setObjectName(u"label_gate_crasher_time")
+        self.label_gate_crasher_time.setFont(font)
+        self.label_gate_crasher_time.setStyleSheet(u"")
 
-        self.verticalLayout_4.addWidget(self.stackedWidget)
+        self.verticalLayout_5.addWidget(self.label_gate_crasher_time)
+
+        self.stacked_widget_game.addWidget(self.gate_crasher)
+
+        self.verticalLayout_4.addWidget(self.stacked_widget_game)
 
         self.line = QFrame(self.centralwidget)
         self.line.setObjectName(u"line")
@@ -525,16 +540,16 @@ class Ui_MainWindow(object):
         self.pushbutton_start.setObjectName(u"pushbutton_start")
         self.pushbutton_start.setMinimumSize(QSize(0, 60))
         self.pushbutton_start.setBaseSize(QSize(0, 0))
-        font = QFont()
-        font.setPointSize(12)
-        self.pushbutton_start.setFont(font)
+        font2 = QFont()
+        font2.setPointSize(12)
+        self.pushbutton_start.setFont(font2)
 
         self.horizontalLayout.addWidget(self.pushbutton_start)
 
         self.pushbutton_stop = QPushButton(self.centralwidget)
         self.pushbutton_stop.setObjectName(u"pushbutton_stop")
         self.pushbutton_stop.setMinimumSize(QSize(0, 60))
-        self.pushbutton_stop.setFont(font)
+        self.pushbutton_stop.setFont(font2)
 
         self.horizontalLayout.addWidget(self.pushbutton_stop)
 
@@ -556,7 +571,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.stackedWidget.setCurrentIndex(0)
+        self.stacked_widget_game.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -593,10 +608,11 @@ class Ui_MainWindow(object):
         self.label_distance.setText(QCoreApplication.translate("MainWindow", u"Distance Meters", None))
         self.checkBox_speak.setText(QCoreApplication.translate("MainWindow", u"Realtime Announcements", None))
         self.pushButton_remove_announcement.setText(QCoreApplication.translate("MainWindow", u"Remove Announcement", None))
-        self.label_time.setText(QCoreApplication.translate("MainWindow", u"Time: ---", None))
-        self.label_speed.setText(QCoreApplication.translate("MainWindow", u"Speed: ---", None))
+        self.label_time.setText(QCoreApplication.translate("MainWindow", u"Time:    ---", None))
+        self.label_speed.setText(QCoreApplication.translate("MainWindow", u"Speed:   ---", None))
         self.label_average.setText(QCoreApplication.translate("MainWindow", u"Average: ---", None))
         self.label.setText(QCoreApplication.translate("MainWindow", u"Select Level", None))
+        self.label_gate_crasher_time.setText(QCoreApplication.translate("MainWindow", u"Time: ---", None))
         self.checkBox_live.setText(QCoreApplication.translate("MainWindow", u"Live Video Feed", None))
         self.label_flightnumber.setText(QCoreApplication.translate("MainWindow", u"Flight Number", None))
         self.radioButton_flight_20.setText(QCoreApplication.translate("MainWindow", u"20", None))

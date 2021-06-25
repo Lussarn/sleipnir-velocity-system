@@ -9,8 +9,9 @@ from cameras_data import CamerasData
 from frame import Frame
 from errors import *
 from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
-from announcements import Announcements, Announcement
+from speed_announcements import Announcements, Announcement
 import database.announcement_dao as announcement_dao
+import database.frame_dao as frame_dao
 
 logger = logging.getLogger(__name__)
 
@@ -120,12 +121,14 @@ class SpeedLogic:
 
     def __evt_globals_flight_change(self, flight):
         ''' Loading announcement '''
+        if self.__globals.get_game != Globals.GAME_SPEED_TRAP: return
         logger.info("Loading announcements for flight %d" % flight)
         self.__state.announcements = announcement_dao.fetch(self.__globals.get_db(), flight)
         event.emit(SpeedLogic.EVENT_ANNOUNCEMENT_LOAD, self.__state.announcements)
 
     def start_run(self):
         ''' Starting run '''
+        logger.info("Speed Trap starting...")
 
         ''' Timed run already in progress? '''
         if self.__state.running: return
@@ -142,18 +145,25 @@ class SpeedLogic:
         self.__state.pass_abort_time = None
         self.__state.announcements.clear()
 
+        try:
+            logger.info("Deleting Announcements for flight %d..." % self.__globals.get_flight())
+            announcement_dao.delete_flight(self.__globals.get_db(), self.__globals.get_flight())
+            logger.info("Deleting Frames for flight %d, hang on..." % self.__globals.get_flight())
+            frame_dao.delete_flight(self.__globals.get_db(), self.__globals.GAME_SPEED_TRAP ,self.__globals.get_flight())
+        except Exception as e:
+            logger.error(str(e))
+            return
+
         event.on(CameraServer.EVENT_NEW_FRAME, self.__cameraserver_evt_new_frame)
         self.__state.running = True
 
-        self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_flight())
-        self.__camera_server.start_shooting(
-            self.__globals.get_flight(),
-            self.__state.cameras_data
-        )
+        self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_game(), self.__globals.get_flight())
+        self.__camera_server.start_shooting(self.__state.cameras_data)
         event.emit(SpeedLogic.EVENT_SPEED_START)
 
     def stop_run(self):
         ''' Stopping run '''
+        logger.info("Speed Trap stopping...")
 
         ''' Timed run not in progress? '''
         if self.__state.running == False: return
@@ -181,6 +191,7 @@ class SpeedLogic:
         if self.__state.pass_abort_time != None and time.time() > self.__state.pass_abort_time:
             self.__state.pass_abort_time = None
             event.emit(SpeedLogic.EVENT_PASS_ABORT)
+            return
 
         cam = frame.get_cam()
 
@@ -198,12 +209,12 @@ class SpeedLogic:
                 
         worker = self.__motion_tracker_threads[cam]
 
-        ''' Wait for the motion tracker to finnish before trying a new one '''
+        ''' Wait for the motion tracker to finish before trying a new one '''
         worker.wait()
         done_message = worker.get_motion_tracker_done_message()
         
         do_message = MotionTrackerDoMessage(
-            frame.pop_image_load_if_missing(self.__globals.get_db()),
+            frame.pop_image_load_if_missing(self.__globals.get_db(), self.__globals.get_game()),
             frame.get_position(),
             self.__globals.get_ground_level(), 
             self.__state.max_dive_angle,
