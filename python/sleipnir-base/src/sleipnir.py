@@ -127,8 +127,6 @@ class WindowMain(QMainWindow):
       event.on(SpeedLogic.EVENT_PASS_ABORT, self.__evt_speedlogic_pass_abort)
       self.__ui.pushbutton_stop.setEnabled(False)
       self.__ui.pushbutton_start.setEnabled(False)
-      self.__speedgui_speak_speed = None
-      self.__speedgui_speak_speed_timestamp = None
       self.__speed_gui_distance = 100
       self.__ui.lineEdit_distance.setText(str(self.__speed_gui_distance))
       self.__ui.lineEdit_distance.textChanged.connect(self.__cb_distance_changed)
@@ -356,8 +354,6 @@ class WindowMain(QMainWindow):
       self.__ui.pushButton_video1_align.setEnabled(False)
       self.__ui.pushButton_video2_align.setEnabled(False)
       self.__ui.pushbutton_stop.setEnabled(True)
-      self.__speedgui_speak_speed = None
-      self.__speedgui_speak_speed_timestamp = None
 
    def __evt_speedlogic_speed_stop(self):
       self.__save_announcements()
@@ -378,14 +374,6 @@ class WindowMain(QMainWindow):
             self.__speed_logic.get_time(frame)
          )
       )
-
-      ''' Since frames are arriving all th time we hook on here 
-      for the speed speak, which needs to happen a second after 
-      making a correct pass '''
-      if self.__speedgui_speak_speed != None and time.time() > self.__speedgui_speak_speed_timestamp:
-         self.__sound.play_number(self.__speedgui_speak_speed)
-         self.__speedgui_speak_speed = None
-         self.__speedgui_speak_speed_timestamp = None
 
    def __evt_speedlogic_pass_abort(self):
       self.__sound.play_error()
@@ -419,8 +407,9 @@ class WindowMain(QMainWindow):
             -1)
 
       if self.__ui.checkBox_speak.isChecked():
-         self.__speedgui_speak_speed = kmh
-         self.__speedgui_speak_speed_timestamp = time.time() + 1.0
+         ''' Speak speed one second after second gate signal '''
+         self.__sound.play_number(kmh, 1000)
+
 
    def display_frame(self, frame :Frame):
       ''' display video frame '''

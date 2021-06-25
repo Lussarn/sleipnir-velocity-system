@@ -1,5 +1,6 @@
 import pygame
 import logging
+from PySide2.QtCore import QTimer
 
 logger = logging.getLogger(__name__)
 
@@ -18,14 +19,14 @@ class Sound:
             self.sounds['number-' + str(i)] = pygame.mixer.Sound('assets/sounds/numbers/' + str(i) + '.ogg')
         logger.info("All sounds loaded")
 
-    def play_gate_1(self):
-        self.sounds['gate-1'].play()
+    def play_gate_1(self, wait=0):
+        QTimer.singleShot(wait, self.sounds['gate-1'].play)
 
-    def play_gate_2(self):
-        self.sounds['gate-2'].play()
+    def play_gate_2(self, wait=0):
+        QTimer.singleShot(wait, self.sounds['gate-2'].play)
 
-    def play_error(self):
-        self.sounds['error'].play()
+    def play_error(self, wait=0):
+        QTimer.singleShot(wait, self.sounds['error'].play)
 
-    def play_number(self, number: int):
-        self.sounds['number-' + str(number)].play()
+    def play_number(self, number: int, wait=0):
+        QTimer.singleShot(wait, self.sounds['number-' + str(number)].play)
