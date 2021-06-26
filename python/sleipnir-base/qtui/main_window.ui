@@ -629,7 +629,7 @@
                 <property name="font">
                  <font>
                   <family>Consolas</family>
-                  <pointsize>14</pointsize>
+                  <pointsize>16</pointsize>
                  </font>
                 </property>
                 <property name="styleSheet">
@@ -648,7 +648,7 @@
                 <property name="font">
                  <font>
                   <family>Consolas</family>
-                  <pointsize>14</pointsize>
+                  <pointsize>16</pointsize>
                  </font>
                 </property>
                 <property name="styleSheet">
@@ -667,7 +667,7 @@
                 <property name="font">
                  <font>
                   <family>Consolas</family>
-                  <pointsize>14</pointsize>
+                  <pointsize>16</pointsize>
                  </font>
                 </property>
                 <property name="styleSheet">
@@ -738,7 +738,7 @@
                 <property name="font">
                  <font>
                   <family>Consolas</family>
-                  <pointsize>18</pointsize>
+                  <pointsize>16</pointsize>
                  </font>
                 </property>
                 <property name="styleSheet">

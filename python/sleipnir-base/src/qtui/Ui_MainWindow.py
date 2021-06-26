@@ -341,7 +341,7 @@ class Ui_MainWindow(object):
         self.label_time.setObjectName(u"label_time")
         font1 = QFont()
         font1.setFamily(u"Consolas")
-        font1.setPointSize(14)
+        font1.setPointSize(16)
         self.label_time.setFont(font1)
         self.label_time.setStyleSheet(u"")
         self.label_time.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
@@ -399,10 +399,7 @@ class Ui_MainWindow(object):
 
         self.label_gate_crasher_time = QLabel(self.gate_crasher)
         self.label_gate_crasher_time.setObjectName(u"label_gate_crasher_time")
-        font2 = QFont()
-        font2.setFamily(u"Consolas")
-        font2.setPointSize(18)
-        self.label_gate_crasher_time.setFont(font2)
+        self.label_gate_crasher_time.setFont(font1)
         self.label_gate_crasher_time.setStyleSheet(u"")
 
         self.verticalLayout_5.addWidget(self.label_gate_crasher_time)
@@ -552,16 +549,16 @@ class Ui_MainWindow(object):
         self.pushbutton_start.setObjectName(u"pushbutton_start")
         self.pushbutton_start.setMinimumSize(QSize(0, 60))
         self.pushbutton_start.setBaseSize(QSize(0, 0))
-        font3 = QFont()
-        font3.setPointSize(12)
-        self.pushbutton_start.setFont(font3)
+        font2 = QFont()
+        font2.setPointSize(12)
+        self.pushbutton_start.setFont(font2)
 
         self.horizontalLayout.addWidget(self.pushbutton_start)
 
         self.pushbutton_stop = QPushButton(self.centralwidget)
         self.pushbutton_stop.setObjectName(u"pushbutton_stop")
         self.pushbutton_stop.setMinimumSize(QSize(0, 60))
-        self.pushbutton_stop.setFont(font3)
+        self.pushbutton_stop.setFont(font2)
 
         self.horizontalLayout.addWidget(self.pushbutton_stop)
 
