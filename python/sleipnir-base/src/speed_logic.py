@@ -190,8 +190,8 @@ class SpeedLogic:
         ''' Speed pass timeout? '''
         if self.__state.pass_abort_time != None and time.time() > self.__state.pass_abort_time:
             self.__state.pass_abort_time = None
+            self.__state.pass_direction = None
             event.emit(SpeedLogic.EVENT_PASS_ABORT)
-            return
 
         cam = frame.get_cam()
 

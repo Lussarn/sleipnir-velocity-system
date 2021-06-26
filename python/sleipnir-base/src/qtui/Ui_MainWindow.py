@@ -17,7 +17,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1195, 839)
+        MainWindow.resize(1195, 952)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
@@ -314,13 +314,18 @@ class Ui_MainWindow(object):
 
         self.verticalLayout.addWidget(self.checkBox_speak)
 
-        self.listView_anouncements = QListView(self.speed_measure)
-        self.listView_anouncements.setObjectName(u"listView_anouncements")
-        self.listView_anouncements.setEnabled(True)
-        self.listView_anouncements.setMinimumSize(QSize(200, 250))
-        self.listView_anouncements.setMaximumSize(QSize(100000, 100000))
+        self.table_view_speed_trap_announcement = QTableView(self.speed_measure)
+        self.table_view_speed_trap_announcement.setObjectName(u"table_view_speed_trap_announcement")
+        font = QFont()
+        font.setFamily(u"Consolas")
+        font.setPointSize(10)
+        self.table_view_speed_trap_announcement.setFont(font)
+        self.table_view_speed_trap_announcement.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.table_view_speed_trap_announcement.horizontalHeader().setDefaultSectionSize(60)
+        self.table_view_speed_trap_announcement.horizontalHeader().setStretchLastSection(True)
+        self.table_view_speed_trap_announcement.verticalHeader().setVisible(False)
 
-        self.verticalLayout.addWidget(self.listView_anouncements)
+        self.verticalLayout.addWidget(self.table_view_speed_trap_announcement)
 
         self.pushButton_remove_announcement = QPushButton(self.speed_measure)
         self.pushButton_remove_announcement.setObjectName(u"pushButton_remove_announcement")
@@ -334,10 +339,10 @@ class Ui_MainWindow(object):
 
         self.label_time = QLabel(self.speed_measure)
         self.label_time.setObjectName(u"label_time")
-        font = QFont()
-        font.setFamily(u"Consolas")
-        font.setPointSize(18)
-        self.label_time.setFont(font)
+        font1 = QFont()
+        font1.setFamily(u"Consolas")
+        font1.setPointSize(18)
+        self.label_time.setFont(font1)
         self.label_time.setStyleSheet(u"")
         self.label_time.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
 
@@ -345,9 +350,9 @@ class Ui_MainWindow(object):
 
         self.label_speed = QLabel(self.speed_measure)
         self.label_speed.setObjectName(u"label_speed")
-        font1 = QFont()
-        font1.setFamily(u"Consolas")
-        self.label_speed.setFont(font1)
+        font2 = QFont()
+        font2.setFamily(u"Consolas")
+        self.label_speed.setFont(font2)
         self.label_speed.setStyleSheet(u"font-size: 24px;")
         self.label_speed.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
 
@@ -355,7 +360,7 @@ class Ui_MainWindow(object):
 
         self.label_average = QLabel(self.speed_measure)
         self.label_average.setObjectName(u"label_average")
-        self.label_average.setFont(font1)
+        self.label_average.setFont(font2)
         self.label_average.setStyleSheet(u"font-size: 24px")
 
         self.verticalLayout.addWidget(self.label_average)
@@ -385,10 +390,7 @@ class Ui_MainWindow(object):
 
         self.table_view_gate_crasher_result = QTableView(self.gate_crasher)
         self.table_view_gate_crasher_result.setObjectName(u"table_view_gate_crasher_result")
-        font2 = QFont()
-        font2.setFamily(u"Consolas")
-        font2.setPointSize(10)
-        self.table_view_gate_crasher_result.setFont(font2)
+        self.table_view_gate_crasher_result.setFont(font)
         self.table_view_gate_crasher_result.setStyleSheet(u"")
         self.table_view_gate_crasher_result.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.table_view_gate_crasher_result.horizontalHeader().setDefaultSectionSize(60)
@@ -399,7 +401,7 @@ class Ui_MainWindow(object):
 
         self.label_gate_crasher_time = QLabel(self.gate_crasher)
         self.label_gate_crasher_time.setObjectName(u"label_gate_crasher_time")
-        self.label_gate_crasher_time.setFont(font)
+        self.label_gate_crasher_time.setFont(font1)
         self.label_gate_crasher_time.setStyleSheet(u"")
 
         self.verticalLayout_5.addWidget(self.label_gate_crasher_time)
@@ -580,7 +582,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.stacked_widget_game.setCurrentIndex(1)
+        self.stacked_widget_game.setCurrentIndex(0)
 
 
         QMetaObject.connectSlotsByName(MainWindow)

@@ -112,7 +112,7 @@ class GateCrasherLogic:
     EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD = 'gatecrasher.announcement.load'
 
     __MAX_ALLOWED_LAG = 15
-    __RESTART_TIME = 150
+    __RESTART_TIME = 15
 
     def __init__(self, globals: Globals, camera_server: CameraServer, configuration: Configuration):
         self.__globals = globals
@@ -338,14 +338,11 @@ class GateCrasherLogic:
             self.__state.current_gate_number += 1
 
     def get_time(self, frame: Frame) -> int:
-        ''' Has run started '''
-        if self.__state.timestamp_start is None: return 0
-
-        ''' get time on frame position since run start '''
-        t = frame.get_timestamp() - self.__state.timestamp_start
+        ''' get time on frame position '''
+        t = frame.get_timestamp() - self.__state.cameras_data.get_start_timestamp()
         if t < 0: t =0
         return t
-
+        
     def get_announcement_by_index(self, index) -> GateCrasherAnnouncement:
         return self.__state.announcements[index]
 

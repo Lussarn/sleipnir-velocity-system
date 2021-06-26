@@ -130,10 +130,12 @@ class WindowMain(QMainWindow):
       ''' Announcement '''
       event.on(SpeedLogic.EVENT_ANNOUNCEMENT_NEW, self.__evt_speedlogic_announcement_new)
       event.on(SpeedLogic.EVENT_ANNOUNCEMENT_LOAD, self.__evt_speedlogic_announcement_load)
-      self.__ui.listView_anouncements.clicked.connect(self.__cb_speed_logic_announcement_changed)
       self.__ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
-      self.__speed_logic_model_announcements = QtGui.QStandardItemModel()
-      self.__ui.listView_anouncements.setModel(self.__speed_logic_model_announcements)
+      self.__speed_logic_model_result = QtGui.QStandardItemModel()
+      self.__speed_logic_init_model_result()
+      self.__ui.table_view_speed_trap_announcement.setModel(self.__speed_logic_model_result)
+      self.__ui.table_view_speed_trap_announcement.setSelectionBehavior(QAbstractItemView.SelectRows)
+      self.__ui.table_view_speed_trap_announcement.clicked.connect(self.__cb_speed_logic_announcement_changed)
 
       ''' Gate Crasher callbacks and events '''
       event.on(GateCrasherLogic.EVENT_GATE_CRASHER_START, self.__evt_gatecrasherlogic_run_start)
@@ -366,6 +368,11 @@ class WindowMain(QMainWindow):
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Speed GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
+   def __speed_logic_init_model_result(self):
+      self.__speed_logic_model_result.clear()
+      self.__speed_logic_model_result.setHorizontalHeaderLabels(["", "Dir", "Time", "Speed"])
+      self.__ui.table_view_speed_trap_announcement.setColumnWidth(0, 30)
+
    def __cb_start_cameras(self):
       try:
          if self.__globals.get_game() == Globals.GAME_SPEED_TRAP:
@@ -385,7 +392,9 @@ class WindowMain(QMainWindow):
          logger.error(e)
 
    def __evt_speedlogic_speed_start(self):
-      self.__speed_logic_model_announcements.clear()
+      self.__ui.slider_video['cam1'].setSliderPosition(0)
+      self.__ui.slider_video['cam2'].setSliderPosition(0)
+      self.__speed_logic_init_model_result()
       self.__speedlogic_average_update_gui()
       self.__speedlogic_speed_update_gui(None)
       self.enable_all_gui_elements(False)
@@ -427,9 +436,21 @@ class WindowMain(QMainWindow):
       self.__sound.play_beep_beep()
 
    def __speedlogic_append_row(self, announcement: Announcement):
-      out = ("--> " if (announcement.get_direction() == 1) else "<-- ") + \
-         "%.3f" % (announcement.get_duration() / 1000) + " - %.1f" % announcement.get_speed() + " km/h "
-      self.__speed_logic_model_announcements.appendRow(QtGui.QStandardItem(out))
+      out = []
+      item = QtGui.QStandardItem(str(self.__speed_logic_model_result.rowCount() + 1))
+      item.setTextAlignment(QtCore.Qt.AlignCenter)
+      out.append(item)
+      item = QtGui.QStandardItem("-->" if announcement.get_direction() == 1 else "<--")
+      item.setTextAlignment(QtCore.Qt.AlignCenter)
+      out.append(item)
+      item = QtGui.QStandardItem("%.3f" % (announcement.get_duration() / 1000))
+      item.setTextAlignment(QtCore.Qt.AlignCenter)
+      out.append(item)
+      item = QtGui.QStandardItem("%.1f" % announcement.get_speed())
+      item.setTextAlignment(QtCore.Qt.AlignCenter)
+      out.append(item)
+      self.__speed_logic_model_result.appendRow(out)
+      self.__ui.table_view_speed_trap_announcement.setRowHeight(self.__speed_logic_model_result.rowCount() - 1, 18)
 
    def __evt_speedlogic_announcement_new(self, announcement: Announcement):
       self.__speedlogic_append_row(announcement)
@@ -441,7 +462,7 @@ class WindowMain(QMainWindow):
       self.__speedlogic_average_update_gui()
 
    def __evt_speedlogic_announcement_load(self, announcements: Announcements):
-      self.__speed_logic_model_announcements.clear()
+      self.__speed_logic_init_model_result()
       for announcement in announcements.get_announcements():
          self.__speedlogic_append_row(announcement)
       self.__speedlogic_average_update_gui()
@@ -477,19 +498,19 @@ class WindowMain(QMainWindow):
       self.__speedlogic_speed_update_gui(announcement)
 
    def __cb_remove_announcement_clicked(self, evt):
-      index = self.__ui.listView_anouncements.currentIndex().row()
+      index = self.__ui.table_view_speed_trap_announcement.currentIndex().row()
       if index == -1:
          QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
          return
       ret = QMessageBox.question(self, 'Sleipnir Information', "Confirm removing announcement", QMessageBox.Ok | QMessageBox.Cancel)
       if ret == QMessageBox.Cancel: return
-      self.__speed_logic_model_announcements.removeRow(index)
+      self.__speed_logic_model_result.removeRow(index)
 
       ''' Remove both from actual index, and model for list 
       The actual index is used when valulating average '''
       self.__speed_logic.remove_announcement_by_index(index)
       self.__speedlogic_average_update_gui()
-      current_row = self.__ui.listView_anouncements.currentIndex().row()
+      current_row = self.__ui.table_view_speed_trap_announcement.currentIndex().row()
       if (current_row == -1):
          self.__speedlogic_speed_update_gui(None)
       else:
@@ -519,6 +540,8 @@ class WindowMain(QMainWindow):
       self.__gate_crasher_logic.set_level(index)
 
    def __evt_gatecrasherlogic_run_start(self):
+      self.__ui.slider_video['cam1'].setSliderPosition(0)
+      self.__ui.slider_video['cam2'].setSliderPosition(0)
       self.enable_all_gui_elements(False)
       self.__ui.pushbutton_stop.setEnabled(True)
       self.__ui.pushButton_video1_align.setEnabled(False)
@@ -643,11 +666,12 @@ class WindowMain(QMainWindow):
 
       self.__ui.combo_box_game_select.setEnabled(enabled)
       self.__ui.combo_box_gate_crasher_level_select.setEnabled(enabled)
+      self.__ui.table_view_gate_crasher_result.setEnabled(enabled)
 
       self.__ui.pushbutton_stop.setEnabled(enabled)
       self.__ui.pushbutton_start.setEnabled(enabled)
       self.__ui.checkBox_speak.setEnabled(enabled)
-      self.__ui.listView_anouncements.setEnabled(enabled)
+      self.__ui.table_view_speed_trap_announcement.setEnabled(enabled)
       self.__ui.verticalSlider_groundlevel.setEnabled(enabled)
 
       self.__ui.lineEdit_distance.setEnabled(enabled)
