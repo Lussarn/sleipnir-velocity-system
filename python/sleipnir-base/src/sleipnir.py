@@ -141,6 +141,7 @@ class WindowMain(QMainWindow):
       event.on(GateCrasherLogic.EVENT_GATE_CRASHER_FINISH, self.__evt_gatecrasherlogic_run_finish)
       event.on(GateCrasherLogic.EVENT_GATE_CRASHER_NEW_FRAME, self.__evt_gatecrasherlogic_run_new_frame)
       event.on(GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE, self.__evt_gatecrasherlogic_run_hit_gate)
+      event.on(GateCrasherLogic.EVENT_GATE_CRASHER_RESTART, self.__evt_gatecrasherlogic_run_restart)
       self.__gatecrasher_logic_model_result = QtGui.QStandardItemModel()
       self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
       self.__ui.table_view_gate_crasher_result.setModel(self.__gatecrasher_logic_model_result)
@@ -531,6 +532,10 @@ class WindowMain(QMainWindow):
       self.__ui.pushbutton_stop.setEnabled(False)
       self.__ui.pushButton_video1_align.setEnabled(True)
       self.__ui.pushButton_video2_align.setEnabled(True)
+
+   def __evt_gatecrasherlogic_run_restart(self):
+      self.__gatecrasher_logic_model_result.clear()
+      self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
 
    def __evt_gatecrasherlogic_run_hit_gate(self, gate_crasher_announcement: GateCrasherAnnouncement):
       self.__sound.play_gate_2()

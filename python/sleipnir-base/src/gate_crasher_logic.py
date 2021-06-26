@@ -71,8 +71,6 @@ class GateCrasherState:
         ''' Announcements '''
         self.announcements = [] # type: list[GateCrasherAnnouncement]
 
-
-
 class GateCrasherHitPoint:
     def __init__(self, cam : str, direction: str):
         self.__cam = cam
@@ -110,6 +108,7 @@ class GateCrasherLogic:
     EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD = 'gatecrasher.announcement.load'
 
     __MAX_ALLOWED_LAG = 15
+    __RESTART_TIME = 15
 
     def __init__(self, globals: Globals, camera_server: CameraServer, configuration: Configuration):
         self.__globals = globals
@@ -219,7 +218,11 @@ class GateCrasherLogic:
 
         ''' Gate crash timeout? '''
         if self.__state.pass_restart_time != None and time.time() > self.__state.pass_restart_time:
+            self.__state.current_gate_number = 0
+            self.__state.lag_recovery = 0
             self.__state.pass_restart_time = None
+            self.__state.announcements = []
+            self.__state.current_runtime_ms = 0
             event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_RESTART)
             return
 
@@ -316,6 +319,9 @@ class GateCrasherLogic:
                 event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_FINISH, finish_time)
                 self.stop_run()
                 return
+
+            ''' Set restart time '''
+            self.__state.pass_restart_time = time.time() + self.__RESTART_TIME
 
             ''' Move on to next gate '''
             self.__state.current_gate_number += 1
