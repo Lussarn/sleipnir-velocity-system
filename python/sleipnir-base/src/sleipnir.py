@@ -536,6 +536,7 @@ class WindowMain(QMainWindow):
    def __evt_gatecrasherlogic_run_restart(self):
       self.__gatecrasher_logic_model_result.clear()
       self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
+      self.__sound.play_error()
 
    def __evt_gatecrasherlogic_run_hit_gate(self, gate_crasher_announcement: GateCrasherAnnouncement):
       self.__sound.play_gate_2()
