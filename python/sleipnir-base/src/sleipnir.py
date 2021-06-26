@@ -1,13 +1,13 @@
 import sys
 import time
 
-from PySide2 import QtGui
-from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
+from PySide2 import QtGui, QtCore
+from PySide2.QtWidgets import QAbstractItemView, QApplication, QMainWindow, QMessageBox
 import cv2 as cv
 
 from sleipnir_window import SleipnirWindow
 from speed_logic import SpeedLogic, SpeedPassMessage
-from gate_crasher_logic import GateCrasherHitMessage, GateCrasherLogic
+from gate_crasher_logic import GateCrasherAnnouncement, GateCrasherLogic
 from configuration import Configuration, ConfigurationError
 from database.db import DB
 from speed_announcements import Announcements, Announcement
@@ -140,6 +140,10 @@ class WindowMain(QMainWindow):
       event.on(GateCrasherLogic.EVENT_GATE_CRASHER_FINISH, self.__evt_gatecrasherlogic_run_finish)
       event.on(GateCrasherLogic.EVENT_GATE_CRASHER_NEW_FRAME, self.__evt_gatecrasherlogic_run_new_frame)
       event.on(GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE, self.__evt_gatecrasherlogic_run_hit_gate)
+      self.__gatecrasher_logic_model_result = QtGui.QStandardItemModel()
+      self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
+      self.__ui.table_view_gate_crasher_result.setModel(self.__gatecrasher_logic_model_result)
+      self.__ui.table_view_gate_crasher_result.setSelectionBehavior(QAbstractItemView.SelectRows)
 
       ''' load flight number 1 '''
       self.__globals.set_flight(1)
@@ -501,7 +505,6 @@ class WindowMain(QMainWindow):
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸    Gate Crasher GUI    ¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
    def __evt_gatecrasherlogic_run_start(self):
-#      self.__speedlogic_speed_update_gui(None)
       self.enable_all_gui_elements(False)
       self.__ui.pushbutton_stop.setEnabled(True)
       self.__ui.pushButton_video1_align.setEnabled(False)
@@ -509,7 +512,7 @@ class WindowMain(QMainWindow):
       self.__ui.pushbutton_stop.setEnabled(True)
 
    def __evt_gatecrasherlogic_run_stop(self):
-      ''' Stop event for speed logic'''
+      ''' Stop event for gate crasher logic'''
 
       ''' Load the just stopped flight, this will load the video player etc. '''
       self.__globals.set_flight(self.__globals.get_flight())
@@ -519,13 +522,32 @@ class WindowMain(QMainWindow):
       self.__ui.pushButton_video1_align.setEnabled(True)
       self.__ui.pushButton_video2_align.setEnabled(True)
 
-   def __evt_gatecrasherlogic_run_hit_gate(self, gate_crasher_hit_message: GateCrasherHitMessage):
+   def __evt_gatecrasherlogic_run_hit_gate(self, gate_crasher_announcement: GateCrasherAnnouncement):
       self.__sound.play_gate_2()
+      self.__gatecrasherlogic_append_row(gate_crasher_announcement)
+ 
+      ''' Speak speed one second after second gate signal '''
+#      self.__sound.play_number(int(announcement.get_speed()), 1000)
 
    def __evt_gatecrasherlogic_run_finish(self, time_ms):
-#      self.__sound.play_gate_2()
-      pass
+      ''' Display run time '''
+      self.__ui.label_gate_crasher_time.setText('Time: ' + 
+         self.__format_video_time(time_ms)
+      )
 
+   def __gatecrasherlogic_append_row(self, gate_crasher_announcement: GateCrasherAnnouncement):
+      out = []
+      item = QtGui.QStandardItem('Gate-1' if gate_crasher_announcement.get_cam() == 'cam1' else 'Gate-2')
+      item.setTextAlignment(QtCore.Qt.AlignCenter)
+      out.append(item)
+      item = QtGui.QStandardItem("-->" if gate_crasher_announcement.get_direction() == 'RIGHT' else "<--")
+      item.setTextAlignment(QtCore.Qt.AlignCenter)
+      out.append(item)
+      item = QtGui.QStandardItem(self.__format_video_time(gate_crasher_announcement.get_time_ms())[3:])
+      item.setTextAlignment(QtCore.Qt.AlignCenter)
+      out.append(item)
+      self.__gatecrasher_logic_model_result.appendRow(out)
+      self.__ui.table_view_gate_crasher_result.setRowHeight(self.__gatecrasher_logic_model_result.rowCount() - 1, 18)
 
    def __evt_gatecrasherlogic_run_new_frame(self, frame: Frame):
       ''' Only display every third frame when live trackng - 30 fps '''
@@ -539,6 +561,7 @@ class WindowMain(QMainWindow):
          )
       )
 
+      ''' Display run time '''
       self.__ui.label_gate_crasher_time.setText('Time: ' + 
          self.__format_video_time(self.__gate_crasher_logic.get_current_runtime())
       )

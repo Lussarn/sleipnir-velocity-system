@@ -10,8 +10,8 @@ from cameras_data import CamerasData
 from frame import Frame
 from errors import *
 from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
-from speed_announcements import Announcements, Announcement
-import database.announcement_dao as announcement_dao
+#from gate_crasher_announcements import Announcements, Announcement
+#import database.gate_crasher_announcement_dao as announcement_dao
 import database.frame_dao as frame_dao
 
 logger = logging.getLogger(__name__)
@@ -19,13 +19,12 @@ logger = logging.getLogger(__name__)
 '''
 SpeedLogic emits the following events
 
-GateCrasherLogic.EVENT_GATE_CRASHER_START                             : Started gate crasher game
-GateCrasherLogic.EVENT_GATE_CRASHER_STOP                              : Stopped gate crasher game
-GateCrasherLogic.EVENT_GATE_CRASHER_NEW_FRAME frame :Frame            : A camera have a new frame
-GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE : GateCrasherHitMessage  : A gate crasher game have restarted
-GateCrasherLogic.EVENT_GATE_CRASHER_FINISH : int                      : A gate crasher game have finnished
-GateCrasherLogic.EVENT_GATE_CRASHER_RESTART                           : A gate crasher game have restarted
-
+GateCrasherLogic.EVENT_GATE_CRASHER_START                                            : Started gate crasher game
+GateCrasherLogic.EVENT_GATE_CRASHER_STOP                                             : Stopped gate crasher game
+GateCrasherLogic.EVENT_GATE_CRASHER_NEW_FRAME frame :Frame                           : A camera have a new frame
+GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE : GateCrasherGateAnnouncement           : A gate crasher game have restarted
+GateCrasherLogic.EVENT_GATE_CRASHER_FINISH : int                                     : A gate crasher game have finnished
+GateCrasherLogic.EVENT_GATE_CRASHER_RESTART                                          : A gate crasher game have restarted
 '''
 
 class GateCrasherState: 
@@ -64,6 +63,14 @@ class GateCrasherState:
         ''' timestamp when we hit first gate '''
         self.current_runtime_ms = 0
 
+        ''' Current level index'''
+        self.level = 0
+
+        ''' Announcements '''
+        self.announcements = [] # type: list[GateCrasherAnnouncement]
+
+
+
 class GateCrasherHitPoint:
     def __init__(self, cam : str, direction: str):
         self.__cam = cam
@@ -81,7 +88,7 @@ class GateCrasherLevel():
         self.__hitpoints = hitpoints
 
     def get_name(self):
-        return self.__name()
+        return self.__name
 
     def get_hitpoint(self, gate_number: int) -> GateCrasherHitPoint:
         return self.__hitpoints[gate_number]
@@ -89,11 +96,38 @@ class GateCrasherLevel():
     def get_length(self):
         return len(self.__hitpoints)
 
-class GateCrasherHitMessage:
-    def __init__(self, gate_crasher_hit_point: GateCrasherHitPoint, position: int, timestamp):
-        self.gate_crasher_hit_point = gate_crasher_hit_point
-        self.position = position
-        self.timestamp = timestamp
+class GateCrasherAnnouncement:
+    def __init__(self, level_name, gate_number, cam, position, timestamp, direction, angle, altitude, time_ms):
+        self.__level_name = level_name
+        self.__gate_number = gate_number
+        self.__cam = cam
+        self.__position = position
+        self.__timestamp = timestamp
+        self.__direction = direction
+        self.__angle = angle            # hit is above max dive (NOT IMPLEMENTED)
+        self.__altitude = altitude      # LOW, HIGH (NOT IMPLEMENTED)
+        self.time_ms = time_ms
+
+    def get_level_name(self) -> str:
+        return self.__level_name
+
+    def get_gate_number(self) -> int:
+        return self.__gate_number
+
+    def get_cam(self) -> str:
+        return self.__cam
+
+    def get_position(self) -> int:
+        return self.__position
+
+    def get_timestamp(self) -> int:
+        return self.__timestamp
+
+    def get_direction(self) -> str:
+        return self.__direction
+
+    def get_time_ms(self) -> int:
+        return self.time_ms
 
 class GateCrasherLogic:
     EVENT_GATE_CRASHER_START           = 'gatecrasher.run.start'
@@ -102,6 +136,7 @@ class GateCrasherLogic:
     EVENT_GATE_CRASHER_HIT_GATE        = 'gatecrasher.run.hitgate'
     EVENT_GATE_CRASHER_FINISH          = 'gatecrasher.run.finish'
     EVENT_GATE_CRASHER_RESTART         = 'gatecrasher.run.restart'
+    EVENT_GATE_CRAHSER_HIT_NEW         = 'gatecrasher.run.hitnew'
 
     __MAX_ALLOWED_LAG = 15
 
@@ -155,6 +190,7 @@ class GateCrasherLogic:
         self.__state.current_gate_number = 0
         self.__state.lag_recovery = 0
         self.__state.pass_restart_time = None
+        self.announcements = []
         self.current_runtime_ms = 0
 
         try:
@@ -245,35 +281,56 @@ class GateCrasherLogic:
             return
         frame.set_image(done_message.get_image())
 
-        if (done_message.have_motion()):
-            self.check_run(cam, done_message)
-
         ''' Note that we are emiting an old frame since we want to motion tracking
         information drawm '''
         event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_NEW_FRAME, frame)
 
+        ''' Check motion '''
+        if (done_message.have_motion()):
+            self.check_run(cam, done_message)
+
     def check_run(self, cam, motion_tracker_done_message: MotionTrackerDoneMessage):
         ''' Check if we hit the gates in the correct order, and in the correct way '''
 
-        hitpoint = self.__levels[0].get_hitpoint(self.__state.current_gate_number)
+        hitpoint = self.__levels[self.__state.level].get_hitpoint(self.__state.current_gate_number)
         motion_tracker_direction_name = ['LEFT', 'RIGHT'][int((motion_tracker_done_message.get_direction() + 1) / 2)] # -1 == 0, 1 == 1
 
         motion_tracker_timestamp = self.__state.cameras_data.get_frame(cam, motion_tracker_done_message.get_position()).get_timestamp()
 
         if hitpoint.get_direction() == motion_tracker_direction_name and hitpoint.get_cam() == cam:
-            event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE, GateCrasherHitMessage(
-                hitpoint, 
-                motion_tracker_done_message.get_position(), 
-                motion_tracker_timestamp
-            ))
 
+            ''' Calculate time '''
             if self.__state.current_gate_number == 0:
+                time_ms = 0
                 self.__state.timestamp_start = motion_tracker_timestamp
+            else:
+                time_ms = motion_tracker_timestamp - self.__state.announcements[self.__state.current_gate_number - 1].get_timestamp()
 
-            if self.__state.current_gate_number == self.__levels[0].get_length() - 1:
+            ''' Create announcement '''
+            announcement = GateCrasherAnnouncement(
+                self.__levels[self.__state.level].get_name(),
+                self.__state.current_gate_number,
+                hitpoint.get_cam(),
+                motion_tracker_done_message.get_position(),
+                motion_tracker_timestamp,
+                hitpoint.get_direction,
+                '','',
+                time_ms
+            )
+            self.__state.announcements.append(announcement)
+
+            event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE, announcement)
+
+
+            if self.__state.current_gate_number == self.__levels[self.__state.level].get_length() - 1:
                 ''' Reached the finish '''
-                event.EventEmitter(GateCrasherLogic.EVENT_GATE_CRASHER_FINISH, 
-                     self.__state.current_runtime_ms)
+
+                ''' Calculate exact finish time'''
+                finish_time = 0.0
+                for announcement in self.__state.announcements:
+                    finish_time += announcement.get_time_ms()
+
+                event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_FINISH, finish_time)
                 self.stop_run()
                 return
 
@@ -281,8 +338,11 @@ class GateCrasherLogic:
             self.__state.current_gate_number += 1
 
     def get_time(self, frame: Frame) -> int:
-        ''' get time on frame position '''
-        t = frame.get_timestamp() - self.__state.cameras_data.get_start_timestamp()
+        ''' Has run started '''
+        if self.__state.timestamp_start is None: return 0
+
+        ''' get time on frame position since run start '''
+        t = frame.get_timestamp() - self.__state.timestamp_start
         if t < 0: t =0
         return t
 

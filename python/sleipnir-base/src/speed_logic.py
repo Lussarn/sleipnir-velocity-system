@@ -10,7 +10,7 @@ from frame import Frame
 from errors import *
 from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
 from speed_announcements import Announcements, Announcement
-import database.announcement_dao as announcement_dao
+import database.speed_announcement_dao as announcement_dao
 import database.frame_dao as frame_dao
 
 logger = logging.getLogger(__name__)
@@ -121,7 +121,7 @@ class SpeedLogic:
 
     def __evt_globals_flight_change(self, flight):
         ''' Loading announcement '''
-        if self.__globals.get_game != Globals.GAME_SPEED_TRAP: return
+        if self.__globals.get_game() != Globals.GAME_SPEED_TRAP: return
         logger.info("Loading announcements for flight %d" % flight)
         self.__state.announcements = announcement_dao.fetch(self.__globals.get_db(), flight)
         event.emit(SpeedLogic.EVENT_ANNOUNCEMENT_LOAD, self.__state.announcements)

@@ -706,7 +706,29 @@
                <widget class="QComboBox" name="combo_box_gate_crasher_level_select"/>
               </item>
               <item>
-               <widget class="QTableView" name="table_view_gate_crasher_result"/>
+               <widget class="QTableView" name="table_view_gate_crasher_result">
+                <property name="font">
+                 <font>
+                  <family>Consolas</family>
+                  <pointsize>10</pointsize>
+                 </font>
+                </property>
+                <property name="styleSheet">
+                 <string notr="true"/>
+                </property>
+                <property name="horizontalScrollBarPolicy">
+                 <enum>Qt::ScrollBarAlwaysOff</enum>
+                </property>
+                <attribute name="horizontalHeaderDefaultSectionSize">
+                 <number>60</number>
+                </attribute>
+                <attribute name="horizontalHeaderStretchLastSection">
+                 <bool>true</bool>
+                </attribute>
+                <attribute name="verticalHeaderVisible">
+                 <bool>false</bool>
+                </attribute>
+               </widget>
               </item>
               <item>
                <widget class="QLabel" name="label_gate_crasher_time">

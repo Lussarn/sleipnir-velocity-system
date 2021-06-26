@@ -385,6 +385,15 @@ class Ui_MainWindow(object):
 
         self.table_view_gate_crasher_result = QTableView(self.gate_crasher)
         self.table_view_gate_crasher_result.setObjectName(u"table_view_gate_crasher_result")
+        font2 = QFont()
+        font2.setFamily(u"Consolas")
+        font2.setPointSize(10)
+        self.table_view_gate_crasher_result.setFont(font2)
+        self.table_view_gate_crasher_result.setStyleSheet(u"")
+        self.table_view_gate_crasher_result.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+        self.table_view_gate_crasher_result.horizontalHeader().setDefaultSectionSize(60)
+        self.table_view_gate_crasher_result.horizontalHeader().setStretchLastSection(True)
+        self.table_view_gate_crasher_result.verticalHeader().setVisible(False)
 
         self.verticalLayout_5.addWidget(self.table_view_gate_crasher_result)
 
@@ -540,16 +549,16 @@ class Ui_MainWindow(object):
         self.pushbutton_start.setObjectName(u"pushbutton_start")
         self.pushbutton_start.setMinimumSize(QSize(0, 60))
         self.pushbutton_start.setBaseSize(QSize(0, 0))
-        font2 = QFont()
-        font2.setPointSize(12)
-        self.pushbutton_start.setFont(font2)
+        font3 = QFont()
+        font3.setPointSize(12)
+        self.pushbutton_start.setFont(font3)
 
         self.horizontalLayout.addWidget(self.pushbutton_start)
 
         self.pushbutton_stop = QPushButton(self.centralwidget)
         self.pushbutton_stop.setObjectName(u"pushbutton_stop")
         self.pushbutton_stop.setMinimumSize(QSize(0, 60))
-        self.pushbutton_stop.setFont(font2)
+        self.pushbutton_stop.setFont(font3)
 
         self.horizontalLayout.addWidget(self.pushbutton_stop)
 
