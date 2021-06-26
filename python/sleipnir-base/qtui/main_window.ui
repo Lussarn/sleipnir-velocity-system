@@ -528,7 +528,7 @@
              <bool>false</bool>
             </property>
             <property name="currentIndex">
-             <number>0</number>
+             <number>1</number>
             </property>
             <widget class="QWidget" name="speed_measure">
              <property name="minimumSize">
@@ -698,7 +698,7 @@
               <item>
                <widget class="QLabel" name="label">
                 <property name="text">
-                 <string>Select Level</string>
+                 <string>Select Course</string>
                 </property>
                </widget>
               </item>

@@ -580,7 +580,7 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
 
-        self.stacked_widget_game.setCurrentIndex(0)
+        self.stacked_widget_game.setCurrentIndex(1)
 
 
         QMetaObject.connectSlotsByName(MainWindow)
@@ -620,7 +620,7 @@ class Ui_MainWindow(object):
         self.label_time.setText(QCoreApplication.translate("MainWindow", u"Time:    ---", None))
         self.label_speed.setText(QCoreApplication.translate("MainWindow", u"Speed:   ---", None))
         self.label_average.setText(QCoreApplication.translate("MainWindow", u"Average: ---", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"Select Level", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"Select Course", None))
         self.label_gate_crasher_time.setText(QCoreApplication.translate("MainWindow", u"Time: ---", None))
         self.checkBox_live.setText(QCoreApplication.translate("MainWindow", u"Live Video Feed", None))
         self.label_flightnumber.setText(QCoreApplication.translate("MainWindow", u"Flight Number", None))

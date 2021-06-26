@@ -143,12 +143,12 @@ class WindowMain(QMainWindow):
       event.on(GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE, self.__evt_gatecrasherlogic_run_hit_gate)
       event.on(GateCrasherLogic.EVENT_GATE_CRASHER_RESTART, self.__evt_gatecrasherlogic_run_restart)
       self.__gatecrasher_logic_model_result = QtGui.QStandardItemModel()
-      self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
+      self.__gate_crasher_init_model_result()
       self.__ui.table_view_gate_crasher_result.setModel(self.__gatecrasher_logic_model_result)
       self.__ui.table_view_gate_crasher_result.setSelectionBehavior(QAbstractItemView.SelectRows)
       event.on(GateCrasherLogic.EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD, self.__evt_gatecrasherlogic_announcement_load)
       self.__ui.table_view_gate_crasher_result.clicked.connect(self.__cb_gate_crasher_announcement_changed)
-      self.__ui.combo_box_gate_crasher_level_select.addItems(self.__gate_crasher_logic.get_levels())
+      self.__ui.combo_box_gate_crasher_level_select.addItems(self.__gate_crasher_logic.get_level_names())
       self.__ui.combo_box_gate_crasher_level_select.currentIndexChanged.connect(self.__cb_gate_crasher_level_select_changed)
 
       ''' load flight number 1 '''
@@ -421,10 +421,10 @@ class WindowMain(QMainWindow):
       self.__sound.play_error()
 
    def __evt_speedlogic_pass_start(self, cam):
-      self.__sound.play_gate_1()
+      self.__sound.play_beep()
 
    def __evt_speedlogic_pass_end(self, speed_pass_message: SpeedPassMessage):
-      self.__sound.play_gate_2()
+      self.__sound.play_beep_beep()
 
    def __speedlogic_append_row(self, announcement: Announcement):
       out = ("--> " if (announcement.get_direction() == 1) else "<-- ") + \
@@ -510,6 +510,11 @@ class WindowMain(QMainWindow):
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸    Gate Crasher GUI    ¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
+   def __gate_crasher_init_model_result(self):
+      self.__gatecrasher_logic_model_result.clear()
+      self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["", "Gate", "Dir", "Gate Time"])
+      self.__ui.table_view_gate_crasher_result.setColumnWidth(0, 30)
+
    def __cb_gate_crasher_level_select_changed(self, index):
       self.__gate_crasher_logic.set_level(index)
 
@@ -519,8 +524,7 @@ class WindowMain(QMainWindow):
       self.__ui.pushButton_video1_align.setEnabled(False)
       self.__ui.pushButton_video2_align.setEnabled(False)
       self.__ui.pushbutton_stop.setEnabled(True)
-      self.__gatecrasher_logic_model_result.clear()
-      self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
+      self.__gate_crasher_init_model_result()
 
    def __evt_gatecrasherlogic_run_stop(self):
       ''' Stop event for gate crasher logic'''
@@ -534,22 +538,56 @@ class WindowMain(QMainWindow):
       self.__ui.pushButton_video2_align.setEnabled(True)
 
    def __evt_gatecrasherlogic_run_restart(self):
-      self.__gatecrasher_logic_model_result.clear()
-      self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
+      self.__gate_crasher_init_model_result()
       self.__sound.play_error()
 
-   def __evt_gatecrasherlogic_run_hit_gate(self, gate_crasher_announcement: GateCrasherAnnouncement):
-      self.__sound.play_gate_2()
-      self.__gatecrasherlogic_append_row(gate_crasher_announcement)
- 
+   def __evt_gatecrasherlogic_run_hit_gate(self, announcement: GateCrasherAnnouncement):
+      self.__sound.play_beep_beep()
+      self.__gatecrasherlogic_append_row(announcement)
+
+      level = self.__gate_crasher_logic.get_levels()[self.__gate_crasher_logic.get_level()]
+
+      try:
+         hitpoint = level.get_hitpoint(announcement.get_gate_number() + 1)
+      except IndexError:
+         ''' No more gates in level '''
+         return
+
+      if hitpoint.get_cam() == 'cam1':
+         self.__sound.play_gate_1(500)
+      else:
+         self.__sound.play_gate_2(500)
+
+      if hitpoint.get_direction() == 'RIGHT':
+         self.__sound.play_right(1000)
+      else:
+         self.__sound.play_left(1000)
+
+
    def __evt_gatecrasherlogic_run_finish(self, time_ms):
       ''' Display run time '''
-      self.__ui.label_gate_crasher_time.setText('Time: ' + 
-         self.__format_video_time(time_ms)
-      )
+      finish_time_str = self.__format_video_time(time_ms)
+
+      self.__ui.label_gate_crasher_time.setText('Time: %s' % finish_time_str)
+      self.__sound.play_cross_the_finish_line(500)
+
+      minutes = int(finish_time_str[0:2])
+      seconds = int(finish_time_str[3:5])
+      milli_seconds1 = finish_time_str[6:7]
+      milli_seconds2 = finish_time_str[7:8]
+      milli_seconds3 = finish_time_str[8:9]
+      self.__sound.play_number(minutes, 2000)
+      self.__sound.play_number(seconds, 3200)
+      self.__sound.play_number(milli_seconds1, 4400)
+      self.__sound.play_number(milli_seconds2, 5000)
+      self.__sound.play_number(milli_seconds3, 5600)
+
 
    def __gatecrasherlogic_append_row(self, gate_crasher_announcement: GateCrasherAnnouncement):
       out = []
+      item = QtGui.QStandardItem(str(gate_crasher_announcement.get_gate_number() + 1))
+      item.setTextAlignment(QtCore.Qt.AlignCenter)
+      out.append(item)
       item = QtGui.QStandardItem('Left' if gate_crasher_announcement.get_cam() == 'cam1' else 'Right')
       item.setTextAlignment(QtCore.Qt.AlignCenter)
       out.append(item)
@@ -563,15 +601,16 @@ class WindowMain(QMainWindow):
       self.__ui.table_view_gate_crasher_result.setRowHeight(self.__gatecrasher_logic_model_result.rowCount() - 1, 18)
 
    def __evt_gatecrasherlogic_announcement_load(self, announcements: List[GateCrasherAnnouncement]):
-      self.__gatecrasher_logic_model_result.clear()
-      self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
+      self.__gate_crasher_init_model_result()
       finish_time = 0
       for announcement in announcements:
          level_index = self.__gate_crasher_logic.level_index_by_name(announcement.get_level_name())
          self.__ui.combo_box_gate_crasher_level_select.setCurrentIndex(level_index or 0)
          self.__gatecrasherlogic_append_row(announcement)
          finish_time += announcement.get_time_ms()
-      self.__evt_gatecrasherlogic_run_finish(finish_time)
+         self.__ui.label_gate_crasher_time.setText('Time: ' + 
+            self.__format_video_time(finish_time)
+         )
 
    def __cb_gate_crasher_announcement_changed(self, evt):
       self.__video_player.stop_all()

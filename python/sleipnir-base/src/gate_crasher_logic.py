@@ -24,7 +24,7 @@ GateCrasherLogic.EVENT_GATE_CRASHER_START                                       
 GateCrasherLogic.EVENT_GATE_CRASHER_STOP                                             : Stopped gate crasher game
 GateCrasherLogic.EVENT_GATE_CRASHER_NEW_FRAME frame :Frame                           : A camera have a new frame
 GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE : GateCrasherGateAnnouncement           : A gate crasher game have restarted
-GateCrasherLogic.EVENT_GATE_CRASHER_FINISH : int                                     : A gate crasher game have finnished
+GateCrasherLogic.EVENT_GATE_CRASHER_FINISH : int                                     : A gate crasher game have finished
 GateCrasherLogic.EVENT_GATE_CRASHER_RESTART                                          : A gate crasher game have restarted
 GateCrasherLogic.EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD                                : Announcements have been loaded
 '''
@@ -71,6 +71,10 @@ class GateCrasherState:
         ''' Announcements '''
         self.announcements = [] # type: list[GateCrasherAnnouncement]
 
+        ''' Window where a hit doesn't count, after a hit 3 tenth of a second a hit wont register
+        otherwise the gate will hit twice in the same pass'''
+        self.no_hit_until = None
+
 class GateCrasherHitPoint:
     def __init__(self, cam : str, direction: str):
         self.__cam = cam
@@ -108,7 +112,7 @@ class GateCrasherLogic:
     EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD = 'gatecrasher.announcement.load'
 
     __MAX_ALLOWED_LAG = 15
-    __RESTART_TIME = 15
+    __RESTART_TIME = 150
 
     def __init__(self, globals: Globals, camera_server: CameraServer, configuration: Configuration):
         self.__globals = globals
@@ -150,6 +154,9 @@ class GateCrasherLogic:
     def set_level(self, level):
         self.__state.level = level
 
+    def get_level(self):
+        return self.__state.level
+
     def start_run(self):
         ''' Starting gate crasher '''
         logger.info("Gate Crasher starting...")
@@ -169,6 +176,7 @@ class GateCrasherLogic:
         self.__state.pass_restart_time = None
         self.__state.announcements = []
         self.__state.current_runtime_ms = 0
+        self.__state.no_hit_until = time.time()
 
         try:
             logger.info("Deleting Announcements for flight %d..." % self.__globals.get_flight())
@@ -223,6 +231,7 @@ class GateCrasherLogic:
             self.__state.pass_restart_time = None
             self.__state.announcements = []
             self.__state.current_runtime_ms = 0
+            self.__state.no_hit_until = time.time()
             event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_RESTART)
             return
 
@@ -284,7 +293,9 @@ class GateCrasherLogic:
 
         motion_tracker_timestamp = self.__state.cameras_data.get_frame(cam, motion_tracker_done_message.get_position()).get_timestamp()
 
-        if hitpoint.get_direction() == motion_tracker_direction_name and hitpoint.get_cam() == cam:
+        if hitpoint.get_direction() == motion_tracker_direction_name and hitpoint.get_cam() == cam and time.time() >  self.__state.no_hit_until:
+            ''' dont register a hit until this time has passed '''
+            self.__state.no_hit_until = time.time() + 0.3
 
             ''' Calculate time '''
             if self.__state.current_gate_number == 0:
@@ -338,11 +349,14 @@ class GateCrasherLogic:
     def get_announcement_by_index(self, index) -> GateCrasherAnnouncement:
         return self.__state.announcements[index]
 
-    def get_levels(self):
+    def get_level_names(self) -> list[str]:
         levels = []
         for level in self.__levels:
             levels.append(level.get_name())
         return levels
+
+    def get_levels(self) -> list[GateCrasherLevel]:
+        return self.__levels
 
     def level_index_by_name(self, level_name):
         for i in range(0, len(self.__levels)):
@@ -351,29 +365,49 @@ class GateCrasherLogic:
 
     def __init_levels(self):
         self.__levels.clear()
-        self.__levels.append(GateCrasherLevel("Beginner 1",
+        self.__levels.append(GateCrasherLevel("Daytona",
             [
                 GateCrasherHitPoint('cam1', 'RIGHT'),
                 GateCrasherHitPoint('cam2', 'RIGHT'),
                 GateCrasherHitPoint('cam1', 'LEFT' ),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam1', 'LEFT' ),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam1', 'LEFT' ),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam1', 'LEFT' ),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam1', 'LEFT' ),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
                 GateCrasherHitPoint('cam2', 'RIGHT')
             ])
         )
         
-        self.__levels.append(GateCrasherLevel("Beginner 2",
+        self.__levels.append(GateCrasherLevel("Imola",
             [
                 GateCrasherHitPoint('cam1', 'RIGHT'),
                 GateCrasherHitPoint('cam2', 'RIGHT'),
-                GateCrasherHitPoint('cam1', 'LEFT' ),
-                GateCrasherHitPoint('cam2', 'RIGHT')
-            ])
-        )
-
-        self.__levels.append(GateCrasherLevel("Beginner 3",
-            [
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
                 GateCrasherHitPoint('cam1', 'RIGHT'),
                 GateCrasherHitPoint('cam2', 'RIGHT'),
-                GateCrasherHitPoint('cam1', 'LEFT' ),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
                 GateCrasherHitPoint('cam2', 'RIGHT')
             ])
         )
