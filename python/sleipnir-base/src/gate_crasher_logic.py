@@ -10,9 +10,9 @@ from cameras_data import CamerasData
 from frame import Frame
 from errors import *
 from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
-#from gate_crasher_announcements import Announcements, Announcement
-#import database.gate_crasher_announcement_dao as announcement_dao
+
 import database.frame_dao as frame_dao
+from gate_crasher_announcement import GateCrasherAnnouncement
 import database.gate_crasher_announcement_dao as announcement_dao
 
 logger = logging.getLogger(__name__)
@@ -26,6 +26,7 @@ GateCrasherLogic.EVENT_GATE_CRASHER_NEW_FRAME frame :Frame                      
 GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE : GateCrasherGateAnnouncement           : A gate crasher game have restarted
 GateCrasherLogic.EVENT_GATE_CRASHER_FINISH : int                                     : A gate crasher game have finnished
 GateCrasherLogic.EVENT_GATE_CRASHER_RESTART                                          : A gate crasher game have restarted
+GateCrasherLogic.EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD                                : Announcements have been loaded
 '''
 
 class GateCrasherState: 
@@ -97,53 +98,16 @@ class GateCrasherLevel():
     def get_length(self):
         return len(self.__hitpoints)
 
-class GateCrasherAnnouncement:
-    def __init__(self, level_name, gate_number, cam, position, timestamp, direction, angle, altitude, time_ms):
-        self.__level_name = level_name
-        self.__gate_number = gate_number
-        self.__cam = cam
-        self.__position = position
-        self.__timestamp = timestamp
-        self.__direction = direction
-        self.__angle = angle            # hit is above max dive (NOT IMPLEMENTED)
-        self.__altitude = altitude      # LOW, HIGH (NOT IMPLEMENTED)
-        self.time_ms = time_ms
-
-    def get_level_name(self) -> str:
-        return self.__level_name
-
-    def get_gate_number(self) -> int:
-        return self.__gate_number
-
-    def get_cam(self) -> str:
-        return self.__cam
-
-    def get_position(self) -> int:
-        return self.__position
-
-    def get_timestamp(self) -> int:
-        return self.__timestamp
-
-    def get_direction(self) -> str:
-        return self.__direction
-
-    def get_angle(self) -> str:
-        return self.__angle
-    
-    def get_altitude(self) -> str:
-        return self.get_altitude()
-
-    def get_time_ms(self) -> int:
-        return self.time_ms
 
 class GateCrasherLogic:
-    EVENT_GATE_CRASHER_START           = 'gatecrasher.run.start'
-    EVENT_GATE_CRASHER_STOP            = 'gatecrasher.run.stop'
-    EVENT_GATE_CRASHER_NEW_FRAME       = 'gatecrasher.run.new_frame'
-    EVENT_GATE_CRASHER_HIT_GATE        = 'gatecrasher.run.hitgate'
-    EVENT_GATE_CRASHER_FINISH          = 'gatecrasher.run.finish'
-    EVENT_GATE_CRASHER_RESTART         = 'gatecrasher.run.restart'
-    EVENT_GATE_CRAHSER_HIT_NEW         = 'gatecrasher.run.hitnew'
+    EVENT_GATE_CRASHER_START             = 'gatecrasher.run.start'
+    EVENT_GATE_CRASHER_STOP              = 'gatecrasher.run.stop'
+    EVENT_GATE_CRASHER_NEW_FRAME         = 'gatecrasher.run.new_frame'
+    EVENT_GATE_CRASHER_HIT_GATE          = 'gatecrasher.run.hitgate'
+    EVENT_GATE_CRASHER_FINISH            = 'gatecrasher.run.finish'
+    EVENT_GATE_CRASHER_RESTART           = 'gatecrasher.run.restart'
+    EVENT_GATE_CRAHSER_HIT_NEW           = 'gatecrasher.run.hitnew'
+    EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD = 'gatecrasher.announcement.load'
 
     __MAX_ALLOWED_LAG = 15
 
@@ -175,10 +139,17 @@ class GateCrasherLogic:
         self.stop_run()
 
     def __evt_globals_flight_change(self, flight):
-        pass
+        ''' Loading announcement '''
+        if self.__globals.get_game() != Globals.GAME_GATE_CRASHER: return
+        logger.info("Loading announcements for flight %d" % flight)
+        self.__state.announcements = announcement_dao.fetch(self.__globals.get_db(), flight)
+        event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD, self.__state.announcements)
 
     def get_current_runtime(self):
         return self.__state.current_runtime_ms
+
+    def set_level(self, level):
+        self.__state.level = level
 
     def start_run(self):
         ''' Starting gate crasher '''
@@ -197,10 +168,12 @@ class GateCrasherLogic:
         self.__state.current_gate_number = 0
         self.__state.lag_recovery = 0
         self.__state.pass_restart_time = None
-        self.announcements = []
-        self.current_runtime_ms = 0
+        self.__state.announcements = []
+        self.__state.current_runtime_ms = 0
 
         try:
+            logger.info("Deleting Announcements for flight %d..." % self.__globals.get_flight())
+            announcement_dao.delete_flight(self.__globals.get_db(), self.__globals.get_flight())
             logger.info("Deleting Frames for flight %d, hang on..." % self.__globals.get_flight())
             frame_dao.delete_flight(self.__globals.get_db(), self.__globals.GAME_GATE_CRASHER ,self.__globals.get_flight())
         except Exception as e:
@@ -324,7 +297,7 @@ class GateCrasherLogic:
                 hitpoint.get_cam(),
                 motion_tracker_done_message.get_position(),
                 motion_tracker_timestamp,
-                hitpoint.get_direction,
+                hitpoint.get_direction(),
                 '','',
                 time_ms
             )
@@ -355,6 +328,20 @@ class GateCrasherLogic:
         t = frame.get_timestamp() - self.__state.timestamp_start
         if t < 0: t =0
         return t
+
+    def get_announcement_by_index(self, index) -> GateCrasherAnnouncement:
+        return self.__state.announcements[index]
+
+    def get_levels(self):
+        levels = []
+        for level in self.__levels:
+            levels.append(level.get_name())
+        return levels
+
+    def level_index_by_name(self, level_name):
+        for i in range(0, len(self.__levels)):
+            if self.__levels[i].get_name() == level_name: return i
+        return None
 
     def __init_levels(self):
         self.__levels.clear()

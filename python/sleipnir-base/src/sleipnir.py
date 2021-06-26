@@ -1,3 +1,4 @@
+from typing import List
 import sys
 import time
 
@@ -144,6 +145,10 @@ class WindowMain(QMainWindow):
       self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
       self.__ui.table_view_gate_crasher_result.setModel(self.__gatecrasher_logic_model_result)
       self.__ui.table_view_gate_crasher_result.setSelectionBehavior(QAbstractItemView.SelectRows)
+      event.on(GateCrasherLogic.EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD, self.__evt_gatecrasherlogic_announcement_load)
+      self.__ui.table_view_gate_crasher_result.clicked.connect(self.__cb_gate_crasher_announcement_changed)
+      self.__ui.combo_box_gate_crasher_level_select.addItems(self.__gate_crasher_logic.get_levels())
+      self.__ui.combo_box_gate_crasher_level_select.currentIndexChanged.connect(self.__cb_gate_crasher_level_select_changed)
 
       ''' load flight number 1 '''
       self.__globals.set_flight(1)
@@ -504,12 +509,17 @@ class WindowMain(QMainWindow):
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸    Gate Crasher GUI    ¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
+   def __cb_gate_crasher_level_select_changed(self, index):
+      self.__gate_crasher_logic.set_level(index)
+
    def __evt_gatecrasherlogic_run_start(self):
       self.enable_all_gui_elements(False)
       self.__ui.pushbutton_stop.setEnabled(True)
       self.__ui.pushButton_video1_align.setEnabled(False)
       self.__ui.pushButton_video2_align.setEnabled(False)
       self.__ui.pushbutton_stop.setEnabled(True)
+      self.__gatecrasher_logic_model_result.clear()
+      self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
 
    def __evt_gatecrasherlogic_run_stop(self):
       ''' Stop event for gate crasher logic'''
@@ -526,9 +536,6 @@ class WindowMain(QMainWindow):
       self.__sound.play_gate_2()
       self.__gatecrasherlogic_append_row(gate_crasher_announcement)
  
-      ''' Speak speed one second after second gate signal '''
-#      self.__sound.play_number(int(announcement.get_speed()), 1000)
-
    def __evt_gatecrasherlogic_run_finish(self, time_ms):
       ''' Display run time '''
       self.__ui.label_gate_crasher_time.setText('Time: ' + 
@@ -537,7 +544,7 @@ class WindowMain(QMainWindow):
 
    def __gatecrasherlogic_append_row(self, gate_crasher_announcement: GateCrasherAnnouncement):
       out = []
-      item = QtGui.QStandardItem('Gate-1' if gate_crasher_announcement.get_cam() == 'cam1' else 'Gate-2')
+      item = QtGui.QStandardItem('Left' if gate_crasher_announcement.get_cam() == 'cam1' else 'Right')
       item.setTextAlignment(QtCore.Qt.AlignCenter)
       out.append(item)
       item = QtGui.QStandardItem("-->" if gate_crasher_announcement.get_direction() == 'RIGHT' else "<--")
@@ -548,6 +555,23 @@ class WindowMain(QMainWindow):
       out.append(item)
       self.__gatecrasher_logic_model_result.appendRow(out)
       self.__ui.table_view_gate_crasher_result.setRowHeight(self.__gatecrasher_logic_model_result.rowCount() - 1, 18)
+
+   def __evt_gatecrasherlogic_announcement_load(self, announcements: List[GateCrasherAnnouncement]):
+      self.__gatecrasher_logic_model_result.clear()
+      self.__gatecrasher_logic_model_result.setHorizontalHeaderLabels(["Gate", "Dir", "Gate Time"])
+      finish_time = 0
+      for announcement in announcements:
+         level_index = self.__gate_crasher_logic.level_index_by_name(announcement.get_level_name())
+         self.__ui.combo_box_gate_crasher_level_select.setCurrentIndex(level_index or 0)
+         self.__gatecrasherlogic_append_row(announcement)
+         finish_time += announcement.get_time_ms()
+      self.__evt_gatecrasherlogic_run_finish(finish_time)
+
+   def __cb_gate_crasher_announcement_changed(self, evt):
+      self.__video_player.stop_all()
+      announcement = self.__gate_crasher_logic.get_announcement_by_index(evt.row())
+      self.__video_player.set_position('cam1', announcement.get_position())
+      self.__video_player.set_position('cam2', announcement.get_position())
 
    def __evt_gatecrasherlogic_run_new_frame(self, frame: Frame):
       ''' Only display every third frame when live trackng - 30 fps '''
@@ -571,6 +595,9 @@ class WindowMain(QMainWindow):
 
    def enable_all_gui_elements(self, enabled):
       self.__enable_video_ui(enabled)
+
+      self.__ui.combo_box_game_select.setEnabled(enabled)
+      self.__ui.combo_box_gate_crasher_level_select.setEnabled(enabled)
 
       self.__ui.pushbutton_stop.setEnabled(enabled)
       self.__ui.pushbutton_start.setEnabled(enabled)

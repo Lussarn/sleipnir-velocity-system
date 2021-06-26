@@ -72,6 +72,7 @@ class Globals:
     def set_game(self, game: str):
         self.__state.game = game
         event.emit(Globals.EVENT_GAME_CHANGE, self.__state.game)
+        self.set_flight(1)
 
     def get_game(self) -> str:
         return self.__state.game
