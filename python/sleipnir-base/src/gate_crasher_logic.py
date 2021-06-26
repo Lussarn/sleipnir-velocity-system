@@ -342,7 +342,7 @@ class GateCrasherLogic:
         t = frame.get_timestamp() - self.__state.cameras_data.get_start_timestamp()
         if t < 0: t =0
         return t
-        
+
     def get_announcement_by_index(self, index) -> GateCrasherAnnouncement:
         return self.__state.announcements[index]
 
