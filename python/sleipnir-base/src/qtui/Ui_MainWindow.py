@@ -341,7 +341,7 @@ class Ui_MainWindow(object):
         self.label_time.setObjectName(u"label_time")
         font1 = QFont()
         font1.setFamily(u"Consolas")
-        font1.setPointSize(18)
+        font1.setPointSize(14)
         self.label_time.setFont(font1)
         self.label_time.setStyleSheet(u"")
         self.label_time.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
@@ -350,18 +350,16 @@ class Ui_MainWindow(object):
 
         self.label_speed = QLabel(self.speed_measure)
         self.label_speed.setObjectName(u"label_speed")
-        font2 = QFont()
-        font2.setFamily(u"Consolas")
-        self.label_speed.setFont(font2)
-        self.label_speed.setStyleSheet(u"font-size: 24px;")
+        self.label_speed.setFont(font1)
+        self.label_speed.setStyleSheet(u"")
         self.label_speed.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
 
         self.verticalLayout.addWidget(self.label_speed)
 
         self.label_average = QLabel(self.speed_measure)
         self.label_average.setObjectName(u"label_average")
-        self.label_average.setFont(font2)
-        self.label_average.setStyleSheet(u"font-size: 24px")
+        self.label_average.setFont(font1)
+        self.label_average.setStyleSheet(u"")
 
         self.verticalLayout.addWidget(self.label_average)
 
@@ -401,7 +399,10 @@ class Ui_MainWindow(object):
 
         self.label_gate_crasher_time = QLabel(self.gate_crasher)
         self.label_gate_crasher_time.setObjectName(u"label_gate_crasher_time")
-        self.label_gate_crasher_time.setFont(font1)
+        font2 = QFont()
+        font2.setFamily(u"Consolas")
+        font2.setPointSize(18)
+        self.label_gate_crasher_time.setFont(font2)
         self.label_gate_crasher_time.setStyleSheet(u"")
 
         self.verticalLayout_5.addWidget(self.label_gate_crasher_time)
