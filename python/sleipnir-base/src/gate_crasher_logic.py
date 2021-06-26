@@ -13,6 +13,7 @@ from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, Mot
 #from gate_crasher_announcements import Announcements, Announcement
 #import database.gate_crasher_announcement_dao as announcement_dao
 import database.frame_dao as frame_dao
+import database.gate_crasher_announcement_dao as announcement_dao
 
 logger = logging.getLogger(__name__)
 
@@ -126,6 +127,12 @@ class GateCrasherAnnouncement:
     def get_direction(self) -> str:
         return self.__direction
 
+    def get_angle(self) -> str:
+        return self.__angle
+    
+    def get_altitude(self) -> str:
+        return self.get_altitude()
+
     def get_time_ms(self) -> int:
         return self.time_ms
 
@@ -219,6 +226,10 @@ class GateCrasherLogic:
 
         ''' Disable the new frame event '''
         event.off(CameraServer.EVENT_NEW_FRAME, self.__cameraserver_evt_new_frame)
+
+        ''' Save the announcements '''
+        logger.info("Saving %d announcements" % len(self.__state.announcements))
+        announcement_dao.store(self.__globals.get_db(), self.__globals.get_flight(), self.__state.announcements)
 
         self.__state.running = False
         event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_STOP)
@@ -320,7 +331,6 @@ class GateCrasherLogic:
             self.__state.announcements.append(announcement)
 
             event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE, announcement)
-
 
             if self.__state.current_gate_number == self.__levels[self.__state.level].get_length() - 1:
                 ''' Reached the finish '''

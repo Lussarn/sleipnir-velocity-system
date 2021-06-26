@@ -166,7 +166,7 @@ class WindowMain(QMainWindow):
          self.__ui.pushButton_video1_align.setEnabled(True)
       else:
          self.__ui.pushButton_video2_align.setEnabled(True)
-         self.__ui.label_video1_online.setText("Cam2: Online")
+         self.__ui.label_video2_online.setText("Cam2: Online")
 
       if self.__camera_server.is_ready_to_shoot():
          self.__ui.pushbutton_start.setEnabled(True)

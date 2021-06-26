@@ -103,7 +103,7 @@ class DB():
 
             ''' CREATE gate table for gate crasher '''
             cur.execute(''' 
-                CREATE TABLE gate_crasher_gate_hit (
+                CREATE TABLE gate_crasher_announcement (
                     id INTEGER PRIMARY KEY,
                     flight INTEGER,
                     level_name TEXT,
@@ -113,7 +113,8 @@ class DB():
                     timestamp INTEGER,
                     direction INTEGER,
                     angle INTEGER,
-                    altitude INTEGER
+                    altitude INTEGER,
+                    time INTEGER
                 )
             ''')
 
