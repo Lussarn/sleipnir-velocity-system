@@ -19,6 +19,7 @@ from globals import Globals
 from align_logic import AlignLogic
 from video_player import VideoPlayer
 from sound import Sound
+from game import speed_trap
 from errors import *
 
 import logging
@@ -114,6 +115,8 @@ class WindowMain(QMainWindow):
       self.__ui.slider_video['cam2'].valueChanged.connect(self.__cb_video2_slider_changed)
       self.__ui.pushbutton_video2_copy.clicked.connect(self.__cb_video2_copy_clicked)
       self.__ui.pushbutton_video2_find.clicked.connect(self.__cb_video2_find_clicked)
+
+      self.__speed_trap_gui = speed_trap.gui(self.__ui)
 
       ''' Speed callbacks and events '''
       self.__ui.pushbutton_start.clicked.connect(self.__cb_start_cameras)
