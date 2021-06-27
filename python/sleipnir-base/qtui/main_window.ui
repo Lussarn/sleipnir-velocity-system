@@ -61,7 +61,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QLabel" name="label_video1">
+           <widget class="QLabel" name="video_player_label_video1">
             <property name="frameShape">
              <enum>QFrame::Box</enum>
             </property>
@@ -82,14 +82,14 @@
              <number>10</number>
             </property>
             <item>
-             <widget class="QSlider" name="slider_video1">
+             <widget class="QSlider" name="video_player_slider_video1">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_time_video1">
+             <widget class="QLabel" name="video_player_label_time_video1">
               <property name="text">
                <string>00:00.000</string>
               </property>
@@ -106,7 +106,7 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QPushButton" name="pushbutton_video1_find">
+             <widget class="QPushButton" name="video_player_push_button_video1_find">
               <property name="text">
                <string>Find</string>
               </property>
@@ -129,7 +129,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video1_playbackward">
+             <widget class="QPushButton" name="video_player_push_button_video1_play_reverse">
               <property name="maximumSize">
                <size>
                 <width>40</width>
@@ -142,7 +142,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video1_backstep">
+             <widget class="QPushButton" name="video_player_push_button_video1_step_reverse">
               <property name="maximumSize">
                <size>
                 <width>40</width>
@@ -155,7 +155,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video1_pause">
+             <widget class="QPushButton" name="video_player_push_button_video1_stop">
               <property name="maximumSize">
                <size>
                 <width>40</width>
@@ -168,7 +168,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video1_forwardstep">
+             <widget class="QPushButton" name="video_player_push_button_video1_step_forward">
               <property name="maximumSize">
                <size>
                 <width>40</width>
@@ -181,7 +181,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video1_playforward">
+             <widget class="QPushButton" name="video_player_push_button_video1_play_forward">
               <property name="maximumSize">
                <size>
                 <width>40</width>
@@ -207,7 +207,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video1_copy">
+             <widget class="QPushButton" name="video_player_push_button_video1_copy">
               <property name="text">
                <string>Copy Right</string>
               </property>
@@ -299,7 +299,7 @@
            </layout>
           </item>
           <item>
-           <widget class="QLabel" name="label_video2">
+           <widget class="QLabel" name="video_player_label_video2">
             <property name="frameShape">
              <enum>QFrame::Box</enum>
             </property>
@@ -320,14 +320,14 @@
              <number>10</number>
             </property>
             <item>
-             <widget class="QSlider" name="slider_video2">
+             <widget class="QSlider" name="video_player_slider_video2">
               <property name="orientation">
                <enum>Qt::Horizontal</enum>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QLabel" name="label_time_video2">
+             <widget class="QLabel" name="video_player_label_time_video2">
               <property name="text">
                <string>00:00.000 </string>
               </property>
@@ -347,7 +347,7 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QPushButton" name="pushbutton_video2_copy">
+             <widget class="QPushButton" name="video_player_push_button_video2_copy">
               <property name="text">
                <string>Copy Left</string>
               </property>
@@ -367,7 +367,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video2_find">
+             <widget class="QPushButton" name="video_player_push_button_video2_find">
               <property name="text">
                <string>Find</string>
               </property>
@@ -390,7 +390,7 @@
              </spacer>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video2_playbackward">
+             <widget class="QPushButton" name="video_player_push_button_video2_play_reverse">
               <property name="maximumSize">
                <size>
                 <width>40</width>
@@ -403,7 +403,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video2_backstep">
+             <widget class="QPushButton" name="video_player_push_button_video2_step_reverse">
               <property name="maximumSize">
                <size>
                 <width>40</width>
@@ -416,7 +416,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video2_pause">
+             <widget class="QPushButton" name="video_player_push_button_video2_stop">
               <property name="maximumSize">
                <size>
                 <width>40</width>
@@ -429,7 +429,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video2_forwardstep">
+             <widget class="QPushButton" name="video_player_push_button_video2_step_forward">
               <property name="maximumSize">
                <size>
                 <width>40</width>
@@ -442,7 +442,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushbutton_video2_playforward">
+             <widget class="QPushButton" name="video_player_push_button_video2_play_forward">
               <property name="maximumSize">
                <size>
                 <width>40</width>

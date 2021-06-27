@@ -3,7 +3,6 @@ import sys
 
 from PySide2 import QtGui, QtCore
 from PySide2.QtWidgets import QAbstractItemView, QApplication, QMainWindow, QMessageBox
-import cv2 as cv
 
 from ui_sleipnir_window import Ui_SleipnirWindow
 from configuration import Configuration, ConfigurationError
@@ -12,7 +11,8 @@ from frame import Frame
 from camera_server import CameraServer
 from globals import Globals
 from align_logic import AlignLogic
-from video_player import VideoPlayer
+from video_player.video_player import VideoPlayer
+from video_player.video_player_gui import VideoPlayerGUI
 from sound import Sound
 from game.speed_trap.gui import GUI as SpeedTrapGUI
 from game.gate_crasher.gui import GUI as GateCrasherGUI
@@ -64,6 +64,7 @@ class SleipnirWindow(QMainWindow):
       self.__globals = Globals(self.__db)
       self.__camera_server = CameraServer(self.__globals)
       self.__video_player = VideoPlayer(self.__globals, self, self.__configuration)
+      self.__video_player_gui = VideoPlayerGUI(self, self.__video_player)
       self.__align_logic = AlignLogic(self.__globals, self.__camera_server)
 
       ''' Start camera server '''
@@ -94,31 +95,6 @@ class SleipnirWindow(QMainWindow):
       event.on(AlignLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_alignlogic_align_new_frame)
       self.__ui.pushButton_video1_align.setEnabled(False)
       self.__ui.pushButton_video2_align.setEnabled(False)
-
-      ''' Video player callbacs and events '''
-      event.on(VideoPlayer.EVENT_FRAME_NEW, self.__evt_videoplayer_play_new_frame)
-
-      ''' video 1 '''
-      self.__ui.pushbutton_video1_playforward.clicked.connect(self.__cb_video1_play_forward_clicked)
-      self.__ui.pushbutton_video1_playbackward.clicked.connect(self.__cb_video1_play_reverse_clicked)
-      self.__ui.pushbutton_video1_pause.clicked.connect(self.__cb_video1_stop_clicked)
-      self.__ui.pushbutton_video1_forwardstep.clicked.connect(self.__cb_video1_step_forward)
-      self.__ui.pushbutton_video1_backstep.clicked.connect(self.__cb_video1_step_reverse)
-      self.__ui.slider_video['cam1'].setMinimum(1)
-      self.__ui.slider_video['cam1'].valueChanged.connect(self.__cb_video1_slider_changed)
-      self.__ui.pushbutton_video1_copy.clicked.connect(self.__cb_video1_copy_clicked)
-      self.__ui.pushbutton_video1_find.clicked.connect(self.__cb_video1_find_clicked)
-
-      ''' video 2 '''
-      self.__ui.pushbutton_video2_playforward.clicked.connect(self.__cb_video2_play_forward_clicked)
-      self.__ui.pushbutton_video2_playbackward.clicked.connect(self.__cb_video2_play_reverse_clicked)
-      self.__ui.pushbutton_video2_pause.clicked.connect(self.__cb_video2_stop_clicked)
-      self.__ui.pushbutton_video2_forwardstep.clicked.connect(self.__cb_video2_step_forward)
-      self.__ui.pushbutton_video2_backstep.clicked.connect(self.__cb_video2_step_reverse)
-      self.__ui.slider_video['cam2'].setMinimum(1)
-      self.__ui.slider_video['cam2'].valueChanged.connect(self.__cb_video2_slider_changed)
-      self.__ui.pushbutton_video2_copy.clicked.connect(self.__cb_video2_copy_clicked)
-      self.__ui.pushbutton_video2_find.clicked.connect(self.__cb_video2_find_clicked)
 
       ''' Start/Stop Cameras'''
       self.__ui.pushbutton_stop.setEnabled(False)
@@ -167,6 +143,9 @@ class SleipnirWindow(QMainWindow):
    def get_video_player(self) -> VideoPlayer:
       return self.__video_player
 
+   def get_video_player_gui(self) -> VideoPlayerGUI:
+      return self.__video_player_gui
+
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º    Camera Online GUI    ¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
    def __evt_cameraserver_camera_online(self, cam):
@@ -193,86 +172,6 @@ class SleipnirWindow(QMainWindow):
       self.__ui.pushbutton_stop.setEnabled(False)
 
 
-   ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤    Video Player GUI    ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
-
-   def __cb_video1_play_forward_clicked(self): self.__video_play_forward_clicked('cam1')
-   def __cb_video2_play_forward_clicked(self): self.__video_play_forward_clicked('cam2')
-   def __video_play_forward_clicked(self, cam: str):
-      self.__video_player.play(cam, VideoPlayer.DIRECTION_FORWARD)
-
-   def __cb_video1_play_reverse_clicked(self): self.__video_play_reverse_clicked('cam1')
-   def __cb_video2_play_reverse_clicked(self): self.__video_play_reverse_clicked('cam2')
-   def __video_play_reverse_clicked(self, cam: str):
-      self.__video_player.play(cam, VideoPlayer.DIRECTION_REVERSE)
-
-   def __cb_video1_stop_clicked(self): self.__video_stop_clicked('cam1')
-   def __cb_video2_stop_clicked(self): self.__video_stop_clicked('cam2')
-   def __video_stop_clicked(self, cam: str):
-      self.__video_player.stop(cam)
-
-   def __cb_video1_step_forward(self): self.__video_step_forward('cam1')
-   def __cb_video2_step_forward(self): self.__video_step_forward('cam2')
-   def __video_step_forward(self, cam):
-      self.__video_player.step(cam, VideoPlayer.DIRECTION_FORWARD)
-
-   def __cb_video1_step_reverse(self): self.__video_step_reverse('cam1')
-   def __cb_video2_step_reverse(self): self.__video_step_reverse('cam2')
-   def __video_step_reverse(self, cam):
-      self.__video_player.step(cam, VideoPlayer.DIRECTION_REVERSE)
-
-   def __cb_video1_slider_changed(self, value): self.__video_slider_changed('cam1', value)
-   def __cb_video2_slider_changed(self, value): self.__video_slider_changed('cam2', value)
-   def __video_slider_changed(self, cam: str, value: int):
-      self.__video_player.set_position(cam, value)
-
-   def __cb_video1_copy_clicked(self): self.__video_copy('cam1', 'cam2')
-   def __cb_video2_copy_clicked(self): self.__video_copy('cam2', 'cam1')
-   def __video_copy(self, source_cam: str, dest_cam: str):
-      self.__video_player.copy(source_cam, dest_cam)
-
-   def __cb_video1_find_clicked(self): self.__video_find_clicked('cam1')
-   def __cb_video2_find_clicked(self): self.__video_find_clicked('cam2')
-   def __video_find_clicked(self, cam):
-      self.__video_player.find(cam)
-
-   def __evt_videoplayer_play_new_frame(self, frame :Frame):
-      self.display_frame(frame)
-      ''' block signal on slider change since it will do a video_player.set_poistion on change
-      and thereby intrduce a circular event '''
-      self.__ui.slider_video[frame.get_cam()].blockSignals(True)
-      self.__ui.slider_video[frame.get_cam()].setSliderPosition(frame.get_position())
-      self.__ui.slider_video[frame.get_cam()].blockSignals(False)
-
-      ''' Display time '''
-      self.__ui.label_time_video[frame.get_cam()].setText(
-         self.format_time(
-            self.__video_player.get_time(frame.get_cam())
-         )
-      )
-
-   def video_display_frame_time(self, cam: str, time: int):
-      self.__ui.label_time_video[cam].setText(
-         self.format_time(time)
-      )
-
-
-   def __enable_video_ui(self, enabled: bool):
-      self.__ui.pushbutton_video1_find.setEnabled(enabled)
-      self.__ui.pushbutton_video1_playbackward.setEnabled(enabled)
-      self.__ui.pushbutton_video1_backstep.setEnabled(enabled)
-      self.__ui.pushbutton_video1_pause.setEnabled(enabled)
-      self.__ui.pushbutton_video1_forwardstep.setEnabled(enabled)
-      self.__ui.pushbutton_video1_playforward.setEnabled(enabled)
-      self.__ui.pushbutton_video1_copy.setEnabled(enabled)
-      self.__ui.pushbutton_video2_find.setEnabled(enabled)
-      self.__ui.pushbutton_video2_playbackward.setEnabled(enabled)
-      self.__ui.pushbutton_video2_backstep.setEnabled(enabled)
-      self.__ui.pushbutton_video2_pause.setEnabled(enabled)
-      self.__ui.pushbutton_video2_forwardstep.setEnabled(enabled)
-      self.__ui.pushbutton_video2_playforward.setEnabled(enabled)
-      self.__ui.pushbutton_video2_copy.setEnabled(enabled)
-      self.__ui.slider_video1.setEnabled(enabled)
-      self.__ui.slider_video2.setEnabled(enabled)
 
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Align GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
@@ -316,7 +215,7 @@ class SleipnirWindow(QMainWindow):
 
 
    def __evt_alignlogic_align_new_frame(self, frame :Frame):
-      self.display_frame(frame)
+      self.__video_player_gui.display_frame(frame)
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Game GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
    def __cb_start_cameras(self):
@@ -371,28 +270,16 @@ class SleipnirWindow(QMainWindow):
 
    def __evt_globals_ground_level_change(self, value):
       ''' When the ground level change the videos needs to redraw '''
-      self.display_frame(self.__video_player.get_current_frame('cam1'))
-      self.display_frame(self.__video_player.get_current_frame('cam2'))
+      self.__video_player_gui.display_frame(self.__video_player.get_current_frame('cam1'))
+      self.__video_player_gui.display_frame(self.__video_player.get_current_frame('cam2'))
 
       ''' Do not try to set position if we are currently dragging '''
       if self.__ui.verticalSlider_groundlevel.isSliderDown() == False:
          self.__ui.verticalSlider_groundlevel.setValue(value)
 
-   def display_frame(self, frame :Frame):
-      ''' display video frame '''
-      image = frame.pop_image_load_if_missing(self.__db, self.__globals.get_game())
-
-      # Draw center line
-      cv.rectangle(image, (160, 0), (160, 480), (0, 0, 0), 1)
-      # Draw ground level
-      cv.rectangle(image, (0, self.__globals.get_ground_level()), (320, self.__globals.get_ground_level()), (0, 0, 0), 1)
-
-      image_qt = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], QtGui.QImage.Format_Indexed8)
-      self.__ui.widget_video[frame.get_cam()].setPixmap(QtGui.QPixmap.fromImage(image_qt))
 
    def enable_all_gui_elements(self, enabled):
-      self.__enable_video_ui(enabled)
-
+      self.__video_player_gui.enable_gui_elements(enabled)
       self.__current_game_gui.enable_gui_elements(enabled)
 
       self.__ui.sleipnir_combo_box_game_select.setEnabled(enabled)

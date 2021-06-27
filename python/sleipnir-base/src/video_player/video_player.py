@@ -10,6 +10,7 @@ from cameras_data import CamerasData
 from configuration import Configuration
 from motion_tracker import MotionTracker, MotionTrackerDoMessage
 
+
 logger = logging.getLogger(__name__)
 
 '''

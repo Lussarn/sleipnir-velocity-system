@@ -8,7 +8,8 @@ from sound import Sound
 from ui_sleipnir_window import Ui_SleipnirWindow
 from configuration import Configuration, ConfigurationError
 from camera_server import CameraServer
-from video_player import VideoPlayer
+from video_player.video_player import VideoPlayer
+from video_player.video_player_gui import VideoPlayerGUI
 from frame import Frame
 
 from game.gate_crasher.logic import Logic
@@ -23,13 +24,14 @@ logger = logging.getLogger(__name__)
 class GUI:
     def __init__(self, win):
         from sleipnir import SleipnirWindow
-        self.__win = win                                # type: SleipnirWindow
-        self.__ui = win.get_ui()                        # type: Ui_SleipnirWindow
-        self.__sound = win.get_sound()                  # type: Sound
-        self.__globals = win.get_globals()              # type: Globals
-        self.__camera_server = win.get_camera_server()  # type: CameraServer
-        self.__configuration = win.get_configuration()  # type: Configuration
-        self.__video_player = win.get_video_player()    # type: VideoPlayer
+        self.__win = win                                        # type: SleipnirWindow
+        self.__ui = win.get_ui()                                # type: Ui_SleipnirWindow
+        self.__sound = win.get_sound()                          # type: Sound
+        self.__globals = win.get_globals()                      # type: Globals
+        self.__camera_server = win.get_camera_server()          # type: CameraServer
+        self.__configuration = win.get_configuration()          # type: Configuration
+        self.__video_player = win.get_video_player()            # type: VideoPlayer
+        self.__video_player_gui = win.get_video_player_gui()    # type: VideoPlayerGUI
 
         self.__logic = Logic(self.__globals, self.__camera_server, self.__configuration)
 
@@ -91,13 +93,13 @@ class GUI:
     def __evt_frame_new(self, frame: Frame):
         ''' Only display every third frame when live trackng - 30 fps '''
         if self.__ui.checkBox_live.isChecked() and frame.get_position() % 3 == 0:
-            self.__win.display_frame(frame)
+            self.__video_player_gui.display_frame(frame)
 
         ''' Display run time '''
         self.__ui.gate_crasher_label_time.setText('Time: %s' % self.__win.format_time(self.__logic.get_current_runtime()))
 
         ''' Display time beneath video '''
-        self.__win.video_display_frame_time(frame.get_cam(), self.__logic.get_time(frame))
+        self.__video_player_gui.video_display_frame_time(frame.get_cam(), self.__logic.get_time(frame))
 
     def __evt_course_restart(self):
         self.__model_announcement_reset()

@@ -48,26 +48,26 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_video_1.addLayout(self.horizontalLayout_video_1_top)
 
-        self.label_video1 = QLabel(self.centralwidget)
-        self.label_video1.setObjectName(u"label_video1")
-        self.label_video1.setFrameShape(QFrame.Box)
-        self.label_video1.setScaledContents(True)
+        self.video_player_label_video1 = QLabel(self.centralwidget)
+        self.video_player_label_video1.setObjectName(u"video_player_label_video1")
+        self.video_player_label_video1.setFrameShape(QFrame.Box)
+        self.video_player_label_video1.setScaledContents(True)
 
-        self.verticalLayout_video_1.addWidget(self.label_video1)
+        self.verticalLayout_video_1.addWidget(self.video_player_label_video1)
 
         self.horizontalLayout_video_1_slider = QHBoxLayout()
         self.horizontalLayout_video_1_slider.setObjectName(u"horizontalLayout_video_1_slider")
         self.horizontalLayout_video_1_slider.setContentsMargins(-1, 10, -1, 10)
-        self.slider_video1 = QSlider(self.centralwidget)
-        self.slider_video1.setObjectName(u"slider_video1")
-        self.slider_video1.setOrientation(Qt.Horizontal)
+        self.video_player_slider_video1 = QSlider(self.centralwidget)
+        self.video_player_slider_video1.setObjectName(u"video_player_slider_video1")
+        self.video_player_slider_video1.setOrientation(Qt.Horizontal)
 
-        self.horizontalLayout_video_1_slider.addWidget(self.slider_video1)
+        self.horizontalLayout_video_1_slider.addWidget(self.video_player_slider_video1)
 
-        self.label_time_video1 = QLabel(self.centralwidget)
-        self.label_time_video1.setObjectName(u"label_time_video1")
+        self.video_player_label_time_video1 = QLabel(self.centralwidget)
+        self.video_player_label_time_video1.setObjectName(u"video_player_label_time_video1")
 
-        self.horizontalLayout_video_1_slider.addWidget(self.label_time_video1)
+        self.horizontalLayout_video_1_slider.addWidget(self.video_player_label_time_video1)
 
 
         self.verticalLayout_video_1.addLayout(self.horizontalLayout_video_1_slider)
@@ -76,53 +76,53 @@ class Ui_MainWindow(object):
         self.horizontalLayout_video_1_buttons.setSpacing(0)
         self.horizontalLayout_video_1_buttons.setObjectName(u"horizontalLayout_video_1_buttons")
         self.horizontalLayout_video_1_buttons.setContentsMargins(-1, 0, -1, -1)
-        self.pushbutton_video1_find = QPushButton(self.centralwidget)
-        self.pushbutton_video1_find.setObjectName(u"pushbutton_video1_find")
+        self.video_player_push_button_video1_find = QPushButton(self.centralwidget)
+        self.video_player_push_button_video1_find.setObjectName(u"video_player_push_button_video1_find")
 
-        self.horizontalLayout_video_1_buttons.addWidget(self.pushbutton_video1_find)
+        self.horizontalLayout_video_1_buttons.addWidget(self.video_player_push_button_video1_find)
 
         self.horizontalSpacer_2 = QSpacerItem(16, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
 
         self.horizontalLayout_video_1_buttons.addItem(self.horizontalSpacer_2)
 
-        self.pushbutton_video1_playbackward = QPushButton(self.centralwidget)
-        self.pushbutton_video1_playbackward.setObjectName(u"pushbutton_video1_playbackward")
-        self.pushbutton_video1_playbackward.setMaximumSize(QSize(40, 16777215))
+        self.video_player_push_button_video1_play_reverse = QPushButton(self.centralwidget)
+        self.video_player_push_button_video1_play_reverse.setObjectName(u"video_player_push_button_video1_play_reverse")
+        self.video_player_push_button_video1_play_reverse.setMaximumSize(QSize(40, 16777215))
 
-        self.horizontalLayout_video_1_buttons.addWidget(self.pushbutton_video1_playbackward)
+        self.horizontalLayout_video_1_buttons.addWidget(self.video_player_push_button_video1_play_reverse)
 
-        self.pushbutton_video1_backstep = QPushButton(self.centralwidget)
-        self.pushbutton_video1_backstep.setObjectName(u"pushbutton_video1_backstep")
-        self.pushbutton_video1_backstep.setMaximumSize(QSize(40, 16777215))
+        self.video_player_push_button_video1_step_reverse = QPushButton(self.centralwidget)
+        self.video_player_push_button_video1_step_reverse.setObjectName(u"video_player_push_button_video1_step_reverse")
+        self.video_player_push_button_video1_step_reverse.setMaximumSize(QSize(40, 16777215))
 
-        self.horizontalLayout_video_1_buttons.addWidget(self.pushbutton_video1_backstep)
+        self.horizontalLayout_video_1_buttons.addWidget(self.video_player_push_button_video1_step_reverse)
 
-        self.pushbutton_video1_pause = QPushButton(self.centralwidget)
-        self.pushbutton_video1_pause.setObjectName(u"pushbutton_video1_pause")
-        self.pushbutton_video1_pause.setMaximumSize(QSize(40, 16777215))
+        self.video_player_push_button_video1_stop = QPushButton(self.centralwidget)
+        self.video_player_push_button_video1_stop.setObjectName(u"video_player_push_button_video1_stop")
+        self.video_player_push_button_video1_stop.setMaximumSize(QSize(40, 16777215))
 
-        self.horizontalLayout_video_1_buttons.addWidget(self.pushbutton_video1_pause)
+        self.horizontalLayout_video_1_buttons.addWidget(self.video_player_push_button_video1_stop)
 
-        self.pushbutton_video1_forwardstep = QPushButton(self.centralwidget)
-        self.pushbutton_video1_forwardstep.setObjectName(u"pushbutton_video1_forwardstep")
-        self.pushbutton_video1_forwardstep.setMaximumSize(QSize(40, 16777215))
+        self.video_player_push_button_video1_step_forward = QPushButton(self.centralwidget)
+        self.video_player_push_button_video1_step_forward.setObjectName(u"video_player_push_button_video1_step_forward")
+        self.video_player_push_button_video1_step_forward.setMaximumSize(QSize(40, 16777215))
 
-        self.horizontalLayout_video_1_buttons.addWidget(self.pushbutton_video1_forwardstep)
+        self.horizontalLayout_video_1_buttons.addWidget(self.video_player_push_button_video1_step_forward)
 
-        self.pushbutton_video1_playforward = QPushButton(self.centralwidget)
-        self.pushbutton_video1_playforward.setObjectName(u"pushbutton_video1_playforward")
-        self.pushbutton_video1_playforward.setMaximumSize(QSize(40, 16777215))
+        self.video_player_push_button_video1_play_forward = QPushButton(self.centralwidget)
+        self.video_player_push_button_video1_play_forward.setObjectName(u"video_player_push_button_video1_play_forward")
+        self.video_player_push_button_video1_play_forward.setMaximumSize(QSize(40, 16777215))
 
-        self.horizontalLayout_video_1_buttons.addWidget(self.pushbutton_video1_playforward)
+        self.horizontalLayout_video_1_buttons.addWidget(self.video_player_push_button_video1_play_forward)
 
         self.horizontalSpacer_3 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout_video_1_buttons.addItem(self.horizontalSpacer_3)
 
-        self.pushbutton_video1_copy = QPushButton(self.centralwidget)
-        self.pushbutton_video1_copy.setObjectName(u"pushbutton_video1_copy")
+        self.video_player_push_button_video1_copy = QPushButton(self.centralwidget)
+        self.video_player_push_button_video1_copy.setObjectName(u"video_player_push_button_video1_copy")
 
-        self.horizontalLayout_video_1_buttons.addWidget(self.pushbutton_video1_copy)
+        self.horizontalLayout_video_1_buttons.addWidget(self.video_player_push_button_video1_copy)
 
         self.horizontalLayout_video_1_buttons.setStretch(7, 1)
 
@@ -175,26 +175,26 @@ class Ui_MainWindow(object):
 
         self.verticalLayout_video_2.addLayout(self.horizontalLayout_video_2_top)
 
-        self.label_video2 = QLabel(self.centralwidget)
-        self.label_video2.setObjectName(u"label_video2")
-        self.label_video2.setFrameShape(QFrame.Box)
-        self.label_video2.setScaledContents(True)
+        self.video_player_label_video2 = QLabel(self.centralwidget)
+        self.video_player_label_video2.setObjectName(u"video_player_label_video2")
+        self.video_player_label_video2.setFrameShape(QFrame.Box)
+        self.video_player_label_video2.setScaledContents(True)
 
-        self.verticalLayout_video_2.addWidget(self.label_video2)
+        self.verticalLayout_video_2.addWidget(self.video_player_label_video2)
 
         self.horizontalLayout_video_2_slider = QHBoxLayout()
         self.horizontalLayout_video_2_slider.setObjectName(u"horizontalLayout_video_2_slider")
         self.horizontalLayout_video_2_slider.setContentsMargins(-1, 10, -1, 10)
-        self.slider_video2 = QSlider(self.centralwidget)
-        self.slider_video2.setObjectName(u"slider_video2")
-        self.slider_video2.setOrientation(Qt.Horizontal)
+        self.video_player_slider_video2 = QSlider(self.centralwidget)
+        self.video_player_slider_video2.setObjectName(u"video_player_slider_video2")
+        self.video_player_slider_video2.setOrientation(Qt.Horizontal)
 
-        self.horizontalLayout_video_2_slider.addWidget(self.slider_video2)
+        self.horizontalLayout_video_2_slider.addWidget(self.video_player_slider_video2)
 
-        self.label_time_video2 = QLabel(self.centralwidget)
-        self.label_time_video2.setObjectName(u"label_time_video2")
+        self.video_player_label_time_video2 = QLabel(self.centralwidget)
+        self.video_player_label_time_video2.setObjectName(u"video_player_label_time_video2")
 
-        self.horizontalLayout_video_2_slider.addWidget(self.label_time_video2)
+        self.horizontalLayout_video_2_slider.addWidget(self.video_player_label_time_video2)
 
 
         self.verticalLayout_video_2.addLayout(self.horizontalLayout_video_2_slider)
@@ -203,53 +203,53 @@ class Ui_MainWindow(object):
         self.horizontalLayout_video_2_buttons.setSpacing(0)
         self.horizontalLayout_video_2_buttons.setObjectName(u"horizontalLayout_video_2_buttons")
         self.horizontalLayout_video_2_buttons.setContentsMargins(-1, 0, -1, 0)
-        self.pushbutton_video2_copy = QPushButton(self.centralwidget)
-        self.pushbutton_video2_copy.setObjectName(u"pushbutton_video2_copy")
+        self.video_player_push_button_video2_copy = QPushButton(self.centralwidget)
+        self.video_player_push_button_video2_copy.setObjectName(u"video_player_push_button_video2_copy")
 
-        self.horizontalLayout_video_2_buttons.addWidget(self.pushbutton_video2_copy)
+        self.horizontalLayout_video_2_buttons.addWidget(self.video_player_push_button_video2_copy)
 
         self.horizontalSpacer_4 = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
 
         self.horizontalLayout_video_2_buttons.addItem(self.horizontalSpacer_4)
 
-        self.pushbutton_video2_find = QPushButton(self.centralwidget)
-        self.pushbutton_video2_find.setObjectName(u"pushbutton_video2_find")
+        self.video_player_push_button_video2_find = QPushButton(self.centralwidget)
+        self.video_player_push_button_video2_find.setObjectName(u"video_player_push_button_video2_find")
 
-        self.horizontalLayout_video_2_buttons.addWidget(self.pushbutton_video2_find)
+        self.horizontalLayout_video_2_buttons.addWidget(self.video_player_push_button_video2_find)
 
         self.horizontalSpacer_5 = QSpacerItem(16, 20, QSizePolicy.Fixed, QSizePolicy.Minimum)
 
         self.horizontalLayout_video_2_buttons.addItem(self.horizontalSpacer_5)
 
-        self.pushbutton_video2_playbackward = QPushButton(self.centralwidget)
-        self.pushbutton_video2_playbackward.setObjectName(u"pushbutton_video2_playbackward")
-        self.pushbutton_video2_playbackward.setMaximumSize(QSize(40, 16777215))
+        self.video_player_push_button_video2_play_reverse = QPushButton(self.centralwidget)
+        self.video_player_push_button_video2_play_reverse.setObjectName(u"video_player_push_button_video2_play_reverse")
+        self.video_player_push_button_video2_play_reverse.setMaximumSize(QSize(40, 16777215))
 
-        self.horizontalLayout_video_2_buttons.addWidget(self.pushbutton_video2_playbackward)
+        self.horizontalLayout_video_2_buttons.addWidget(self.video_player_push_button_video2_play_reverse)
 
-        self.pushbutton_video2_backstep = QPushButton(self.centralwidget)
-        self.pushbutton_video2_backstep.setObjectName(u"pushbutton_video2_backstep")
-        self.pushbutton_video2_backstep.setMaximumSize(QSize(40, 16777215))
+        self.video_player_push_button_video2_step_reverse = QPushButton(self.centralwidget)
+        self.video_player_push_button_video2_step_reverse.setObjectName(u"video_player_push_button_video2_step_reverse")
+        self.video_player_push_button_video2_step_reverse.setMaximumSize(QSize(40, 16777215))
 
-        self.horizontalLayout_video_2_buttons.addWidget(self.pushbutton_video2_backstep)
+        self.horizontalLayout_video_2_buttons.addWidget(self.video_player_push_button_video2_step_reverse)
 
-        self.pushbutton_video2_pause = QPushButton(self.centralwidget)
-        self.pushbutton_video2_pause.setObjectName(u"pushbutton_video2_pause")
-        self.pushbutton_video2_pause.setMaximumSize(QSize(40, 16777215))
+        self.video_player_push_button_video2_stop = QPushButton(self.centralwidget)
+        self.video_player_push_button_video2_stop.setObjectName(u"video_player_push_button_video2_stop")
+        self.video_player_push_button_video2_stop.setMaximumSize(QSize(40, 16777215))
 
-        self.horizontalLayout_video_2_buttons.addWidget(self.pushbutton_video2_pause)
+        self.horizontalLayout_video_2_buttons.addWidget(self.video_player_push_button_video2_stop)
 
-        self.pushbutton_video2_forwardstep = QPushButton(self.centralwidget)
-        self.pushbutton_video2_forwardstep.setObjectName(u"pushbutton_video2_forwardstep")
-        self.pushbutton_video2_forwardstep.setMaximumSize(QSize(40, 16777215))
+        self.video_player_push_button_video2_step_forward = QPushButton(self.centralwidget)
+        self.video_player_push_button_video2_step_forward.setObjectName(u"video_player_push_button_video2_step_forward")
+        self.video_player_push_button_video2_step_forward.setMaximumSize(QSize(40, 16777215))
 
-        self.horizontalLayout_video_2_buttons.addWidget(self.pushbutton_video2_forwardstep)
+        self.horizontalLayout_video_2_buttons.addWidget(self.video_player_push_button_video2_step_forward)
 
-        self.pushbutton_video2_playforward = QPushButton(self.centralwidget)
-        self.pushbutton_video2_playforward.setObjectName(u"pushbutton_video2_playforward")
-        self.pushbutton_video2_playforward.setMaximumSize(QSize(40, 16777215))
+        self.video_player_push_button_video2_play_forward = QPushButton(self.centralwidget)
+        self.video_player_push_button_video2_play_forward.setObjectName(u"video_player_push_button_video2_play_forward")
+        self.video_player_push_button_video2_play_forward.setMaximumSize(QSize(40, 16777215))
 
-        self.horizontalLayout_video_2_buttons.addWidget(self.pushbutton_video2_playforward)
+        self.horizontalLayout_video_2_buttons.addWidget(self.video_player_push_button_video2_play_forward)
 
         self.horizontalLayout_video_2_buttons.setStretch(1, 1)
 
@@ -590,26 +590,26 @@ class Ui_MainWindow(object):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Speed", None))
         self.label_video1_online.setText(QCoreApplication.translate("MainWindow", u"Waiting...", None))
         self.pushButton_video1_align.setText(QCoreApplication.translate("MainWindow", u"Align Camera", None))
-        self.label_video1.setText("")
-        self.label_time_video1.setText(QCoreApplication.translate("MainWindow", u"00:00.000", None))
-        self.pushbutton_video1_find.setText(QCoreApplication.translate("MainWindow", u"Find", None))
-        self.pushbutton_video1_playbackward.setText(QCoreApplication.translate("MainWindow", u"<<", None))
-        self.pushbutton_video1_backstep.setText(QCoreApplication.translate("MainWindow", u"<", None))
-        self.pushbutton_video1_pause.setText(QCoreApplication.translate("MainWindow", u"||", None))
-        self.pushbutton_video1_forwardstep.setText(QCoreApplication.translate("MainWindow", u">", None))
-        self.pushbutton_video1_playforward.setText(QCoreApplication.translate("MainWindow", u">>", None))
-        self.pushbutton_video1_copy.setText(QCoreApplication.translate("MainWindow", u"Copy Right", None))
+        self.video_player_label_video1.setText("")
+        self.video_player_label_time_video1.setText(QCoreApplication.translate("MainWindow", u"00:00.000", None))
+        self.video_player_push_button_video1_find.setText(QCoreApplication.translate("MainWindow", u"Find", None))
+        self.video_player_push_button_video1_play_reverse.setText(QCoreApplication.translate("MainWindow", u"<<", None))
+        self.video_player_push_button_video1_step_reverse.setText(QCoreApplication.translate("MainWindow", u"<", None))
+        self.video_player_push_button_video1_stop.setText(QCoreApplication.translate("MainWindow", u"||", None))
+        self.video_player_push_button_video1_step_forward.setText(QCoreApplication.translate("MainWindow", u">", None))
+        self.video_player_push_button_video1_play_forward.setText(QCoreApplication.translate("MainWindow", u">>", None))
+        self.video_player_push_button_video1_copy.setText(QCoreApplication.translate("MainWindow", u"Copy Right", None))
         self.label_video2_online.setText(QCoreApplication.translate("MainWindow", u"Waiting...", None))
         self.pushButton_video2_align.setText(QCoreApplication.translate("MainWindow", u"Align Camera", None))
-        self.label_video2.setText("")
-        self.label_time_video2.setText(QCoreApplication.translate("MainWindow", u"00:00.000 ", None))
-        self.pushbutton_video2_copy.setText(QCoreApplication.translate("MainWindow", u"Copy Left", None))
-        self.pushbutton_video2_find.setText(QCoreApplication.translate("MainWindow", u"Find", None))
-        self.pushbutton_video2_playbackward.setText(QCoreApplication.translate("MainWindow", u"<<", None))
-        self.pushbutton_video2_backstep.setText(QCoreApplication.translate("MainWindow", u"<", None))
-        self.pushbutton_video2_pause.setText(QCoreApplication.translate("MainWindow", u"||", None))
-        self.pushbutton_video2_forwardstep.setText(QCoreApplication.translate("MainWindow", u">", None))
-        self.pushbutton_video2_playforward.setText(QCoreApplication.translate("MainWindow", u">>", None))
+        self.video_player_label_video2.setText("")
+        self.video_player_label_time_video2.setText(QCoreApplication.translate("MainWindow", u"00:00.000 ", None))
+        self.video_player_push_button_video2_copy.setText(QCoreApplication.translate("MainWindow", u"Copy Left", None))
+        self.video_player_push_button_video2_find.setText(QCoreApplication.translate("MainWindow", u"Find", None))
+        self.video_player_push_button_video2_play_reverse.setText(QCoreApplication.translate("MainWindow", u"<<", None))
+        self.video_player_push_button_video2_step_reverse.setText(QCoreApplication.translate("MainWindow", u"<", None))
+        self.video_player_push_button_video2_stop.setText(QCoreApplication.translate("MainWindow", u"||", None))
+        self.video_player_push_button_video2_step_forward.setText(QCoreApplication.translate("MainWindow", u">", None))
+        self.video_player_push_button_video2_play_forward.setText(QCoreApplication.translate("MainWindow", u">>", None))
         self.sleipnir_combo_box_game_select.setItemText(0, QCoreApplication.translate("MainWindow", u"Speed Trap", None))
         self.sleipnir_combo_box_game_select.setItemText(1, QCoreApplication.translate("MainWindow", u"Gate Crasher", None))
 
