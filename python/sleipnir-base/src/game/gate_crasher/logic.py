@@ -392,6 +392,31 @@ class Logic:
         self.__levels.append(GateCrasherLevel("Drag Race",
             [
                 GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'RIGHT')
+           ])
+        )
+
+        self.__levels.append(GateCrasherLevel("Figure 8",
+            [
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'LEFT'),
            ])
         )
