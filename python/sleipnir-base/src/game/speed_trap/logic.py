@@ -13,20 +13,9 @@ from game.speed_trap.announcement import Announcements, Announcement
 import game.speed_trap.announcement_dao as announcement_dao
 import database.frame_dao as frame_dao
 
+from game.speed_trap.events import *
+
 logger = logging.getLogger(__name__)
-
-'''
-SpeedLogic emits the following events
-
-SpeedLogic.EVENT_SPEED_START                        : Start timed run camera
-SpeedLogic.EVENT_SPEED_STOP                         : Stop timed run camera
-SpeedLogic.EVENT_SPEED_NEW_FRAME frame :Frame       : A camera have a new frame
-SpeedLogic.EVENT_PASS_START : str                   : A speed pass have started on cam
-SpeedLogic.EVENT_PASS_END : SpeedPassMessage        : A speed pass have ended
-SpeedLogic.EVENT_PASS_ABORT :                       : A speed pass have been aborted
-SpeedLogic.EVENT_ANNOUNCEMENT_NEW : Announcement    : An announcement has been added
-SpeedLogic.EVENT_ANNOUNCEMENT_LOAD : Announcements  : announcemnet loaded
-'''
 
 class SpeedState: 
     def __init__(self):        
@@ -82,16 +71,7 @@ class SpeedPassMessage:
         self.position_end = position_end
         self.timestamp_end = timestamp_end
 
-class SpeedLogic:
-    EVENT_SPEED_START           = 'speedlogic.speed.start'
-    EVENT_SPEED_STOP            = 'speedlogic.speed.stop'
-    EVENT_SPEED_NEW_FRAME       = 'speedlogic.speed.new_frame'
-    EVENT_PASS_START            = 'speedlogic.pass.start'
-    EVENT_PASS_END              = 'speedlogic.pass.end'
-    EVENT_PASS_ABORT            = 'speedlogic.pass.abort'
-    EVENT_ANNOUNCEMENT_NEW      = 'speedlogic.announcement.new'
-    EVENT_ANNOUNCEMENT_LOAD     = 'speedlogic.announcement.load'
-
+class Logic:
     __MAX_ALLOWED_LAG = 15
 
     def __init__(self, globals: Globals, camera_server: CameraServer, configuration: Configuration):
@@ -124,7 +104,7 @@ class SpeedLogic:
         if self.__globals.get_game() != Globals.GAME_SPEED_TRAP: return
         logger.info("Loading announcements for flight %d" % flight)
         self.__state.announcements = announcement_dao.fetch(self.__globals.get_db(), flight)
-        event.emit(SpeedLogic.EVENT_ANNOUNCEMENT_LOAD, self.__state.announcements)
+        event.emit(EVENT_ANNOUNCEMENT_LOADED, self.__state.announcements)
 
     def start_run(self):
         ''' Starting run '''
@@ -159,7 +139,7 @@ class SpeedLogic:
 
         self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_game(), self.__globals.get_flight())
         self.__camera_server.start_shooting(self.__state.cameras_data)
-        event.emit(SpeedLogic.EVENT_SPEED_START)
+        event.emit(EVENT_GAME_STARTED)
 
     def stop_run(self):
         ''' Stopping run '''
@@ -179,7 +159,7 @@ class SpeedLogic:
         announcement_dao.store(self.__globals.get_db(), self.__globals.get_flight(), self.__state.announcements)
 
         self.__state.running = False
-        event.emit(SpeedLogic.EVENT_SPEED_STOP)
+        event.emit(EVENT_GAME_STOPPED)
 
     def __cameraserver_evt_new_frame(self, frame: Frame):
         ''' See if we are in lag recovery mode '''
@@ -191,7 +171,7 @@ class SpeedLogic:
         if self.__state.pass_abort_time != None and time.time() > self.__state.pass_abort_time:
             self.__state.pass_abort_time = None
             self.__state.pass_direction = None
-            event.emit(SpeedLogic.EVENT_PASS_ABORT)
+            event.emit(EVENT_PASS_ABORTED)
 
         cam = frame.get_cam()
 
@@ -199,12 +179,12 @@ class SpeedLogic:
         cameras_data_last_position = self.__state.cameras_data.get_last_frame(cam).get_position()
 
         ''' Check if we need to go into lag recovery mode '''
-        if cameras_data_last_position - frame.get_position() > SpeedLogic.__MAX_ALLOWED_LAG:
-            logger.warning("Lag detected when fetching new frame " + cam + ": " + str(frame.get_position()) + ", skipping ahead " + str(SpeedLogic.__MAX_ALLOWED_LAG) + " frames")
+        if cameras_data_last_position - frame.get_position() > self.__MAX_ALLOWED_LAG:
+            logger.warning("Lag detected when fetching new frame " + cam + ": " + str(frame.get_position()) + ", skipping ahead " + str(self.__MAX_ALLOWED_LAG) + " frames")
             ''' Enable the lag recovery for __MAX_ALLOWED_LAG * 3 frames 
             We tripple up since there are two cameras that are sending images 
             plus extra headroom '''
-            self.__state.lag_recovery = SpeedLogic.__MAX_ALLOWED_LAG * 3
+            self.__state.lag_recovery = self.__MAX_ALLOWED_LAG * 3
             return
                 
         worker = self.__motion_tracker_threads[cam]
@@ -234,7 +214,7 @@ class SpeedLogic:
 
         ''' Note that we are emiting an old frame since we want to motion tracking
         information drawm '''
-        event.emit(SpeedLogic.EVENT_SPEED_NEW_FRAME, frame)
+        event.emit(EVENT_FRAME_NEW, frame)
 
     def check_run(self, cam: str, motion_tracker_done_message: MotionTrackerDoneMessage):
         ''' Discard hits that are obviously wrong '''
@@ -265,7 +245,7 @@ class SpeedLogic:
             ''' Max 6 second run '''
             self.__state.pass_abort_time = time.time() + 6.0
             logger.info("Initiating time run from cam 1 -->")
-            event.emit(SpeedLogic.EVENT_PASS_START, cam)
+            event.emit(EVENT_PASS_STARTED, cam)
 
         ''' Check for end of RIGHT pass on camera 2 '''
         if cam == 'cam2' and self.__state.pass_direction == 'RIGHT' and motion_tracker_done_message.get_direction() == 1:
@@ -283,7 +263,7 @@ class SpeedLogic:
                 self.__state.pass_position['cam2'],
                 self.__state.cameras_data.get_frame('cam2', self.__state.pass_position['cam2']).get_timestamp(),                
             )
-            event.emit(SpeedLogic.EVENT_PASS_END, speed_pass_message)
+            event.emit(EVENT_PASS_ENDED, speed_pass_message)
             self.__check_announcement(speed_pass_message)
 
         ''' Check for start of LEFT pass from camera 2 '''
@@ -295,7 +275,7 @@ class SpeedLogic:
             ''' Max 6 second run '''
             self.__state.pass_abort_time = time.time() + 6.0
             logger.info("Initiating time run from cam 2 <--")
-            event.emit(SpeedLogic.EVENT_PASS_START, cam)
+            event.emit(EVENT_PASS_STARTED, cam)
 
         ''' Check for end of LEFT pass on camera 1 '''
         if cam == 'cam1' and self.__state.pass_direction == "LEFT" and motion_tracker_done_message.get_direction() == -1:
@@ -314,7 +294,7 @@ class SpeedLogic:
                 self.__state.cameras_data.get_frame('cam1', self.__state.pass_position['cam1']).get_timestamp(),                
             )
             self.__check_announcement(speed_pass_message)
-            event.emit(SpeedLogic.EVENT_PASS_END, speed_pass_message)
+            event.emit(EVENT_PASS_ENDED, speed_pass_message)
 
     def set_distance(self, distance: int):
         self.__state.distance = distance
@@ -364,7 +344,7 @@ class SpeedLogic:
             direction
         )
         self.__state.announcements.append(announcement)
-        event.emit(self.EVENT_ANNOUNCEMENT_NEW, announcement)
+        event.emit(EVENT_ANNOUNCEMENT_NEW, announcement)
 
     def get_announcement_max_speeds(self):
         max_right = None  # type: Announcement

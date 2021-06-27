@@ -11,6 +11,7 @@ from frame import Frame
 from errors import *
 from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
 
+from game.gate_crasher.events import *
 import database.frame_dao as frame_dao
 from game.gate_crasher.announcement import Announcement
 import game.gate_crasher.announcement_dao as announcement_dao
@@ -101,16 +102,7 @@ class GateCrasherLevel():
         return len(self.__hitpoints)
 
 
-class GateCrasherLogic:
-    EVENT_GATE_CRASHER_START             = 'gatecrasher.run.start'
-    EVENT_GATE_CRASHER_STOP              = 'gatecrasher.run.stop'
-    EVENT_GATE_CRASHER_NEW_FRAME         = 'gatecrasher.run.new_frame'
-    EVENT_GATE_CRASHER_HIT_GATE          = 'gatecrasher.run.hitgate'
-    EVENT_GATE_CRASHER_FINISH            = 'gatecrasher.run.finish'
-    EVENT_GATE_CRASHER_RESTART           = 'gatecrasher.run.restart'
-    EVENT_GATE_CRAHSER_HIT_NEW           = 'gatecrasher.run.hitnew'
-    EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD = 'gatecrasher.announcement.load'
-
+class Logic:
     __MAX_ALLOWED_LAG = 15
     __RESTART_TIME = 15
 
@@ -146,7 +138,7 @@ class GateCrasherLogic:
         if self.__globals.get_game() != Globals.GAME_GATE_CRASHER: return
         logger.info("Loading announcements for flight %d" % flight)
         self.__state.announcements = announcement_dao.fetch(self.__globals.get_db(), flight)
-        event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD, self.__state.announcements)
+        event.emit(EVENT_ANNOUNCEMENT_LOADED, self.__state.announcements)
 
     def get_current_runtime(self):
         return self.__state.current_runtime_ms
@@ -192,7 +184,7 @@ class GateCrasherLogic:
 
         self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_game(), self.__globals.get_flight())
         self.__camera_server.start_shooting(self.__state.cameras_data)
-        event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_START)
+        event.emit(EVENT_GAME_STARTED)
 
     def stop_run(self):
         ''' Stopping run '''
@@ -212,7 +204,7 @@ class GateCrasherLogic:
         announcement_dao.store(self.__globals.get_db(), self.__globals.get_flight(), self.__state.announcements)
 
         self.__state.running = False
-        event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_STOP)
+        event.emit(EVENT_GAME_STOPPED)
 
     def __cameraserver_evt_new_frame(self, frame: Frame):
         ''' Make sure we do not process any lingering event, it would
@@ -232,7 +224,7 @@ class GateCrasherLogic:
             self.__state.announcements = []
             self.__state.current_runtime_ms = 0
             self.__state.no_hit_until = time.time()
-            event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_RESTART)
+            event.emit(EVENT_COURSE_RESTARTED)
             return
 
         cam = frame.get_cam()
@@ -241,12 +233,12 @@ class GateCrasherLogic:
         cameras_data_last_position = self.__state.cameras_data.get_last_frame(cam).get_position()
 
         ''' Check if we need to go into lag recovery mode '''
-        if cameras_data_last_position - frame.get_position() > GateCrasherLogic.__MAX_ALLOWED_LAG:
-            logger.warning("Lag detected when fetching new frame " + cam + ": " + str(frame.get_position()) + ", skipping ahead " + str(GateCrasherLogic.__MAX_ALLOWED_LAG) + " frames")
+        if cameras_data_last_position - frame.get_position() > self.__MAX_ALLOWED_LAG:
+            logger.warning("Lag detected when fetching new frame " + cam + ": " + str(frame.get_position()) + ", skipping ahead " + str(self.__MAX_ALLOWED_LAG) + " frames")
             ''' Enable the lag recovery for __MAX_ALLOWED_LAG * 3 frames 
             We tripple up since there are two cameras that are sending images 
             plus extra headroom '''
-            self.__state.lag_recovery = GateCrasherLogic.__MAX_ALLOWED_LAG * 3
+            self.__state.lag_recovery = self.__MAX_ALLOWED_LAG * 3
             return
                 
         worker = self.__motion_tracker_threads[cam]
@@ -279,7 +271,7 @@ class GateCrasherLogic:
 
         ''' Note that we are emiting an old frame since we want to motion tracking
         information drawm '''
-        event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_NEW_FRAME, frame)
+        event.emit(EVENT_FRAME_NEW, frame)
 
         ''' Check motion '''
         if (done_message.have_motion()):
@@ -317,7 +309,8 @@ class GateCrasherLogic:
             )
             self.__state.announcements.append(announcement)
 
-            event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE, announcement)
+            print("!!!!!")
+            event.emit(EVENT_ANNOUNCEMENT_NEW, announcement)
 
             if self.__state.current_gate_number == self.__levels[self.__state.level].get_length() - 1:
                 ''' Reached the finish '''
@@ -327,7 +320,7 @@ class GateCrasherLogic:
                 for announcement in self.__state.announcements:
                     finish_time += announcement.get_time_ms()
 
-                event.emit(GateCrasherLogic.EVENT_GATE_CRASHER_FINISH, finish_time)
+                event.emit(EVENT_COURSE_FINISHED, finish_time)
                 self.stop_run()
                 return
 

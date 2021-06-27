@@ -1,7 +1,6 @@
 import simplejpeg
 
 from database.db import DB
-import database.frame_dao as frame_dao
 
 class Frame:
     def __init__ (self, flight: int, cam: str, position: int, timestamp: int, image):
@@ -33,6 +32,7 @@ class Frame:
         ''' If there is and image set, returns the image and blank the memory
             If there is no image, trye to load and return it '''
         if self.__image is None:
+            import database.frame_dao as frame_dao
             frame = frame_dao.load(db, game, self.__flight, self.__cam, self.__position)
             if frame is None: return
             return simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
