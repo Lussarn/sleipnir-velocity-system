@@ -473,7 +473,7 @@
            <number>3</number>
           </property>
           <item>
-           <widget class="QComboBox" name="combo_box_game_select">
+           <widget class="QComboBox" name="sleipnir_combo_box_game_select">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -551,14 +551,14 @@
                <number>0</number>
               </property>
               <item>
-               <widget class="QLabel" name="label_distance">
+               <widget class="QLabel" name="speed_trap_label_distance">
                 <property name="text">
                  <string>Distance Meters</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QLineEdit" name="lineEdit_distance">
+               <widget class="QLineEdit" name="speed_trap_line_edit_distance">
                 <property name="maximumSize">
                  <size>
                   <width>16777215</width>
@@ -568,7 +568,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="checkBox_speak">
+               <widget class="QCheckBox" name="speed_trap_check_box_speak">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
                   <horstretch>0</horstretch>
@@ -590,7 +590,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QTableView" name="table_view_speed_trap_announcement">
+               <widget class="QTableView" name="speed_trap_table_view_announcement">
                 <property name="font">
                  <font>
                   <family>Consolas</family>
@@ -612,7 +612,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QPushButton" name="pushButton_remove_announcement">
+               <widget class="QPushButton" name="speed_trap_push_button_remove_announcement">
                 <property name="sizePolicy">
                  <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                   <horstretch>0</horstretch>
@@ -625,7 +625,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_time">
+               <widget class="QLabel" name="speed_trap_label_time">
                 <property name="font">
                  <font>
                   <family>Consolas</family>
@@ -644,7 +644,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_speed">
+               <widget class="QLabel" name="speed_trap_label_speed">
                 <property name="font">
                  <font>
                   <family>Consolas</family>
@@ -663,7 +663,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_average">
+               <widget class="QLabel" name="speed_trap_label_average">
                 <property name="font">
                  <font>
                   <family>Consolas</family>
@@ -699,17 +699,17 @@
                <number>0</number>
               </property>
               <item>
-               <widget class="QLabel" name="label">
+               <widget class="QLabel" name="gate_crasher_label_select_course">
                 <property name="text">
                  <string>Select Course</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QComboBox" name="combo_box_gate_crasher_level_select"/>
+               <widget class="QComboBox" name="gate_crasher_combo_box_course_select"/>
               </item>
               <item>
-               <widget class="QTableView" name="table_view_gate_crasher_result">
+               <widget class="QTableView" name="gate_crasher_table_view_result">
                 <property name="font">
                  <font>
                   <family>Consolas</family>
@@ -734,7 +734,7 @@
                </widget>
               </item>
               <item>
-               <widget class="QLabel" name="label_gate_crasher_time">
+               <widget class="QLabel" name="gate_crasher_label_time">
                 <property name="font">
                  <font>
                   <family>Consolas</family>

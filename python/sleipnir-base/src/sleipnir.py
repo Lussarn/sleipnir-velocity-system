@@ -78,7 +78,7 @@ class SleipnirWindow(QMainWindow):
 
       ''' game callbacks and events '''
       event.on(Globals.EVENT_GAME_CHANGE, self.__evt_globals_game_change)
-      self.__ui.combo_box_game_select.currentIndexChanged.connect(self.__cb_game_changed)
+      self.__ui.sleipnir_combo_box_game_select.currentIndexChanged.connect(self.__cb_game_changed)
 
       ''' flight callbacks and events '''
       for radio_buttons_flight in self.__ui.radio_buttons_flights:
@@ -273,6 +273,8 @@ class SleipnirWindow(QMainWindow):
       self.__ui.pushbutton_video2_forwardstep.setEnabled(enabled)
       self.__ui.pushbutton_video2_playforward.setEnabled(enabled)
       self.__ui.pushbutton_video2_copy.setEnabled(enabled)
+      self.__ui.slider_video1.setEnabled(enabled)
+      self.__ui.slider_video2.setEnabled(enabled)
 
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Align GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
@@ -392,19 +394,24 @@ class SleipnirWindow(QMainWindow):
    def enable_all_gui_elements(self, enabled):
       self.__enable_video_ui(enabled)
 
-      self.__ui.combo_box_game_select.setEnabled(enabled)
-      self.__ui.combo_box_gate_crasher_level_select.setEnabled(enabled)
-      self.__ui.table_view_gate_crasher_result.setEnabled(enabled)
+      ''' gate crasher controls '''
+      self.__ui.gate_crasher_combo_box_course_select.setEnabled(enabled)
+      self.__ui.gate_crasher_table_view_result.setEnabled(enabled)
 
+      ''' Speed trap controls '''
+      self.__ui.speed_trap_check_box_speak.setEnabled(enabled)
+      self.__ui.speed_trap_table_view_announcement.setEnabled(enabled)
+      self.__ui.speed_trap_line_edit_distance.setEnabled(enabled)
+      self.__ui.speed_trap_push_button_remove_announcement.setEnabled(enabled)
+
+
+      self.__ui.sleipnir_combo_box_game_select.setEnabled(enabled)
       self.__ui.pushbutton_stop.setEnabled(enabled)
       self.__ui.pushbutton_start.setEnabled(enabled)
-      self.__ui.checkBox_speak.setEnabled(enabled)
-      self.__ui.table_view_speed_trap_announcement.setEnabled(enabled)
       self.__ui.verticalSlider_groundlevel.setEnabled(enabled)
+      
 
-      self.__ui.lineEdit_distance.setEnabled(enabled)
       self.__ui.checkBox_live.setEnabled(enabled)
-      self.__ui.pushButton_remove_announcement.setEnabled(enabled)
 
       for i in range(0, len(self.__ui.radio_buttons_flights)):
          self.__ui.radio_buttons_flights[i].setEnabled(enabled)

@@ -1,5 +1,5 @@
 from PySide2 import QtGui, QtCore
-from PySide2.QtWidgets import QAbstractItemView, QMessageBox
+from PySide2.QtWidgets import QAbstractItemView
 
 from globals import Globals
 import event
@@ -48,12 +48,12 @@ class GUI:
         event.on(EVENT_COURSE_RESTARTED, self.__evt_course_restart)
         self.__model_announcement = QtGui.QStandardItemModel()
         self.__model_announcement_reset()
-        self.__ui.table_view_gate_crasher_result.setModel(self.__model_announcement)
-        self.__ui.table_view_gate_crasher_result.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.__ui.gate_crasher_table_view_result.setModel(self.__model_announcement)
+        self.__ui.gate_crasher_table_view_result.setSelectionBehavior(QAbstractItemView.SelectRows)
         event.on(EVENT_ANNOUNCEMENT_LOADED, self.__evt_announcement_loaded)
-        self.__ui.table_view_gate_crasher_result.clicked.connect(self.__cb_gate_crasher_announcement_changed)
-        self.__ui.combo_box_gate_crasher_level_select.addItems(self.__logic.get_level_names())
-        self.__ui.combo_box_gate_crasher_level_select.currentIndexChanged.connect(self.__cb_gate_crasher_level_select_changed)
+        self.__ui.gate_crasher_table_view_result.clicked.connect(self.__cb_announcement_changed)
+        self.__ui.gate_crasher_combo_box_course_select.addItems(self.__logic.get_level_names())
+        self.__ui.gate_crasher_combo_box_course_select.currentIndexChanged.connect(self.__cb_course_select_changed)
 
     def __evt_SleipnirWindow_GAME_START_REQUESTED(self, game):
         try:
@@ -66,14 +66,6 @@ class GUI:
             if self.__globals.get_game() == Globals.GAME_GATE_CRASHER: self.__logic.stop_run()
         except IllegalStateError as e:
             logger.error(e)
-
-    def __model_announcement_reset(self):
-        self.__model_announcement.clear()
-        self.__model_announcement.setHorizontalHeaderLabels(["", "Gate", "Dir", "Gate Time"])
-        self.__ui.table_view_gate_crasher_result.setColumnWidth(0, 30)
-
-    def __cb_gate_crasher_level_select_changed(self, index):
-        self.__logic.set_level(index)
 
     def __evt_game_started(self):
         self.__ui.slider_video['cam1'].setSliderPosition(0)
@@ -96,9 +88,38 @@ class GUI:
         self.__ui.pushButton_video1_align.setEnabled(True)
         self.__ui.pushButton_video2_align.setEnabled(True)
 
+    def __evt_frame_new(self, frame: Frame):
+        ''' Only display every third frame when live trackng - 30 fps '''
+        if self.__ui.checkBox_live.isChecked() and frame.get_position() % 3 == 0:
+            self.__win.display_frame(frame)
+
+        ''' Display run time '''
+        self.__ui.gate_crasher_label_time.setText('Time: %s' % self.__win.format_time(self.__logic.get_current_runtime()))
+
+        ''' Display time beneath video '''
+        self.__win.video_display_frame_time(frame.get_cam(), self.__logic.get_time(frame))
+
     def __evt_course_restart(self):
         self.__model_announcement_reset()
         self.__sound.play_error()
+
+    def __evt_course_finished(self, time_ms):
+        ''' Display run time '''
+        finish_time_str = self.__win.format_time(time_ms)
+
+        self.__ui.gate_crasher_label_time.setText('Time: %s' % finish_time_str)
+        self.__sound.play_cross_the_finish_line(500)
+
+        minutes = int(finish_time_str[0:2])
+        seconds = int(finish_time_str[3:5])
+        milli_seconds1 = finish_time_str[6:7]
+        milli_seconds2 = finish_time_str[7:8]
+        milli_seconds3 = finish_time_str[8:9]
+        self.__sound.play_number(minutes, 2000)
+        self.__sound.play_number(seconds, 3200)
+        self.__sound.play_number(milli_seconds1, 4400)
+        self.__sound.play_number(milli_seconds2, 5000)
+        self.__sound.play_number(milli_seconds3, 5600)
 
     def __evt_course_hit_gate(self, announcement: Announcement):
         self.__sound.play_beep_beep()
@@ -122,25 +143,32 @@ class GUI:
         else:
             self.__sound.play_left(1000)
 
+    def __evt_announcement_loaded(self, announcements: list[Announcement]):
+        self.__model_announcement_reset()
+        finish_time = 0
+        for announcement in announcements:
+            level_index = self.__logic.level_index_by_name(announcement.get_level_name())
+            self.__ui.gate_crasher_combo_box_course_select.setCurrentIndex(level_index or 0)
+            self.__gatecrasherlogic_append_row(announcement)
+            finish_time += announcement.get_time_ms()
+            self.__ui.gate_crasher_label_time.setText('Time: ' + 
+                self.__win.format_time(finish_time)
+            )
 
-    def __evt_course_finished(self, time_ms):
-        ''' Display run time '''
-        finish_time_str = self.__win.format_time(time_ms)
 
-        self.__ui.label_gate_crasher_time.setText('Time: %s' % finish_time_str)
-        self.__sound.play_cross_the_finish_line(500)
+    def __model_announcement_reset(self):
+        self.__model_announcement.clear()
+        self.__model_announcement.setHorizontalHeaderLabels(["", "Gate", "Dir", "Gate Time"])
+        self.__ui.gate_crasher_table_view_result.setColumnWidth(0, 30)
 
-        minutes = int(finish_time_str[0:2])
-        seconds = int(finish_time_str[3:5])
-        milli_seconds1 = finish_time_str[6:7]
-        milli_seconds2 = finish_time_str[7:8]
-        milli_seconds3 = finish_time_str[8:9]
-        self.__sound.play_number(minutes, 2000)
-        self.__sound.play_number(seconds, 3200)
-        self.__sound.play_number(milli_seconds1, 4400)
-        self.__sound.play_number(milli_seconds2, 5000)
-        self.__sound.play_number(milli_seconds3, 5600)
+    def __cb_course_select_changed(self, index):
+        self.__logic.set_level(index)
 
+    def __cb_announcement_changed(self, evt):
+        self.__video_player.stop_all()
+        announcement = self.__logic.get_announcement_by_index(evt.row())
+        self.__video_player.set_position('cam1', announcement.get_position())
+        self.__video_player.set_position('cam2', announcement.get_position())
 
     def __gatecrasherlogic_append_row(self, gate_crasher_announcement: Announcement):
         out = []
@@ -157,30 +185,4 @@ class GUI:
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         out.append(item)
         self.__model_announcement.appendRow(out)
-        self.__ui.table_view_gate_crasher_result.setRowHeight(self.__model_announcement.rowCount() - 1, 18)
-
-    def __evt_announcement_loaded(self, announcements: list[Announcement]):
-        self.__model_announcement_reset()
-        finish_time = 0
-        for announcement in announcements:
-            level_index = self.__logic.level_index_by_name(announcement.get_level_name())
-            self.__ui.combo_box_gate_crasher_level_select.setCurrentIndex(level_index or 0)
-            self.__gatecrasherlogic_append_row(announcement)
-            finish_time += announcement.get_time_ms()
-            self.__ui.label_gate_crasher_time.setText('Time: ' + 
-                self.__win.format_time(finish_time)
-            )
-
-    def __cb_gate_crasher_announcement_changed(self, evt):
-        self.__video_player.stop_all()
-        announcement = self.__logic.get_announcement_by_index(evt.row())
-        self.__video_player.set_position('cam1', announcement.get_position())
-        self.__video_player.set_position('cam2', announcement.get_position())
-
-    def __evt_frame_new(self, frame: Frame):
-        ''' Only display every third frame when live trackng - 30 fps '''
-        if self.__ui.checkBox_live.isChecked() and frame.get_position() % 3 == 0:
-            self.__win.display_frame(frame)
-
-        ''' Display time beneath video '''
-        self.__win.video_display_frame_time(frame.get_cam(), self.__logic.get_time(frame))
+        self.__ui.gate_crasher_table_view_result.setRowHeight(self.__model_announcement.rowCount() - 1, 18)

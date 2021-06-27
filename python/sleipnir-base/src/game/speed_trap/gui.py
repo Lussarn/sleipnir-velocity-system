@@ -46,18 +46,18 @@ class GUI:
         event.on(EVENT_PASS_STARTED, self.__evt_pass_started)
         event.on(EVENT_PASS_ENDED, self.__evt_pass_ended)
         event.on(EVENT_PASS_ABORTED, self.__evt_pass_aborted)
-        self.__ui.lineEdit_distance.setText(str(self.__logic.get_distance()))
-        self.__ui.lineEdit_distance.textChanged.connect(self.__cb_distance_changed)
+        self.__ui.speed_trap_line_edit_distance.setText(str(self.__logic.get_distance()))
+        self.__ui.speed_trap_line_edit_distance.textChanged.connect(self.__cb_distance_changed)
 
         ''' Announcements '''
         event.on(EVENT_ANNOUNCEMENT_NEW, self.__evt_announcement_new)
         event.on(EVENT_ANNOUNCEMENT_LOADED, self.__evt_announcement_loaded)
-        self.__ui.pushButton_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
+        self.__ui.speed_trap_push_button_remove_announcement.clicked.connect(self.__cb_remove_announcement_clicked)
         self.__model_announcement = QtGui.QStandardItemModel()
         self.__reset_model_announcement()
-        self.__ui.table_view_speed_trap_announcement.setModel(self.__model_announcement)
-        self.__ui.table_view_speed_trap_announcement.setSelectionBehavior(QAbstractItemView.SelectRows)
-        self.__ui.table_view_speed_trap_announcement.clicked.connect(self.__cb_speed_logic_announcement_changed)
+        self.__ui.speed_trap_table_view_announcement.setModel(self.__model_announcement)
+        self.__ui.speed_trap_table_view_announcement.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.__ui.speed_trap_table_view_announcement.clicked.connect(self.__cb_announcement_changed)
 
     def __evt_SleipnirWindow_GAME_START_REQUESTED(self, game):
         try:
@@ -70,19 +70,6 @@ class GUI:
             if self.__globals.get_game() == Globals.GAME_SPEED_TRAP: self.__logic.stop_run()
         except IllegalStateError as e:
             logger.error(e)
-
-
-    def __cb_distance_changed(self, value):
-        try:
-            value = int(value)
-        except:
-            value = 100
-        self.__logic.set_distance(value)
-
-    def __reset_model_announcement(self):
-        self.__model_announcement.clear()
-        self.__model_announcement.setHorizontalHeaderLabels(["", "Dir", "Time", "Speed"])
-        self.__ui.table_view_speed_trap_announcement.setColumnWidth(0, 30)
 
     def __evt_game_started(self):
         self.__ui.slider_video['cam1'].setSliderPosition(0)
@@ -124,6 +111,61 @@ class GUI:
     def __evt_pass_aborted(self):
         self.__sound.play_error()
 
+    def __evt_announcement_new(self, announcement: Announcement):
+        self.__append_row(announcement)
+        if self.__ui.speed_trap_check_box_speak.isChecked():
+            ''' Speak speed one second after second gate signal '''
+            self.__sound.play_number(int(announcement.get_speed()), 1000)
+
+        self.__update_gui(announcement)
+        self.__average_update_gui()
+
+    def __evt_announcement_loaded(self, announcements: Announcements):
+        self.__reset_model_announcement()
+        for announcement in announcements.get_announcements():
+            self.__append_row(announcement)
+        self.__average_update_gui()
+        self.__update_gui(None)
+
+    def __cb_distance_changed(self, value):
+        try:
+            value = int(value)
+        except:
+            value = 100
+        self.__logic.set_distance(value)
+
+    def __cb_announcement_changed(self, evt):
+        self.__video_player.stop_all()
+        announcement = self.__logic.get_announcement_by_index(evt.row())
+        self.__video_player.set_position('cam1', announcement.get_cam1_position())
+        self.__video_player.set_position('cam2', announcement.get_cam2_position())
+        self.__update_gui(announcement)
+
+    def __cb_remove_announcement_clicked(self, evt):
+        index = self.__ui.speed_trap_table_view_announcement.currentIndex().row()
+        if index == -1:
+            QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
+            return
+        ret = QMessageBox.question(self, 'Sleipnir Information', "Confirm removing announcement", QMessageBox.Ok | QMessageBox.Cancel)
+        if ret == QMessageBox.Cancel: return
+        self.__model_announcement.removeRow(index)
+
+        ''' Remove both from actual index, and model for list 
+        The actual index is used when valulating average '''
+        self.__logic.remove_announcement_by_index(index)
+        self.__average_update_gui()
+        current_row = self.__ui.speed_trap_table_view_announcement.currentIndex().row()
+        if (current_row == -1):
+            self.__update_gui(None)
+        else:
+            self.__update_gui(self.__logic.get_announcement_by_index(current_row))
+
+    def __reset_model_announcement(self):
+        self.__model_announcement.clear()
+        self.__model_announcement.setHorizontalHeaderLabels(["", "Dir", "Time", "Speed"])
+        self.__ui.speed_trap_table_view_announcement.setColumnWidth(0, 30)
+
+
     def __append_row(self, announcement: Announcement):
         out = []
         item = QtGui.QStandardItem(str(self.__model_announcement.rowCount() + 1))
@@ -139,68 +181,26 @@ class GUI:
         item.setTextAlignment(QtCore.Qt.AlignCenter)
         out.append(item)
         self.__model_announcement.appendRow(out)
-        self.__ui.table_view_speed_trap_announcement.setRowHeight(self.__model_announcement.rowCount() - 1, 18)
-
-    def __evt_announcement_new(self, announcement: Announcement):
-        self.__append_row(announcement)
-        if self.__ui.checkBox_speak.isChecked():
-            ''' Speak speed one second after second gate signal '''
-            self.__sound.play_number(int(announcement.get_speed()), 1000)
-
-        self.__update_gui(announcement)
-        self.__average_update_gui()
-
-    def __evt_announcement_loaded(self, announcements: Announcements):
-        self.__reset_model_announcement()
-        for announcement in announcements.get_announcements():
-            self.__append_row(announcement)
-        self.__average_update_gui()
-        self.__update_gui(None)
+        self.__ui.speed_trap_table_view_announcement.setRowHeight(self.__model_announcement.rowCount() - 1, 18)
 
     def __update_gui(self, announcement: Announcement):
         if announcement is None:
-            self.__ui.label_time.setText('Time:    ---')
-            self.__ui.label_speed.setText('Speed:   ---')
+            self.__ui.speed_trap_label_time.setText('Time:    ---')
+            self.__ui.speed_trap_label_speed.setText('Speed:   ---')
             return
 
         ''' Set speed from camera frame numbers '''
         duration_sec = announcement.get_duration() / 1000
         speed_kmh = self.__logic.get_distance() / (announcement.get_duration() / 1000) * 3.6
-        self.__ui.label_time.setText("Time:    %.3f sec" % duration_sec)
-        self.__ui.label_speed.setText("Speed:   %.1f km/h" % speed_kmh)
+        self.__ui.speed_trap_label_time.setText("Time:    %.3f sec" % duration_sec)
+        self.__ui.speed_trap_label_speed.setText("Speed:   %.1f km/h" % speed_kmh)
 
     def __average_update_gui(self):
         ''' update the average speed GUI '''
         max_speeds = self.__logic.get_announcement_max_speeds()
 
         if max_speeds['LEFT'] == None or max_speeds['RIGHT'] == None:
-            self.__ui.label_average.setText('Average: ---')
+            self.__ui.speed_trap_label_average.setText('Average: ---')
             return
         average_speed = (max_speeds['LEFT'].get_speed() + max_speeds['RIGHT'].get_speed()) / 2 
-        self.__ui.label_average.setText("Average: %.1f km/h" % average_speed)
-
-    def __cb_speed_logic_announcement_changed(self, evt):
-        self.__video_player.stop_all()
-        announcement = self.__logic.get_announcement_by_index(evt.row())
-        self.__video_player.set_position('cam1', announcement.get_cam1_position())
-        self.__video_player.set_position('cam2', announcement.get_cam2_position())
-        self.__update_gui(announcement)
-
-    def __cb_remove_announcement_clicked(self, evt):
-        index = self.__ui.table_view_speed_trap_announcement.currentIndex().row()
-        if index == -1:
-            QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
-            return
-        ret = QMessageBox.question(self, 'Sleipnir Information', "Confirm removing announcement", QMessageBox.Ok | QMessageBox.Cancel)
-        if ret == QMessageBox.Cancel: return
-        self.__model_announcement.removeRow(index)
-
-        ''' Remove both from actual index, and model for list 
-        The actual index is used when valulating average '''
-        self.__logic.remove_announcement_by_index(index)
-        self.__average_update_gui()
-        current_row = self.__ui.table_view_speed_trap_announcement.currentIndex().row()
-        if (current_row == -1):
-            self.__update_gui(None)
-        else:
-            self.__update_gui(self.__logic.get_announcement_by_index(current_row))
+        self.__ui.speed_trap_label_average.setText("Average: %.1f km/h" % average_speed)
