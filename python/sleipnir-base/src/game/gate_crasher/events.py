@@ -1,0 +1,7 @@
+EVENT_GAME_STARTED                    = 'gatecrasher.game.started'
+EVENT_GAME_STOPPED                    = 'gatecrasher.game.stopped'
+EVENT_FRAME_NEW                       = 'gatecrasher.frame.new'
+EVENT_COURSE_HIT_GATE                 = 'gatecrasher.course.hitgate'
+EVENT_COURSE_FINISHED                 = 'gatecrasher.course.finished'
+EVENT_COURSE_RESTARTED                = 'gatecrasher.course.restarted'
+EVENT_ANNOUNCEMENT_LOADED             = 'gatecrasher.announcement.loaded'

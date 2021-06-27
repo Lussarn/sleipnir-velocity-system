@@ -1,0 +1,8 @@
+EVENT_GAME_STARTED         = 'speed_trap.game.started'
+EVENT_GAME_STOPPED         = 'speed_trap.game.stopped'
+EVENT_FRAME_NEW            = 'speed_trap.frame.new'
+EVENT_PASS_STARTED         = 'speed_trap.pass.started'
+EVENT_PASS_ENDED           = 'speed_trap.pass.ended'
+EVENT_PASS_ABORTED         = 'speed_trap.pass.aborted'
+EVENT_ANNOUNCEMENT_NEW     = 'speed_trap.announcement.new'
+EVENT_ANNOUNCEMENT_LOADED  = 'speed_trap.announcement.loaded'

@@ -18,18 +18,6 @@ import game.gate_crasher.announcement_dao as announcement_dao
 
 logger = logging.getLogger(__name__)
 
-'''
-SpeedLogic emits the following events
-
-GateCrasherLogic.EVENT_GATE_CRASHER_START                                            : Started gate crasher game
-GateCrasherLogic.EVENT_GATE_CRASHER_STOP                                             : Stopped gate crasher game
-GateCrasherLogic.EVENT_GATE_CRASHER_NEW_FRAME frame :Frame                           : A camera have a new frame
-GateCrasherLogic.EVENT_GATE_CRASHER_HIT_GATE : GateCrasherGateAnnouncement           : A gate crasher game have restarted
-GateCrasherLogic.EVENT_GATE_CRASHER_FINISH : int                                     : A gate crasher game have finished
-GateCrasherLogic.EVENT_GATE_CRASHER_RESTART                                          : A gate crasher game have restarted
-GateCrasherLogic.EVENT_GATE_CRASHER_ANNOUNCEMENT_LOAD                                : Announcements have been loaded
-'''
-
 class GateCrasherState: 
     def __init__(self):        
         ''' collection of frames '''
@@ -309,8 +297,7 @@ class Logic:
             )
             self.__state.announcements.append(announcement)
 
-            print("!!!!!")
-            event.emit(EVENT_ANNOUNCEMENT_NEW, announcement)
+            event.emit(EVENT_COURSE_HIT_GATE, announcement)
 
             if self.__state.current_gate_number == self.__levels[self.__state.level].get_length() - 1:
                 ''' Reached the finish '''
@@ -360,20 +347,20 @@ class Logic:
                 GateCrasherHitPoint('cam1', 'RIGHT'),
                 GateCrasherHitPoint('cam2', 'RIGHT'),
                 GateCrasherHitPoint('cam1', 'LEFT' ),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'RIGHT'),
-                GateCrasherHitPoint('cam1', 'LEFT' ),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'RIGHT'),
-                GateCrasherHitPoint('cam1', 'LEFT' ),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'RIGHT'),
-                GateCrasherHitPoint('cam1', 'LEFT' ),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'RIGHT'),
-                GateCrasherHitPoint('cam1', 'LEFT' ),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'RIGHT')
+#                GateCrasherHitPoint('cam1', 'RIGHT'),
+#                GateCrasherHitPoint('cam2', 'RIGHT'),
+#                GateCrasherHitPoint('cam1', 'LEFT' ),
+#                GateCrasherHitPoint('cam1', 'RIGHT'),
+#                GateCrasherHitPoint('cam2', 'RIGHT'),
+#                GateCrasherHitPoint('cam1', 'LEFT' ),
+#                GateCrasherHitPoint('cam1', 'RIGHT'),
+#                GateCrasherHitPoint('cam2', 'RIGHT'),
+#                GateCrasherHitPoint('cam1', 'LEFT' ),
+#                GateCrasherHitPoint('cam1', 'RIGHT'),
+#                GateCrasherHitPoint('cam2', 'RIGHT'),
+#                GateCrasherHitPoint('cam1', 'LEFT' ),
+#                GateCrasherHitPoint('cam1', 'RIGHT'),
+#                GateCrasherHitPoint('cam2', 'RIGHT')
             ])
         )
         
@@ -381,23 +368,23 @@ class Logic:
             [
                 GateCrasherHitPoint('cam1', 'RIGHT'),
                 GateCrasherHitPoint('cam2', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'LEFT'),
-                GateCrasherHitPoint('cam2', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'LEFT'),
-                GateCrasherHitPoint('cam2', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'LEFT'),
-                GateCrasherHitPoint('cam2', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'RIGHT')
+#                GateCrasherHitPoint('cam2', 'LEFT'),
+#                GateCrasherHitPoint('cam2', 'LEFT'),
+#                GateCrasherHitPoint('cam1', 'LEFT'),
+#                GateCrasherHitPoint('cam1', 'LEFT'),
+#                GateCrasherHitPoint('cam1', 'RIGHT'),
+#                GateCrasherHitPoint('cam2', 'RIGHT'),
+#                GateCrasherHitPoint('cam2', 'LEFT'),
+#                GateCrasherHitPoint('cam2', 'LEFT'),
+#                GateCrasherHitPoint('cam1', 'LEFT'),
+#                GateCrasherHitPoint('cam1', 'LEFT'),
+#                GateCrasherHitPoint('cam1', 'RIGHT'),
+#                GateCrasherHitPoint('cam2', 'RIGHT'),
+#                GateCrasherHitPoint('cam2', 'LEFT'),
+#                GateCrasherHitPoint('cam2', 'LEFT'),
+#                GateCrasherHitPoint('cam1', 'LEFT'),
+#                GateCrasherHitPoint('cam1', 'LEFT'),
+#               GateCrasherHitPoint('cam1', 'RIGHT'),
+#                GateCrasherHitPoint('cam2', 'RIGHT')
             ])
         )
