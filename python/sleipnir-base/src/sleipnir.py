@@ -255,8 +255,6 @@ class SleipnirWindow(QMainWindow):
          self.format_time(time)
       )
 
-   def format_time(self, ms):
-      return "%02d:%02d.%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
 
    def __enable_video_ui(self, enabled: bool):
       self.__ui.pushbutton_video1_find.setEnabled(enabled)
@@ -349,7 +347,6 @@ class SleipnirWindow(QMainWindow):
       
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Flight GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
-
    def __cb_flight(self):
       for i in range(0,20):
          if self.__ui.radio_buttons_flights[i].isChecked(): break
@@ -368,7 +365,7 @@ class SleipnirWindow(QMainWindow):
       self.__video_player.set_position('cam2', 1)
 
 
-   ''' ground level GUI '''
+   ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸    Ground Level GUI    ¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
    def __cb_groundlevel_changed(self, value):
       self.__globals.set_ground_level(value)
 
@@ -380,8 +377,6 @@ class SleipnirWindow(QMainWindow):
       ''' Do not try to set position if we are currently dragging '''
       if self.__ui.verticalSlider_groundlevel.isSliderDown() == False:
          self.__ui.verticalSlider_groundlevel.setValue(value)
-
-
 
    def display_frame(self, frame :Frame):
       ''' display video frame '''
@@ -395,30 +390,22 @@ class SleipnirWindow(QMainWindow):
       image_qt = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], QtGui.QImage.Format_Indexed8)
       self.__ui.widget_video[frame.get_cam()].setPixmap(QtGui.QPixmap.fromImage(image_qt))
 
-
-      
-
-
-
    def enable_all_gui_elements(self, enabled):
       self.__enable_video_ui(enabled)
 
-      if self.__current_game_gui is not None:
-         self.__current_game_gui.enable_gui_elements(enabled)
-
-
-
+      self.__current_game_gui.enable_gui_elements(enabled)
 
       self.__ui.sleipnir_combo_box_game_select.setEnabled(enabled)
       self.__ui.pushbutton_stop.setEnabled(enabled)
       self.__ui.pushbutton_start.setEnabled(enabled)
       self.__ui.verticalSlider_groundlevel.setEnabled(enabled)
       
-
       self.__ui.checkBox_live.setEnabled(enabled)
-
       for i in range(0, len(self.__ui.radio_buttons_flights)):
          self.__ui.radio_buttons_flights[i].setEnabled(enabled)
+
+   def format_time(self, ms):
+      return "%02d:%02d.%03d" % (int(ms / 1000) / 60, int(ms / 1000) % 60, ms % 1000)
 
 
 
