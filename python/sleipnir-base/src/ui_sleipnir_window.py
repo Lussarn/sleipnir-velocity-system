@@ -4,7 +4,7 @@ class Ui_SleipnirWindow(Ui_MainWindow):
     def setupUi(self, MainWindow):
         super().setupUi(MainWindow)
 
-        # We want the flight number buttons as an array
+        ''' We want the flight number buttons as an array '''
         self.radio_buttons_flights =  [
             self.radioButton_flight_1,
             self.radioButton_flight_2,
@@ -27,17 +27,18 @@ class Ui_SleipnirWindow(Ui_MainWindow):
             self.radioButton_flight_19,
             self.radioButton_flight_20]
 
+        ''' Some Aliases for the Video Player'''
         self.widget_video = {
-            'cam1': self.label_video1,
-            'cam2': self.label_video2
+            'cam1': self.video_player_label_video1,
+            'cam2': self.video_player_label_video2
         }
 
         self.slider_video = {
-            'cam1': self.slider_video1,
-            'cam2': self.slider_video2
+            'cam1': self.video_player_slider_video1,
+            'cam2': self.video_player_slider_video2
         }
 
         self.label_time_video = {
-            'cam1': self.label_time_video1,
-            'cam2': self.label_time_video2
+            'cam1': self.video_player_label_time_video1,
+            'cam2': self.video_player_label_time_video2
         }

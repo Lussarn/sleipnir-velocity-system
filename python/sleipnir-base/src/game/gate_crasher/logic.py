@@ -388,3 +388,10 @@ class Logic:
                 GateCrasherHitPoint('cam2', 'RIGHT')
            ])
         )
+
+        self.__levels.append(GateCrasherLevel("Drag Race",
+            [
+                GateCrasherHitPoint('cam1', 'RIGHT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+           ])
+        )
