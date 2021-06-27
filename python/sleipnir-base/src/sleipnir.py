@@ -1,8 +1,7 @@
 from typing import List
 import sys
 
-from PySide2 import QtGui, QtCore
-from PySide2.QtWidgets import QAbstractItemView, QApplication, QMainWindow, QMessageBox
+from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 
 from ui_sleipnir_window import Ui_SleipnirWindow
 from configuration import Configuration, ConfigurationError
@@ -146,8 +145,8 @@ class SleipnirWindow(QMainWindow):
    def get_video_player_gui(self) -> VideoPlayerGUI:
       return self.__video_player_gui
 
-   ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º    Camera Online GUI    ¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
+   ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º    Camera Online GUI    ¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
    def __evt_cameraserver_camera_online(self, cam):
       if (cam == 'cam1'):
          self.__ui.label_video1_online.setText("Cam1: Online")
@@ -172,10 +171,7 @@ class SleipnirWindow(QMainWindow):
       self.__ui.pushbutton_stop.setEnabled(False)
 
 
-
-
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Align GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
-
    def __cb_align_cam1_clicked(self):
       if self.__ui.pushButton_video1_align.text() == 'Align Camera':
          self.__align_logic.start_align_camera('cam1')
@@ -213,9 +209,9 @@ class SleipnirWindow(QMainWindow):
       if not self.__camera_server.is_ready_to_shoot():
          self.__ui.pushbutton_start.setEnabled(False)
 
-
    def __evt_alignlogic_align_new_frame(self, frame :Frame):
       self.__video_player_gui.display_frame(frame)
+
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Game GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
    def __cb_start_cameras(self):
