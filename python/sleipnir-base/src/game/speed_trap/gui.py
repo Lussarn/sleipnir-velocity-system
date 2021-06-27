@@ -165,7 +165,6 @@ class GUI:
         self.__model_announcement.setHorizontalHeaderLabels(["", "Dir", "Time", "Speed"])
         self.__ui.speed_trap_table_view_announcement.setColumnWidth(0, 30)
 
-
     def __append_row(self, announcement: Announcement):
         out = []
         item = QtGui.QStandardItem(str(self.__model_announcement.rowCount() + 1))
@@ -204,3 +203,9 @@ class GUI:
             return
         average_speed = (max_speeds['LEFT'].get_speed() + max_speeds['RIGHT'].get_speed()) / 2 
         self.__ui.speed_trap_label_average.setText("Average: %.1f km/h" % average_speed)
+
+    def enable_gui_elements(self, enabled: bool):
+      self.__ui.speed_trap_check_box_speak.setEnabled(enabled)
+      self.__ui.speed_trap_table_view_announcement.setEnabled(enabled)
+      self.__ui.speed_trap_line_edit_distance.setEnabled(enabled)
+      self.__ui.speed_trap_push_button_remove_announcement.setEnabled(enabled)

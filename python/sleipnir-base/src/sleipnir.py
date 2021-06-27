@@ -8,7 +8,6 @@ import cv2 as cv
 from ui_sleipnir_window import Ui_SleipnirWindow
 from configuration import Configuration, ConfigurationError
 from database.db import DB
-from game.gate_crasher.announcement import Announcement as GateCrasherAnnouncement
 from frame import Frame
 from camera_server import CameraServer
 from globals import Globals
@@ -31,7 +30,6 @@ SleipnirWindow emits the following events
 
 SleipnirWindow.GAME_START_REQUESTED : str               : A game have been requested to start 
 SleipnirWindow.GAME_STOP_REQUESTED                      : SleipnirWindow have requested to stop ongoing game
-
 '''
 
 class SleipnirWindow(QMainWindow):
@@ -56,7 +54,6 @@ class SleipnirWindow(QMainWindow):
 
       ''' Setup Sound '''
       self.__sound = Sound()
-
 
       ''' Main window setup '''
       self.__ui = Ui_SleipnirWindow()
@@ -136,6 +133,9 @@ class SleipnirWindow(QMainWindow):
       ''' Initialize gate crasher game '''
       self.__gate_crasher_gui = GateCrasherGUI(self)
       self.__gate_crasher_gui.initialize()
+
+      ''' Currently selected Game GUI '''
+      self.__current_game_gui = self.__speed_trap_gui
 
       ''' load flight number 1 '''
       self.__globals.set_flight(1)
@@ -328,16 +328,25 @@ class SleipnirWindow(QMainWindow):
       event.emit(SleipnirWindow.EVENT_GAME_STOP_REQUESTED)
 
    def __cb_game_changed(self, index):
-      if index == 0: self.__globals.set_game(Globals.GAME_SPEED_TRAP)
-      if index == 1: self.__globals.set_game(Globals.GAME_GATE_CRASHER)
+      if index == 0:
+         self.__globals.set_game(Globals.GAME_SPEED_TRAP)
+      if index == 1: 
+         self.__globals.set_game(Globals.GAME_GATE_CRASHER)
 
    def __evt_globals_game_change(self, game):
+      ''' Show Correct Game GUI '''
       self.__ui.stacked_widget_game.setCurrentIndex(
          {
             self.__globals.GAME_SPEED_TRAP: 0,
             self.__globals.GAME_GATE_CRASHER: 1
          }[game]
       )
+
+      self.__current_game_gui = {
+         self.__globals.GAME_SPEED_TRAP: self.__speed_trap_gui,
+         self.__globals.GAME_GATE_CRASHER: self.__gate_crasher_gui
+      }[game]
+      
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Flight GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
 
@@ -394,15 +403,10 @@ class SleipnirWindow(QMainWindow):
    def enable_all_gui_elements(self, enabled):
       self.__enable_video_ui(enabled)
 
-      ''' gate crasher controls '''
-      self.__ui.gate_crasher_combo_box_course_select.setEnabled(enabled)
-      self.__ui.gate_crasher_table_view_result.setEnabled(enabled)
+      if self.__current_game_gui is not None:
+         self.__current_game_gui.enable_gui_elements(enabled)
 
-      ''' Speed trap controls '''
-      self.__ui.speed_trap_check_box_speak.setEnabled(enabled)
-      self.__ui.speed_trap_table_view_announcement.setEnabled(enabled)
-      self.__ui.speed_trap_line_edit_distance.setEnabled(enabled)
-      self.__ui.speed_trap_push_button_remove_announcement.setEnabled(enabled)
+
 
 
       self.__ui.sleipnir_combo_box_game_select.setEnabled(enabled)

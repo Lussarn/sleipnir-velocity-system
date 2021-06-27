@@ -186,3 +186,7 @@ class GUI:
         out.append(item)
         self.__model_announcement.appendRow(out)
         self.__ui.gate_crasher_table_view_result.setRowHeight(self.__model_announcement.rowCount() - 1, 18)
+
+    def enable_gui_elements(self, enabled: bool):
+      self.__ui.gate_crasher_combo_box_course_select.setEnabled(enabled)
+      self.__ui.gate_crasher_table_view_result.setEnabled(enabled)

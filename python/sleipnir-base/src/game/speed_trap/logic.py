@@ -376,7 +376,6 @@ class Logic:
     def remove_announcement_by_index(self, index):
         self.__state.announcements.remove_announcement_by_index(index)
 
-
     def get_time(self, frame: Frame) -> int:
         ''' get time on frame position '''
         t = frame.get_timestamp() - self.__state.cameras_data.get_start_timestamp()
