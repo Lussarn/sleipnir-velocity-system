@@ -2,7 +2,6 @@ import logging
 
 import event
 from database.db import DB
-#from camera_server import CameraServer
 
 '''
 Globals.EVENT_GAME_CHANGE game: str              : the game have changed
@@ -22,12 +21,6 @@ class GlobalState:
         ''' ground level, no tracking below this '''
         self.ground_level = 400
 
-#       ''' Are the cameras online '''
-#        self.camera_online = {
-#            'cam1': False,
-#            'cam2': False
-#        }
-
         ''' Current game we are playing '''
         self.game = Globals.GAME_SPEED_TRAP
 
@@ -43,22 +36,13 @@ class Globals:
         self.__state = GlobalState()
         self.__state.db = db
 
-#        event.on(CameraServer.EVENT_CAMERA_ONLINE, self.__evt_camera_online)
-#        event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_camera_offline)
+#        ''' Listen to the stop event from speed_trap.logic, to load the newly flown flight '''
+#        from game.speed_trap.logic import SpeedLogic
+#        event.on(SpeedLogic.EVENT_SPEED_STOP, self.__evt_speedlogic_speed_stop)
 
-        ''' Listen to the stop event from speed_logic, to load the newly flown flight '''
-        from speed_logic import SpeedLogic
-        event.on(SpeedLogic.EVENT_SPEED_STOP, self.__evt_speedlogic_speed_stop)
-
-#    def __evt_camera_online(self, cam):
-#        self.__state.camera_online[cam] = True
-
-#    def __evt_camera_offline(self, cam):
-#        self.__state.camera_online[cam] = False
-
-    def __evt_speedlogic_speed_stop(self):
-        ''' Load the flight if a speed stop event occurs '''
-        self.set_flight(self.__state.flight)
+#    def __evt_speedlogic_speed_stop(self):
+#        ''' Load the flight if a speed stop event occurs '''
+#        self.set_flight(self.__state.flight)
 
     '''
     db functions

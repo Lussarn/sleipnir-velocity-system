@@ -1,7 +1,7 @@
 import sqlite3
 from sqlite3.dbapi2 import OperationalError
 
-from speed_announcements import Announcements, Announcement
+from game.speed_trap.announcement import Announcements, Announcement
 from database.db import DB
 
 import logging

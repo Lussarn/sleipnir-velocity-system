@@ -1,4 +1,4 @@
-class GateCrasherAnnouncement:
+class Announcement:
     def __init__(self, level_name, gate_number, cam, position, timestamp, direction, angle, altitude, time_ms):
         self.__level_name = level_name
         self.__gate_number = gate_number

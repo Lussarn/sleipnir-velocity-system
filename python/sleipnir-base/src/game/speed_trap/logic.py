@@ -9,8 +9,8 @@ from cameras_data import CamerasData
 from frame import Frame
 from errors import *
 from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
-from speed_announcements import Announcements, Announcement
-import database.speed_announcement_dao as announcement_dao
+from game.speed_trap.announcement import Announcements, Announcement
+import game.speed_trap.announcement_dao as announcement_dao
 import database.frame_dao as frame_dao
 
 logger = logging.getLogger(__name__)

@@ -7,11 +7,12 @@ from PySide2.QtWidgets import QAbstractItemView, QApplication, QMainWindow, QMes
 import cv2 as cv
 
 from sleipnir_window import SleipnirWindow
-from speed_logic import SpeedLogic, SpeedPassMessage
-from gate_crasher_logic import GateCrasherAnnouncement, GateCrasherLogic
+from game.speed_trap.logic import SpeedLogic, SpeedPassMessage
+from game.gate_crasher.logic import GateCrasherLogic
 from configuration import Configuration, ConfigurationError
 from database.db import DB
-from speed_announcements import Announcements, Announcement
+from game.speed_trap.announcement import Announcements, Announcement
+from game.gate_crasher.announcement import Announcement as GateCrasherAnnouncement
 from frame import Frame
 from camera_server import CameraServer
 from globals import Globals

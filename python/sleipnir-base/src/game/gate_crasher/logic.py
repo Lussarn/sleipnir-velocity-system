@@ -12,8 +12,8 @@ from errors import *
 from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
 
 import database.frame_dao as frame_dao
-from gate_crasher_announcement import GateCrasherAnnouncement
-import database.gate_crasher_announcement_dao as announcement_dao
+from game.gate_crasher.announcement import Announcement
+import game.gate_crasher.announcement_dao as announcement_dao
 
 logger = logging.getLogger(__name__)
 
@@ -69,7 +69,7 @@ class GateCrasherState:
         self.level = 0
 
         ''' Announcements '''
-        self.announcements = [] # type: list[GateCrasherAnnouncement]
+        self.announcements = [] # type: list[Announcement]
 
         ''' Window where a hit doesn't count, after a hit 3 tenth of a second a hit wont register
         otherwise the gate will hit twice in the same pass'''
@@ -305,7 +305,7 @@ class GateCrasherLogic:
                 time_ms = motion_tracker_timestamp - self.__state.announcements[self.__state.current_gate_number - 1].get_timestamp()
 
             ''' Create announcement '''
-            announcement = GateCrasherAnnouncement(
+            announcement = Announcement(
                 self.__levels[self.__state.level].get_name(),
                 self.__state.current_gate_number,
                 hitpoint.get_cam(),
@@ -343,7 +343,7 @@ class GateCrasherLogic:
         if t < 0: t =0
         return t
 
-    def get_announcement_by_index(self, index) -> GateCrasherAnnouncement:
+    def get_announcement_by_index(self, index) -> Announcement:
         return self.__state.announcements[index]
 
     def get_level_names(self) -> list[str]:

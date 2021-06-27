@@ -3,13 +3,13 @@ from typing import List
 import sqlite3
 from sqlite3.dbapi2 import OperationalError
 
-from gate_crasher_announcement import GateCrasherAnnouncement
+from game.gate_crasher.announcement import Announcement
 from database.db import DB
 
 import logging
 logger = logging.getLogger(__name__)
 
-def store(db: DB, flight: int, announcements: List[GateCrasherAnnouncement]):
+def store(db: DB, flight: int, announcements: List[Announcement]):
     db.acquire_write_lock()
     cur = db.get_conn().cursor()
     try:
@@ -46,7 +46,7 @@ def fetch(db: DB, flight: int):
         for row in cur.execute(
             '''SELECT level_name, gate_number, camera, position, timestamp, direction, angle, altitude, time FROM gate_crasher_announcement WHERE flight=?''',
             [str(flight)]):
-                announcements.append(GateCrasherAnnouncement(
+                announcements.append(Announcement(
                     row[0],
                     int(row[1]),
                     'cam1' if row[2] == 1 else 'cam2',
