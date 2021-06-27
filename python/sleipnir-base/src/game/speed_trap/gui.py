@@ -146,9 +146,9 @@ class GUI:
     def __cb_remove_announcement_clicked(self, evt):
         index = self.__ui.speed_trap_table_view_announcement.currentIndex().row()
         if index == -1:
-            QMessageBox.information(self, 'Sleipnir Information', 'Select announcement to delete')
+            QMessageBox.information(self.__win, 'Sleipnir Information', 'Select announcement to delete')
             return
-        ret = QMessageBox.question(self, 'Sleipnir Information', "Confirm removing announcement", QMessageBox.Ok | QMessageBox.Cancel)
+        ret = QMessageBox.question(self.__win, 'Sleipnir Information', "Confirm removing announcement", QMessageBox.Ok | QMessageBox.Cancel)
         if ret == QMessageBox.Cancel: return
         self.__model_announcement.removeRow(index)
 
