@@ -17,7 +17,7 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1241, 890)
+        MainWindow.resize(1058, 886)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
         self.horizontalLayout_4 = QHBoxLayout(self.centralwidget)
@@ -539,9 +539,9 @@ class Ui_MainWindow(object):
 
         self.vertical_layout_game.addLayout(self.gridLayout_flights)
 
-        self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setObjectName(u"horizontalLayout")
-        self.horizontalLayout.setContentsMargins(-1, 6, -1, 0)
+        self.horizontal_layout_start_stop = QHBoxLayout()
+        self.horizontal_layout_start_stop.setObjectName(u"horizontal_layout_start_stop")
+        self.horizontal_layout_start_stop.setContentsMargins(-1, 6, -1, 0)
         self.pushbutton_start = QPushButton(self.centralwidget)
         self.pushbutton_start.setObjectName(u"pushbutton_start")
         self.pushbutton_start.setMinimumSize(QSize(0, 60))
@@ -550,17 +550,17 @@ class Ui_MainWindow(object):
         font2.setPointSize(12)
         self.pushbutton_start.setFont(font2)
 
-        self.horizontalLayout.addWidget(self.pushbutton_start)
+        self.horizontal_layout_start_stop.addWidget(self.pushbutton_start)
 
         self.pushbutton_stop = QPushButton(self.centralwidget)
         self.pushbutton_stop.setObjectName(u"pushbutton_stop")
         self.pushbutton_stop.setMinimumSize(QSize(0, 60))
         self.pushbutton_stop.setFont(font2)
 
-        self.horizontalLayout.addWidget(self.pushbutton_stop)
+        self.horizontal_layout_start_stop.addWidget(self.pushbutton_stop)
 
 
-        self.vertical_layout_game.addLayout(self.horizontalLayout)
+        self.vertical_layout_game.addLayout(self.horizontal_layout_start_stop)
 
 
         self.horizontal_layout_top.addLayout(self.vertical_layout_game)
