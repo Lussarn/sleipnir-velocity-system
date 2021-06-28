@@ -17,20 +17,17 @@ class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         if not MainWindow.objectName():
             MainWindow.setObjectName(u"MainWindow")
-        MainWindow.resize(1195, 952)
+        MainWindow.resize(1241, 890)
         self.centralwidget = QWidget(MainWindow)
         self.centralwidget.setObjectName(u"centralwidget")
-        self.verticalLayout_2 = QVBoxLayout(self.centralwidget)
-        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
-        self.verticalLayout_2.setContentsMargins(-1, -1, 6, -1)
-        self.verticalLayout_3 = QVBoxLayout()
-        self.verticalLayout_3.setObjectName(u"verticalLayout_3")
-        self.horizontalLayout_top = QHBoxLayout()
-        self.horizontalLayout_top.setObjectName(u"horizontalLayout_top")
-        self.horizontalLayout_top.setContentsMargins(-1, 0, 0, 0)
-        self.verticalLayout_video_1 = QVBoxLayout()
-        self.verticalLayout_video_1.setObjectName(u"verticalLayout_video_1")
-        self.verticalLayout_video_1.setContentsMargins(-1, 0, -1, 0)
+        self.horizontalLayout_4 = QHBoxLayout(self.centralwidget)
+        self.horizontalLayout_4.setObjectName(u"horizontalLayout_4")
+        self.horizontal_layout_top = QHBoxLayout()
+        self.horizontal_layout_top.setObjectName(u"horizontal_layout_top")
+        self.horizontal_layout_top.setContentsMargins(-1, 0, 0, 0)
+        self.vertical_layout_video_1 = QVBoxLayout()
+        self.vertical_layout_video_1.setObjectName(u"vertical_layout_video_1")
+        self.vertical_layout_video_1.setContentsMargins(-1, 0, -1, 0)
         self.horizontalLayout_video_1_top = QHBoxLayout()
         self.horizontalLayout_video_1_top.setObjectName(u"horizontalLayout_video_1_top")
         self.label_video1_online = QLabel(self.centralwidget)
@@ -46,14 +43,14 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_video_1_top.setStretch(0, 1)
 
-        self.verticalLayout_video_1.addLayout(self.horizontalLayout_video_1_top)
+        self.vertical_layout_video_1.addLayout(self.horizontalLayout_video_1_top)
 
         self.video_player_label_video1 = QLabel(self.centralwidget)
         self.video_player_label_video1.setObjectName(u"video_player_label_video1")
         self.video_player_label_video1.setFrameShape(QFrame.Box)
         self.video_player_label_video1.setScaledContents(True)
 
-        self.verticalLayout_video_1.addWidget(self.video_player_label_video1)
+        self.vertical_layout_video_1.addWidget(self.video_player_label_video1)
 
         self.horizontalLayout_video_1_slider = QHBoxLayout()
         self.horizontalLayout_video_1_slider.setObjectName(u"horizontalLayout_video_1_slider")
@@ -70,7 +67,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_video_1_slider.addWidget(self.video_player_label_time_video1)
 
 
-        self.verticalLayout_video_1.addLayout(self.horizontalLayout_video_1_slider)
+        self.vertical_layout_video_1.addLayout(self.horizontalLayout_video_1_slider)
 
         self.horizontalLayout_video_1_buttons = QHBoxLayout()
         self.horizontalLayout_video_1_buttons.setSpacing(0)
@@ -126,18 +123,18 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_video_1_buttons.setStretch(7, 1)
 
-        self.verticalLayout_video_1.addLayout(self.horizontalLayout_video_1_buttons)
+        self.vertical_layout_video_1.addLayout(self.horizontalLayout_video_1_buttons)
 
-        self.verticalLayout_video_1.setStretch(1, 1)
+        self.vertical_layout_video_1.setStretch(1, 1)
 
-        self.horizontalLayout_top.addLayout(self.verticalLayout_video_1)
+        self.horizontal_layout_top.addLayout(self.vertical_layout_video_1)
 
-        self.verticalLayout_groundlevel = QVBoxLayout()
-        self.verticalLayout_groundlevel.setObjectName(u"verticalLayout_groundlevel")
-        self.verticalLayout_groundlevel.setContentsMargins(-1, -1, 0, -1)
+        self.vertical_layout_groundlevel = QVBoxLayout()
+        self.vertical_layout_groundlevel.setObjectName(u"vertical_layout_groundlevel")
+        self.vertical_layout_groundlevel.setContentsMargins(-1, -1, 0, -1)
         self.verticalSpacer_4 = QSpacerItem(1, 34, QSizePolicy.Minimum, QSizePolicy.Fixed)
 
-        self.verticalLayout_groundlevel.addItem(self.verticalSpacer_4)
+        self.vertical_layout_groundlevel.addItem(self.verticalSpacer_4)
 
         self.verticalSlider_groundlevel = QSlider(self.centralwidget)
         self.verticalSlider_groundlevel.setObjectName(u"verticalSlider_groundlevel")
@@ -147,17 +144,17 @@ class Ui_MainWindow(object):
         self.verticalSlider_groundlevel.setOrientation(Qt.Vertical)
         self.verticalSlider_groundlevel.setInvertedAppearance(True)
 
-        self.verticalLayout_groundlevel.addWidget(self.verticalSlider_groundlevel)
+        self.vertical_layout_groundlevel.addWidget(self.verticalSlider_groundlevel)
 
         self.verticalSpacer_3 = QSpacerItem(1, 80, QSizePolicy.Minimum, QSizePolicy.Fixed)
 
-        self.verticalLayout_groundlevel.addItem(self.verticalSpacer_3)
+        self.vertical_layout_groundlevel.addItem(self.verticalSpacer_3)
 
 
-        self.horizontalLayout_top.addLayout(self.verticalLayout_groundlevel)
+        self.horizontal_layout_top.addLayout(self.vertical_layout_groundlevel)
 
-        self.verticalLayout_video_2 = QVBoxLayout()
-        self.verticalLayout_video_2.setObjectName(u"verticalLayout_video_2")
+        self.vertical_layout_video_2 = QVBoxLayout()
+        self.vertical_layout_video_2.setObjectName(u"vertical_layout_video_2")
         self.horizontalLayout_video_2_top = QHBoxLayout()
         self.horizontalLayout_video_2_top.setObjectName(u"horizontalLayout_video_2_top")
         self.label_video2_online = QLabel(self.centralwidget)
@@ -173,14 +170,14 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_video_2_top.setStretch(0, 1)
 
-        self.verticalLayout_video_2.addLayout(self.horizontalLayout_video_2_top)
+        self.vertical_layout_video_2.addLayout(self.horizontalLayout_video_2_top)
 
         self.video_player_label_video2 = QLabel(self.centralwidget)
         self.video_player_label_video2.setObjectName(u"video_player_label_video2")
         self.video_player_label_video2.setFrameShape(QFrame.Box)
         self.video_player_label_video2.setScaledContents(True)
 
-        self.verticalLayout_video_2.addWidget(self.video_player_label_video2)
+        self.vertical_layout_video_2.addWidget(self.video_player_label_video2)
 
         self.horizontalLayout_video_2_slider = QHBoxLayout()
         self.horizontalLayout_video_2_slider.setObjectName(u"horizontalLayout_video_2_slider")
@@ -197,7 +194,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout_video_2_slider.addWidget(self.video_player_label_time_video2)
 
 
-        self.verticalLayout_video_2.addLayout(self.horizontalLayout_video_2_slider)
+        self.vertical_layout_video_2.addLayout(self.horizontalLayout_video_2_slider)
 
         self.horizontalLayout_video_2_buttons = QHBoxLayout()
         self.horizontalLayout_video_2_buttons.setSpacing(0)
@@ -253,16 +250,16 @@ class Ui_MainWindow(object):
 
         self.horizontalLayout_video_2_buttons.setStretch(1, 1)
 
-        self.verticalLayout_video_2.addLayout(self.horizontalLayout_video_2_buttons)
+        self.vertical_layout_video_2.addLayout(self.horizontalLayout_video_2_buttons)
 
-        self.verticalLayout_video_2.setStretch(1, 1)
+        self.vertical_layout_video_2.setStretch(1, 1)
 
-        self.horizontalLayout_top.addLayout(self.verticalLayout_video_2)
+        self.horizontal_layout_top.addLayout(self.vertical_layout_video_2)
 
-        self.verticalLayout_4 = QVBoxLayout()
-        self.verticalLayout_4.setSpacing(6)
-        self.verticalLayout_4.setObjectName(u"verticalLayout_4")
-        self.verticalLayout_4.setContentsMargins(3, 1, 3, -1)
+        self.vertical_layout_game = QVBoxLayout()
+        self.vertical_layout_game.setSpacing(6)
+        self.vertical_layout_game.setObjectName(u"vertical_layout_game")
+        self.vertical_layout_game.setContentsMargins(3, 1, 3, -1)
         self.sleipnir_combo_box_game_select = QComboBox(self.centralwidget)
         self.sleipnir_combo_box_game_select.addItem("")
         self.sleipnir_combo_box_game_select.addItem("")
@@ -270,7 +267,7 @@ class Ui_MainWindow(object):
         self.sleipnir_combo_box_game_select.setMinimumSize(QSize(0, 21))
         self.sleipnir_combo_box_game_select.setEditable(False)
 
-        self.verticalLayout_4.addWidget(self.sleipnir_combo_box_game_select)
+        self.vertical_layout_game.addWidget(self.sleipnir_combo_box_game_select)
 
         self.stacked_widget_game = QStackedWidget(self.centralwidget)
         self.stacked_widget_game.setObjectName(u"stacked_widget_game")
@@ -406,14 +403,14 @@ class Ui_MainWindow(object):
 
         self.stacked_widget_game.addWidget(self.gate_crasher)
 
-        self.verticalLayout_4.addWidget(self.stacked_widget_game)
+        self.vertical_layout_game.addWidget(self.stacked_widget_game)
 
         self.line = QFrame(self.centralwidget)
         self.line.setObjectName(u"line")
         self.line.setFrameShape(QFrame.HLine)
         self.line.setFrameShadow(QFrame.Sunken)
 
-        self.verticalLayout_4.addWidget(self.line)
+        self.vertical_layout_game.addWidget(self.line)
 
         self.checkBox_live = QCheckBox(self.centralwidget)
         self.checkBox_live.setObjectName(u"checkBox_live")
@@ -422,16 +419,16 @@ class Ui_MainWindow(object):
         self.checkBox_live.setSizePolicy(sizePolicy1)
         self.checkBox_live.setChecked(True)
 
-        self.verticalLayout_4.addWidget(self.checkBox_live)
+        self.vertical_layout_game.addWidget(self.checkBox_live)
 
         self.verticalSpacer = QSpacerItem(100, 5, QSizePolicy.Minimum, QSizePolicy.Fixed)
 
-        self.verticalLayout_4.addItem(self.verticalSpacer)
+        self.vertical_layout_game.addItem(self.verticalSpacer)
 
         self.label_flightnumber = QLabel(self.centralwidget)
         self.label_flightnumber.setObjectName(u"label_flightnumber")
 
-        self.verticalLayout_4.addWidget(self.label_flightnumber)
+        self.vertical_layout_game.addWidget(self.label_flightnumber)
 
         self.gridLayout_flights = QGridLayout()
         self.gridLayout_flights.setObjectName(u"gridLayout_flights")
@@ -540,7 +537,7 @@ class Ui_MainWindow(object):
         self.gridLayout_flights.addWidget(self.radioButton_flight_7, 2, 2, 1, 1)
 
 
-        self.verticalLayout_4.addLayout(self.gridLayout_flights)
+        self.vertical_layout_game.addLayout(self.gridLayout_flights)
 
         self.horizontalLayout = QHBoxLayout()
         self.horizontalLayout.setObjectName(u"horizontalLayout")
@@ -563,18 +560,15 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.pushbutton_stop)
 
 
-        self.verticalLayout_4.addLayout(self.horizontalLayout)
+        self.vertical_layout_game.addLayout(self.horizontalLayout)
 
 
-        self.horizontalLayout_top.addLayout(self.verticalLayout_4)
+        self.horizontal_layout_top.addLayout(self.vertical_layout_game)
 
-        self.horizontalLayout_top.setStretch(0, 1)
-        self.horizontalLayout_top.setStretch(2, 1)
+        self.horizontal_layout_top.setStretch(0, 1)
+        self.horizontal_layout_top.setStretch(2, 1)
 
-        self.verticalLayout_3.addLayout(self.horizontalLayout_top)
-
-
-        self.verticalLayout_2.addLayout(self.verticalLayout_3)
+        self.horizontalLayout_4.addLayout(self.horizontal_layout_top)
 
         MainWindow.setCentralWidget(self.centralwidget)
 
