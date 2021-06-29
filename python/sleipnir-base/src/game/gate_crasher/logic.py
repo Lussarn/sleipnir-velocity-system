@@ -396,16 +396,25 @@ class Logic:
            ])
         )
 
-        self.__levels.append(GateCrasherLevel("Figure 8",
+        self.__levels.append(GateCrasherLevel("Figure 8 - Inside",
             [
                 GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'LEFT'),
-                GateCrasherHitPoint('cam1', 'RIGHT'),
-                GateCrasherHitPoint('cam2', 'LEFT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+                GateCrasherHitPoint('cam1', 'LEFT'),
+                GateCrasherHitPoint('cam2', 'RIGHT'),
+           ])
+        )
+
+        self.__levels.append(GateCrasherLevel("Figure 8 - Outside",
+            [
                 GateCrasherHitPoint('cam1', 'RIGHT'),
                 GateCrasherHitPoint('cam2', 'LEFT'),
                 GateCrasherHitPoint('cam1', 'RIGHT'),
