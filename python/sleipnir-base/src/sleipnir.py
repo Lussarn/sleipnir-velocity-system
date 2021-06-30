@@ -87,19 +87,19 @@ class SleipnirWindow(QMainWindow):
       event.on(Globals.EVENT_GROUND_LEVEL_CHANGE, self.__evt_globals_ground_level_change)
 
       ''' Align callbacks and events '''
-      self.__ui.pushButton_video1_align.clicked.connect(self.__cb_align_cam1_clicked)
-      self.__ui.pushButton_video2_align.clicked.connect(self.__cb_align_cam2_clicked)
+      self.__ui.align_push_button_video1.clicked.connect(self.__cb_align_cam1_clicked)
+      self.__ui.align_push_button_video2.clicked.connect(self.__cb_align_cam2_clicked)
       event.on(AlignLogic.EVENT_ALIGN_START, self.__evt_alignlogic_align_start)
       event.on(AlignLogic.EVENT_ALIGN_STOP, self.__evt_alignlogic_align_stop)
       event.on(AlignLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_alignlogic_align_new_frame)
-      self.__ui.pushButton_video1_align.setEnabled(False)
-      self.__ui.pushButton_video2_align.setEnabled(False)
+      self.__ui.align_push_button_video1.setEnabled(False)
+      self.__ui.align_push_button_video2.setEnabled(False)
 
       ''' Start/Stop Cameras'''
-      self.__ui.pushbutton_stop.setEnabled(False)
-      self.__ui.pushbutton_start.setEnabled(False)
-      self.__ui.pushbutton_start.clicked.connect(self.__cb_start_cameras)
-      self.__ui.pushbutton_stop.clicked.connect(self.__cb_stop_cameras)
+      self.__ui.sleipnir_push_button_start.setEnabled(False)
+      self.__ui.sleipnir_push_button_start.clicked.connect(self.__cb_start_cameras)
+      self.__ui.sleipnir_push_button_stop.setEnabled(False)
+      self.__ui.sleipnir_push_button_stop.clicked.connect(self.__cb_stop_cameras)
 
       ''' Initialize speed trap game '''
       self.__speed_trap_gui = SpeedTrapGUI(self)
@@ -150,36 +150,36 @@ class SleipnirWindow(QMainWindow):
    def __evt_cameraserver_camera_online(self, cam):
       if (cam == 'cam1'):
          self.__ui.label_video1_online.setText("Cam1: Online")
-         self.__ui.pushButton_video1_align.setEnabled(True)
+         self.__ui.align_push_button_video1.setEnabled(True)
       else:
-         self.__ui.pushButton_video2_align.setEnabled(True)
+         self.__ui.align_push_button_video2.setEnabled(True)
          self.__ui.label_video2_online.setText("Cam2: Online")
 
       if self.__camera_server.is_ready_to_shoot():
-         self.__ui.pushbutton_start.setEnabled(True)
-         self.__ui.pushbutton_stop.setEnabled(False)
+         self.__ui.sleipnir_push_button_start.setEnabled(True)
+         self.__ui.sleipnir_push_button_stop.setEnabled(False)
       
    def __evt_cameraserver_camera_offline(self, cam):
       if (cam == 'cam1'):
          self.__ui.label_video1_online.setText("Cam1: Offline")
-         self.__ui.pushButton_video1_align.setEnabled(False)
+         self.__ui.align_push_button_video1.setEnabled(False)
       else:
          self.__ui.label_video1_online.setText("Cam2: Offine")
-         self.__ui.pushButton_video2_align.setEnabled(False)
+         self.__ui.align_push_button_video2.setEnabled(False)
 
-      self.__ui.pushbutton_start.setEnabled(False)
-      self.__ui.pushbutton_stop.setEnabled(False)
+      self.__ui.sleipnir_push_button_start.setEnabled(False)
+      self.__ui.sleipnir_push_button_stop.setEnabled(False)
 
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Align GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
    def __cb_align_cam1_clicked(self):
-      if self.__ui.pushButton_video1_align.text() == 'Align Camera':
+      if self.__ui.align_push_button_video1.text() == 'Align':
          self.__align_logic.start_align_camera('cam1')
       else:
          self.__align_logic.stop_align_camera('cam1')
 
    def __cb_align_cam2_clicked(self):
-      if self.__ui.pushButton_video2_align.text() == 'Align Camera':
+      if self.__ui.align_push_button_video2.text() == 'Align':
          self.__align_logic.start_align_camera('cam2')
       else:
          self.__align_logic.stop_align_camera('cam2')
@@ -187,27 +187,27 @@ class SleipnirWindow(QMainWindow):
    def __evt_alignlogic_align_start(self, cam):
       self.enable_all_gui_elements(False)
       if cam == 'cam1':
-         self.__ui.pushButton_video1_align.setText('Stop')
-         self.__ui.pushButton_video2_align.setEnabled(False)
+         self.__ui.align_push_button_video1.setText('Stop')
+         self.__ui.align_push_button_video2.setEnabled(False)
       else:
-         self.__ui.pushButton_video2_align.setText('Stop')
-         self.__ui.pushButton_video1_align.setEnabled(False)
+         self.__ui.align_push_button_video2.setText('Stop')
+         self.__ui.align_push_button_video1.setEnabled(False)
 
    def __evt_alignlogic_align_stop(self, cam):
       self.enable_all_gui_elements(True)
 
-      self.__ui.pushButton_video1_align.setText('Align Camera')
-      self.__ui.pushButton_video2_align.setText('Align Camera')
+      self.__ui.align_push_button_video1.setText('Align')
+      self.__ui.align_push_button_video2.setText('Align')
       
       if self.__camera_server.is_online('cam1'): 
-         self.__ui.pushButton_video1_align.setEnabled(True)
+         self.__ui.align_push_button_video1.setEnabled(True)
       if self.__camera_server.is_online('cam2'): 
-         self.__ui.pushButton_video2_align.setEnabled(True)
+         self.__ui.align_push_button_video2.setEnabled(True)
 
       ''' Check status for start stop buttons '''
-      self.__ui.pushbutton_stop.setEnabled(False)
+      self.__ui.sleipnir_push_button_stop.setEnabled(False)
       if not self.__camera_server.is_ready_to_shoot():
-         self.__ui.pushbutton_start.setEnabled(False)
+         self.__ui.sleipnir_push_button_start.setEnabled(False)
 
    def __evt_alignlogic_align_new_frame(self, frame :Frame):
       self.__video_player_gui.display_frame(frame)
@@ -273,14 +273,26 @@ class SleipnirWindow(QMainWindow):
       if self.__ui.verticalSlider_groundlevel.isSliderDown() == False:
          self.__ui.verticalSlider_groundlevel.setValue(value)
 
+   def game_started(self):
+        self.enable_all_gui_elements(False)
+        self.__ui.sleipnir_push_button_stop.setEnabled(True)
+        self.__ui.align_push_button_video1.setEnabled(False)
+        self.__ui.align_push_button_video2.setEnabled(False)
+
+
+   def game_stopped(self):
+      self.enable_all_gui_elements(True)
+      self.__ui.sleipnir_push_button_stop.setEnabled(False)
+      self.__ui.align_push_button_video1.setEnabled(True)
+      self.__ui.align_push_button_video2.setEnabled(True)
 
    def enable_all_gui_elements(self, enabled):
       self.__video_player_gui.enable_gui_elements(enabled)
       self.__current_game_gui.enable_gui_elements(enabled)
 
       self.__ui.sleipnir_combo_box_game_select.setEnabled(enabled)
-      self.__ui.pushbutton_stop.setEnabled(enabled)
-      self.__ui.pushbutton_start.setEnabled(enabled)
+      self.__ui.sleipnir_push_button_stop.setEnabled(enabled)
+      self.__ui.sleipnir_push_button_start.setEnabled(enabled)
       self.__ui.verticalSlider_groundlevel.setEnabled(enabled)
       
       self.__ui.checkBox_live.setEnabled(enabled)

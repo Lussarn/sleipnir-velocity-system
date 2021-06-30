@@ -32,14 +32,19 @@ class Ui_MainWindow(object):
         self.horizontalLayout_video_1_top.setObjectName(u"horizontalLayout_video_1_top")
         self.label_video1_online = QLabel(self.centralwidget)
         self.label_video1_online.setObjectName(u"label_video1_online")
+        font = QFont()
+        font.setFamily(u"Consolas")
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_video1_online.setFont(font)
         self.label_video1_online.setStyleSheet(u"font-size: 20px;")
 
         self.horizontalLayout_video_1_top.addWidget(self.label_video1_online)
 
-        self.pushButton_video1_align = QPushButton(self.centralwidget)
-        self.pushButton_video1_align.setObjectName(u"pushButton_video1_align")
+        self.align_push_button_video1 = QPushButton(self.centralwidget)
+        self.align_push_button_video1.setObjectName(u"align_push_button_video1")
 
-        self.horizontalLayout_video_1_top.addWidget(self.pushButton_video1_align)
+        self.horizontalLayout_video_1_top.addWidget(self.align_push_button_video1)
 
         self.horizontalLayout_video_1_top.setStretch(0, 1)
 
@@ -159,14 +164,15 @@ class Ui_MainWindow(object):
         self.horizontalLayout_video_2_top.setObjectName(u"horizontalLayout_video_2_top")
         self.label_video2_online = QLabel(self.centralwidget)
         self.label_video2_online.setObjectName(u"label_video2_online")
+        self.label_video2_online.setFont(font)
         self.label_video2_online.setStyleSheet(u"font-size: 20px;")
 
         self.horizontalLayout_video_2_top.addWidget(self.label_video2_online)
 
-        self.pushButton_video2_align = QPushButton(self.centralwidget)
-        self.pushButton_video2_align.setObjectName(u"pushButton_video2_align")
+        self.align_push_button_video2 = QPushButton(self.centralwidget)
+        self.align_push_button_video2.setObjectName(u"align_push_button_video2")
 
-        self.horizontalLayout_video_2_top.addWidget(self.pushButton_video2_align)
+        self.horizontalLayout_video_2_top.addWidget(self.align_push_button_video2)
 
         self.horizontalLayout_video_2_top.setStretch(0, 1)
 
@@ -313,10 +319,10 @@ class Ui_MainWindow(object):
 
         self.speed_trap_table_view_announcement = QTableView(self.speed_measure)
         self.speed_trap_table_view_announcement.setObjectName(u"speed_trap_table_view_announcement")
-        font = QFont()
-        font.setFamily(u"Consolas")
-        font.setPointSize(10)
-        self.speed_trap_table_view_announcement.setFont(font)
+        font1 = QFont()
+        font1.setFamily(u"Consolas")
+        font1.setPointSize(10)
+        self.speed_trap_table_view_announcement.setFont(font1)
         self.speed_trap_table_view_announcement.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.speed_trap_table_view_announcement.horizontalHeader().setDefaultSectionSize(60)
         self.speed_trap_table_view_announcement.horizontalHeader().setStretchLastSection(True)
@@ -336,10 +342,10 @@ class Ui_MainWindow(object):
 
         self.speed_trap_label_time = QLabel(self.speed_measure)
         self.speed_trap_label_time.setObjectName(u"speed_trap_label_time")
-        font1 = QFont()
-        font1.setFamily(u"Consolas")
-        font1.setPointSize(16)
-        self.speed_trap_label_time.setFont(font1)
+        font2 = QFont()
+        font2.setFamily(u"Consolas")
+        font2.setPointSize(16)
+        self.speed_trap_label_time.setFont(font2)
         self.speed_trap_label_time.setStyleSheet(u"")
         self.speed_trap_label_time.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
 
@@ -347,7 +353,7 @@ class Ui_MainWindow(object):
 
         self.speed_trap_label_speed = QLabel(self.speed_measure)
         self.speed_trap_label_speed.setObjectName(u"speed_trap_label_speed")
-        self.speed_trap_label_speed.setFont(font1)
+        self.speed_trap_label_speed.setFont(font2)
         self.speed_trap_label_speed.setStyleSheet(u"")
         self.speed_trap_label_speed.setAlignment(Qt.AlignLeading|Qt.AlignLeft|Qt.AlignVCenter)
 
@@ -355,7 +361,7 @@ class Ui_MainWindow(object):
 
         self.speed_trap_label_average = QLabel(self.speed_measure)
         self.speed_trap_label_average.setObjectName(u"speed_trap_label_average")
-        self.speed_trap_label_average.setFont(font1)
+        self.speed_trap_label_average.setFont(font2)
         self.speed_trap_label_average.setStyleSheet(u"")
 
         self.verticalLayout.addWidget(self.speed_trap_label_average)
@@ -385,7 +391,7 @@ class Ui_MainWindow(object):
 
         self.gate_crasher_table_view_result = QTableView(self.gate_crasher)
         self.gate_crasher_table_view_result.setObjectName(u"gate_crasher_table_view_result")
-        self.gate_crasher_table_view_result.setFont(font)
+        self.gate_crasher_table_view_result.setFont(font1)
         self.gate_crasher_table_view_result.setStyleSheet(u"")
         self.gate_crasher_table_view_result.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
         self.gate_crasher_table_view_result.horizontalHeader().setDefaultSectionSize(60)
@@ -396,7 +402,7 @@ class Ui_MainWindow(object):
 
         self.gate_crasher_label_time = QLabel(self.gate_crasher)
         self.gate_crasher_label_time.setObjectName(u"gate_crasher_label_time")
-        self.gate_crasher_label_time.setFont(font1)
+        self.gate_crasher_label_time.setFont(font2)
         self.gate_crasher_label_time.setStyleSheet(u"")
 
         self.verticalLayout_5.addWidget(self.gate_crasher_label_time)
@@ -542,22 +548,22 @@ class Ui_MainWindow(object):
         self.horizontal_layout_start_stop = QHBoxLayout()
         self.horizontal_layout_start_stop.setObjectName(u"horizontal_layout_start_stop")
         self.horizontal_layout_start_stop.setContentsMargins(-1, 6, -1, 0)
-        self.pushbutton_start = QPushButton(self.centralwidget)
-        self.pushbutton_start.setObjectName(u"pushbutton_start")
-        self.pushbutton_start.setMinimumSize(QSize(0, 60))
-        self.pushbutton_start.setBaseSize(QSize(0, 0))
-        font2 = QFont()
-        font2.setPointSize(12)
-        self.pushbutton_start.setFont(font2)
+        self.sleipnir_push_button_start = QPushButton(self.centralwidget)
+        self.sleipnir_push_button_start.setObjectName(u"sleipnir_push_button_start")
+        self.sleipnir_push_button_start.setMinimumSize(QSize(0, 60))
+        self.sleipnir_push_button_start.setBaseSize(QSize(0, 0))
+        font3 = QFont()
+        font3.setPointSize(12)
+        self.sleipnir_push_button_start.setFont(font3)
 
-        self.horizontal_layout_start_stop.addWidget(self.pushbutton_start)
+        self.horizontal_layout_start_stop.addWidget(self.sleipnir_push_button_start)
 
-        self.pushbutton_stop = QPushButton(self.centralwidget)
-        self.pushbutton_stop.setObjectName(u"pushbutton_stop")
-        self.pushbutton_stop.setMinimumSize(QSize(0, 60))
-        self.pushbutton_stop.setFont(font2)
+        self.sleipnir_push_button_stop = QPushButton(self.centralwidget)
+        self.sleipnir_push_button_stop.setObjectName(u"sleipnir_push_button_stop")
+        self.sleipnir_push_button_stop.setMinimumSize(QSize(0, 60))
+        self.sleipnir_push_button_stop.setFont(font3)
 
-        self.horizontal_layout_start_stop.addWidget(self.pushbutton_stop)
+        self.horizontal_layout_start_stop.addWidget(self.sleipnir_push_button_stop)
 
 
         self.vertical_layout_game.addLayout(self.horizontal_layout_start_stop)
@@ -583,7 +589,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QCoreApplication.translate("MainWindow", u"Speed", None))
         self.label_video1_online.setText(QCoreApplication.translate("MainWindow", u"Waiting...", None))
-        self.pushButton_video1_align.setText(QCoreApplication.translate("MainWindow", u"Align Camera", None))
+        self.align_push_button_video1.setText(QCoreApplication.translate("MainWindow", u"Align", None))
         self.video_player_label_video1.setText("")
         self.video_player_label_time_video1.setText(QCoreApplication.translate("MainWindow", u"00:00.000", None))
         self.video_player_push_button_video1_find.setText(QCoreApplication.translate("MainWindow", u"Find", None))
@@ -594,7 +600,7 @@ class Ui_MainWindow(object):
         self.video_player_push_button_video1_play_forward.setText(QCoreApplication.translate("MainWindow", u">>", None))
         self.video_player_push_button_video1_copy.setText(QCoreApplication.translate("MainWindow", u"Copy Right", None))
         self.label_video2_online.setText(QCoreApplication.translate("MainWindow", u"Waiting...", None))
-        self.pushButton_video2_align.setText(QCoreApplication.translate("MainWindow", u"Align Camera", None))
+        self.align_push_button_video2.setText(QCoreApplication.translate("MainWindow", u"Align", None))
         self.video_player_label_video2.setText("")
         self.video_player_label_time_video2.setText(QCoreApplication.translate("MainWindow", u"00:00.000 ", None))
         self.video_player_push_button_video2_copy.setText(QCoreApplication.translate("MainWindow", u"Copy Left", None))
@@ -638,7 +644,7 @@ class Ui_MainWindow(object):
         self.radioButton_flight_3.setText(QCoreApplication.translate("MainWindow", u"3", None))
         self.radioButton_flight_8.setText(QCoreApplication.translate("MainWindow", u"8", None))
         self.radioButton_flight_7.setText(QCoreApplication.translate("MainWindow", u"7", None))
-        self.pushbutton_start.setText(QCoreApplication.translate("MainWindow", u"Start ", None))
-        self.pushbutton_stop.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
+        self.sleipnir_push_button_start.setText(QCoreApplication.translate("MainWindow", u"Start ", None))
+        self.sleipnir_push_button_stop.setText(QCoreApplication.translate("MainWindow", u"Stop", None))
     # retranslateUi
 

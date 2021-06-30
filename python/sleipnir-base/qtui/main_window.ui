@@ -38,6 +38,14 @@
          <layout class="QHBoxLayout" name="horizontalLayout_video_1_top" stretch="1,0">
           <item>
            <widget class="QLabel" name="label_video1_online">
+            <property name="font">
+             <font>
+              <family>Consolas</family>
+              <pointsize>-1</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
             <property name="styleSheet">
              <string notr="true">font-size: 20px;</string>
             </property>
@@ -47,9 +55,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_video1_align">
+           <widget class="QPushButton" name="align_push_button_video1">
             <property name="text">
-             <string>Align Camera</string>
+             <string>Align</string>
             </property>
            </widget>
           </item>
@@ -276,6 +284,14 @@
          <layout class="QHBoxLayout" name="horizontalLayout_video_2_top" stretch="1,0">
           <item>
            <widget class="QLabel" name="label_video2_online">
+            <property name="font">
+             <font>
+              <family>Consolas</family>
+              <pointsize>-1</pointsize>
+              <weight>75</weight>
+              <bold>true</bold>
+             </font>
+            </property>
             <property name="styleSheet">
              <string notr="true">font-size: 20px;</string>
             </property>
@@ -285,9 +301,9 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushButton_video2_align">
+           <widget class="QPushButton" name="align_push_button_video2">
             <property name="text">
-             <string>Align Camera</string>
+             <string>Align</string>
             </property>
            </widget>
           </item>
@@ -968,7 +984,7 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QPushButton" name="pushbutton_start">
+           <widget class="QPushButton" name="sleipnir_push_button_start">
             <property name="minimumSize">
              <size>
               <width>0</width>
@@ -992,7 +1008,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QPushButton" name="pushbutton_stop">
+           <widget class="QPushButton" name="sleipnir_push_button_stop">
             <property name="minimumSize">
              <size>
               <width>0</width>

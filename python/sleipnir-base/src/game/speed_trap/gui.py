@@ -79,11 +79,12 @@ class GUI:
         self.__reset_model_announcement()
         self.__average_update_gui()
         self.__update_gui(None)
-        self.__win.enable_all_gui_elements(False)
-        self.__ui.pushbutton_stop.setEnabled(True)
-        self.__ui.pushButton_video1_align.setEnabled(False)
-        self.__ui.pushButton_video2_align.setEnabled(False)
-        self.__ui.pushbutton_stop.setEnabled(True)
+        self.__win.game_started()
+#        self.__win.enable_all_gui_elements(False)
+#        self.__ui.pushbutton_stop.setEnabled(True)
+#        self.__ui.pushButton_video1_align.setEnabled(False)
+#        self.__ui.pushButton_video2_align.setEnabled(False)
+#        self.__ui.pushbutton_stop.setEnabled(True)
 
     def __evt_game_stopped(self):
         ''' Stop event for speed logic'''
@@ -91,10 +92,11 @@ class GUI:
         ''' Load the just stopped flight, this will load the video player etc. '''
         self.__globals.set_flight(self.__globals.get_flight())
 
-        self.__win.enable_all_gui_elements(True)
-        self.__ui.pushbutton_stop.setEnabled(False)
-        self.__ui.pushButton_video1_align.setEnabled(True)
-        self.__ui.pushButton_video2_align.setEnabled(True)
+        self.__win.game_stopped()
+#        self.__win.enable_all_gui_elements(True)
+#        self.__ui.pushbutton_stop.setEnabled(False)
+#        self.__ui.pushButton_video1_align.setEnabled(True)
+#        self.__ui.pushButton_video2_align.setEnabled(True)
 
     def __evt_frame_new(self, frame: Frame):
         ''' Only display every third frame when live trackng - 30 fps '''

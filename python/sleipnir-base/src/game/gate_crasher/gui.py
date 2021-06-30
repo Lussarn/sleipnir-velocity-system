@@ -72,11 +72,7 @@ class GUI:
     def __evt_game_started(self):
         self.__ui.slider_video['cam1'].setSliderPosition(0)
         self.__ui.slider_video['cam2'].setSliderPosition(0)
-        self.__win.enable_all_gui_elements(False)
-        self.__ui.pushbutton_stop.setEnabled(True)
-        self.__ui.pushButton_video1_align.setEnabled(False)
-        self.__ui.pushButton_video2_align.setEnabled(False)
-        self.__ui.pushbutton_stop.setEnabled(True)
+        self.__win.game_started()
         self.__model_announcement_reset()
 
     def __evt_game_stopped(self):
@@ -84,11 +80,7 @@ class GUI:
 
         ''' Load the just stopped flight, this will load the video player etc. '''
         self.__globals.set_flight(self.__globals.get_flight())
-
-        self.__win.enable_all_gui_elements(True)
-        self.__ui.pushbutton_stop.setEnabled(False)
-        self.__ui.pushButton_video1_align.setEnabled(True)
-        self.__ui.pushButton_video2_align.setEnabled(True)
+        self.__win.game_stopped()
 
     def __evt_frame_new(self, frame: Frame):
         ''' Only display every third frame when live trackng - 30 fps '''
