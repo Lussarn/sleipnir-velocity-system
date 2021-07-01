@@ -5,8 +5,8 @@ import event
 from configuration import Configuration
 from globals import Globals
 from camera_server import CameraServer
-from frame_collection import FrameCollection
-from frame import Frame
+from frame.frame_collection import FrameCollection
+from frame.frame import Frame
 from errors import *
 from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
 from game.speed_trap.announcement import Announcements, Announcement

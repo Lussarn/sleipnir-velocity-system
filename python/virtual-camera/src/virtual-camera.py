@@ -8,7 +8,7 @@ sys.path.insert(0, '../sleipnir-base/src')
 from configuration import Configuration
 from database.db import DB
 import database.frame_dao as frame_dao
-from frame import Frame
+from frame.frame import Frame
 
 def usage():
     print ('Usage:')

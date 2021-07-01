@@ -2,7 +2,7 @@ from threading import Lock
 
 from database.db import DB
 import database.frame_dao as frame_dao
-from frame import Frame
+from frame.frame import Frame
 
 from function_timer import timer
 

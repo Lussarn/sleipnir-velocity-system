@@ -10,7 +10,7 @@ from configuration import Configuration
 from camera_server import CameraServer
 from video_player.video_player import VideoPlayer
 from video_player.video_player_gui import VideoPlayerGUI
-from frame import Frame
+from frame.frame import Frame
 
 from game.gate_crasher.logic import Logic
 from game.gate_crasher.announcement import Announcement

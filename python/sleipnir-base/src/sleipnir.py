@@ -6,7 +6,6 @@ from PySide2.QtWidgets import QApplication, QMainWindow, QMessageBox
 from ui_sleipnir_window import Ui_SleipnirWindow
 from configuration import Configuration, ConfigurationError
 from database.db import DB
-from frame import Frame
 from camera_server import CameraServer
 from globals import Globals
 from video_player.video_player import VideoPlayer

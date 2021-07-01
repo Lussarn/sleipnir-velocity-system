@@ -7,13 +7,13 @@ import asyncio
 
 import tornado.ioloop
 import tornado.web
-from frame_collection import FrameCollection
+from frame.frame_collection import FrameCollection
+from frame.frame import Frame
 
 from globals import Globals
 import event
 from database.db import DB
 import database.frame_dao as frame_dao
-from frame import Frame
 from function_timer import timer
 
 ''' Set logger on third party modules '''

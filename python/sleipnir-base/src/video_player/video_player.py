@@ -5,8 +5,8 @@ from PySide2.QtCore import QTimer
 
 import event
 from globals import Globals
-from frame import Frame
-from frame_collection import FrameCollection
+from frame.frame import Frame
+from frame.frame_collection import FrameCollection
 from configuration import Configuration
 from motion_tracker import MotionTracker, MotionTrackerDoMessage
 

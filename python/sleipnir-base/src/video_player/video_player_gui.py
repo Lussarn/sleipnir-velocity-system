@@ -1,5 +1,4 @@
-from PySide2 import QtGui, QtCore
-from PySide2.QtWidgets import QAbstractItemView
+from PySide2 import QtGui
 import cv2 as cv
 
 from globals import Globals
@@ -7,9 +6,9 @@ import event
 from errors import *
 from sound import Sound
 from ui_sleipnir_window import Ui_SleipnirWindow
-from configuration import Configuration, ConfigurationError
+from configuration import Configuration
 from camera_server import CameraServer
-from frame import Frame
+from frame.frame import Frame
 
 from video_player.video_player import VideoPlayer
 

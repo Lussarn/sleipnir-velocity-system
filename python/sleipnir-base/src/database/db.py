@@ -1,9 +1,7 @@
 from threading import Lock
-import time
 import os
 
 import sqlite3
-from sqlite3.dbapi2 import OperationalError, connect
 
 import logging
 

@@ -2,7 +2,7 @@ import sqlite3
 from sqlite3.dbapi2 import OperationalError
 
 from database.db import DB
-from frame import Frame
+from frame.frame import Frame
 
 import logging
 logger = logging.getLogger(__name__)

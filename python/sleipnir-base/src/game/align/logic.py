@@ -3,9 +3,9 @@ from errors import IllegalStateError
 
 import event
 from globals import Globals
-from frame import Frame
+from frame.frame import Frame
 from camera_server import CameraServer
-from frame_collection import FrameCollection
+from frame.frame_collection import FrameCollection
 from game.align.events import *
 
 

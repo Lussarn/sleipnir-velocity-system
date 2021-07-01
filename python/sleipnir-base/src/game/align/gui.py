@@ -5,7 +5,7 @@ from errors import *
 from ui_sleipnir_window import Ui_SleipnirWindow
 from camera_server import CameraServer
 from video_player.video_player_gui import VideoPlayerGUI
-from frame import Frame
+from frame.frame import Frame
 
 from game.align.logic import Logic
 from game.align.events import *
