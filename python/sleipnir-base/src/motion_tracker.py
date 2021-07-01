@@ -91,7 +91,8 @@ class MotionTracker:
             threshold = cv.dilate(threshold, None, iterations=3)
             (self.__motion_boxes[position], _) = cv.findContours(threshold.copy(), cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE)
 
-            for c in self.__motion_boxes[position]:
+            ''' Fetch the first 15 boxes, i.e. if we chake the camera it will not overload with motion '''
+            for c in self.__motion_boxes[position][:15]:
                 (x, y, w, h) = cv.boundingRect(c)
 
                 # No tracking below ground level
@@ -115,7 +116,7 @@ class MotionTracker:
                         # The 0.0000001 will remove a division by zero if x - last_box.x is 0
                         dive_angle = math.atan(abs(y - last_box.y) / (abs(x - last_box.x) + 0.0000001) ) * 180 / math.pi
                         if  dive_angle > motion_tracker_do_message.get_max_dive_angle():
-#                            logger.debug("Max dive angle of " + str(motion_tracker_do_message.get_max_dive_angle()) + "° exceeded on position " + str(position) + " (" +  "{:.2f}".format(dive_angle)+ "°)")
+                            logger.debug("Max dive angle of " + str(motion_tracker_do_message.get_max_dive_angle()) + "° exceeded on position " + str(position) + " (" +  "{:.2f}".format(dive_angle)+ "°)")
                             direction = 0
 
                         # Definitely no hit

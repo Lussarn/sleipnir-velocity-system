@@ -80,11 +80,6 @@ class GUI:
         self.__average_update_gui()
         self.__update_gui(None)
         self.__win.game_started()
-#        self.__win.enable_all_gui_elements(False)
-#        self.__ui.pushbutton_stop.setEnabled(True)
-#        self.__ui.pushButton_video1_align.setEnabled(False)
-#        self.__ui.pushButton_video2_align.setEnabled(False)
-#        self.__ui.pushbutton_stop.setEnabled(True)
 
     def __evt_game_stopped(self):
         ''' Stop event for speed logic'''
@@ -93,16 +88,16 @@ class GUI:
         self.__globals.set_flight(self.__globals.get_flight())
 
         self.__win.game_stopped()
-#        self.__win.enable_all_gui_elements(True)
-#        self.__ui.pushbutton_stop.setEnabled(False)
-#        self.__ui.pushButton_video1_align.setEnabled(True)
-#        self.__ui.pushButton_video2_align.setEnabled(True)
 
     def __evt_frame_new(self, frame: Frame):
         ''' Only display every third frame when live trackng - 30 fps '''
+
         if self.__ui.checkBox_live.isChecked() and frame.get_position() % 3 == 0:
             self.__video_player_gui.display_frame(frame)
-
+        else:
+            ''' pop image from frame to prevent memory leak '''
+            frame.pop_image_load_if_missing(self.__globals.get_db(), self.__globals.get_game())
+                    
         ''' Display time beneath video '''
         self.__video_player_gui.video_display_frame_time(frame.get_cam(), self.__logic.get_time(frame))
 
