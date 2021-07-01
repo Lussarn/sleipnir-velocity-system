@@ -35,7 +35,6 @@ class GUI:
 
         self.__logic = Logic(self.__globals, self.__camera_server, self.__configuration)
 
-    def initialize(self):
         from sleipnir import SleipnirWindow
         ''' Game start/stop events '''
         event.on(SleipnirWindow.EVENT_GAME_START_REQUESTED, self.__evt_SleipnirWindow_GAME_START_REQUESTED)

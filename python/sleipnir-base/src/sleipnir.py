@@ -9,13 +9,16 @@ from database.db import DB
 from frame import Frame
 from camera_server import CameraServer
 from globals import Globals
-from align_logic import AlignLogic
 from video_player.video_player import VideoPlayer
 from video_player.video_player_gui import VideoPlayerGUI
 from sound import Sound
+from game.align.gui import GUI as AlignGUI
 from game.speed_trap.gui import GUI as SpeedTrapGUI
 from game.gate_crasher.gui import GUI as GateCrasherGUI
 from errors import *
+
+from game.align.events import *
+from game.align.logic import Logic as AlignLogic
 
 import logging
 import logger
@@ -89,9 +92,6 @@ class SleipnirWindow(QMainWindow):
       ''' Align callbacks and events '''
       self.__ui.align_push_button_video1.clicked.connect(self.__cb_align_cam1_clicked)
       self.__ui.align_push_button_video2.clicked.connect(self.__cb_align_cam2_clicked)
-      event.on(AlignLogic.EVENT_ALIGN_START, self.__evt_align_start)
-      event.on(AlignLogic.EVENT_ALIGN_STOP, self.__evt_align_stop)
-      event.on(AlignLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_align_new_frame)
       self.__ui.align_push_button_video1.setEnabled(False)
       self.__ui.align_push_button_video2.setEnabled(False)
 
@@ -101,13 +101,14 @@ class SleipnirWindow(QMainWindow):
       self.__ui.sleipnir_push_button_stop.setEnabled(False)
       self.__ui.sleipnir_push_button_stop.clicked.connect(self.__cb_stop_cameras)
 
+      ''' Initialize align game '''
+      self.__align_gui = AlignGUI(self)
+
       ''' Initialize speed trap game '''
       self.__speed_trap_gui = SpeedTrapGUI(self)
-      self.__speed_trap_gui.initialize()
 
       ''' Initialize gate crasher game '''
       self.__gate_crasher_gui = GateCrasherGUI(self)
-      self.__gate_crasher_gui.initialize()
 
       ''' Currently selected Game GUI '''
       self.__current_game_gui = self.__speed_trap_gui
@@ -173,52 +174,33 @@ class SleipnirWindow(QMainWindow):
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Align GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
    def __cb_align_cam1_clicked(self):
-      self.__globals.set_game(Globals.GAME_ALIGN)
-
       if self.__ui.align_push_button_video1.text() == 'Align':
-         self.__align_logic.start_align_camera('cam1')
+         ''' Set game to ALIGN '''
+         self.__globals.set_game(Globals.GAME_ALIGN)
+         try:
+            self.__align_logic.start_align_camera('cam1')
+         except Exception as e:
+            ''' Restore as align did not start as expected '''
+            logger.error(e)
+            self.__cb_game_changed(self.__ui.sleipnir_combo_box_game_select.currentIndex())
       else:
          self.__align_logic.stop_align_camera('cam1')
+         self.__cb_game_changed(self.__ui.sleipnir_combo_box_game_select.currentIndex())
 
    def __cb_align_cam2_clicked(self):
-      ''' Set game to ALIGN '''
-      self.__globals.set_game(Globals.GAME_ALIGN)
-
       if self.__ui.align_push_button_video2.text() == 'Align':
-         self.__align_logic.start_align_camera('cam2')
+         ''' Set game to ALIGN '''
+         self.__globals.set_game(Globals.GAME_ALIGN)
+         try:
+            self.__align_logic.start_align_camera('cam2')
+         except Exception as e:
+            ''' Restore as align did not start as expected '''
+            logger.error(e)
+            self.__cb_game_changed(self.__ui.sleipnir_combo_box_game_select.currentIndex())
       else:
          self.__align_logic.stop_align_camera('cam2')
-
-   def __evt_align_start(self, cam):
-      self.enable_all_gui_elements(False)
-      if cam == 'cam1':
-         self.__ui.align_push_button_video1.setText('Stop')
-         self.__ui.align_push_button_video2.setEnabled(False)
-      else:
-         self.__ui.align_push_button_video2.setText('Stop')
-         self.__ui.align_push_button_video1.setEnabled(False)
-
-   def __evt_align_stop(self, cam):
-      self.enable_all_gui_elements(True)
-
-      self.__ui.align_push_button_video1.setText('Align')
-      self.__ui.align_push_button_video2.setText('Align')
-      
-      if self.__camera_server.is_online('cam1'): 
-         self.__ui.align_push_button_video1.setEnabled(True)
-      if self.__camera_server.is_online('cam2'): 
-         self.__ui.align_push_button_video2.setEnabled(True)
-
-      ''' Check status for start stop buttons '''
-      self.__ui.sleipnir_push_button_stop.setEnabled(False)
-      if not self.__camera_server.is_ready_to_shoot():
-         self.__ui.sleipnir_push_button_start.setEnabled(False)
-
-      ''' Restore game to what's in the game combobox '''
-      self.__cb_game_changed(self.__ui.sleipnir_combo_box_game_select.currentIndex())
-
-   def __evt_align_new_frame(self, frame :Frame):
-      self.__video_player_gui.display_frame(frame)
+         ''' Restore game to what's in the game combobox '''
+         self.__cb_game_changed(self.__ui.sleipnir_combo_box_game_select.currentIndex())
 
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Game GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
