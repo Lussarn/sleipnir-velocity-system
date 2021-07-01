@@ -1,14 +1,9 @@
-from PySide2 import QtGui, QtCore
-from PySide2.QtWidgets import QAbstractItemView, QMessageBox
 
 from globals import Globals
 import event
 from errors import *
-from sound import Sound
 from ui_sleipnir_window import Ui_SleipnirWindow
-from configuration import Configuration, ConfigurationError
 from camera_server import CameraServer
-from video_player.video_player import VideoPlayer
 from video_player.video_player_gui import VideoPlayerGUI
 from frame import Frame
 
@@ -16,7 +11,6 @@ from game.align.logic import Logic
 from game.align.events import *
 
 import logging
-import logger
 
 logger = logging.getLogger(__name__)
 

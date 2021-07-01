@@ -25,4 +25,4 @@ log_handler = logging.StreamHandler(sys.stderr)
 log_handler.setFormatter(SleipnirFormatter('%(asctime)s -  %(levelname)s - %(name)s - %(threadName)s - %(message)s'))
 log_root.addHandler(log_handler)
 
-logging.getLogger("cameras_data").setLevel(logging.INFO)
+logging.getLogger("frame_collection").setLevel(logging.INFO)

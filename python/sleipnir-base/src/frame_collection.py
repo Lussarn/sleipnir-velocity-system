@@ -9,7 +9,7 @@ from function_timer import timer
 import logging
 logger = logging.getLogger(__name__)
 
-class CamerasData:
+class FrameCollection:
    __mutex = Lock()
 
    __db = None # type: DB

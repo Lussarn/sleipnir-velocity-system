@@ -6,7 +6,7 @@ import event
 from configuration import Configuration
 from globals import Globals
 from camera_server import CameraServer
-from cameras_data import CamerasData
+from frame_collection import FrameCollection
 from frame import Frame
 from errors import *
 from motion_tracker import MotionTrackerDoMessage, MotionTrackerDoneMessage, MotionTrackerWorker
@@ -21,12 +21,10 @@ logger = logging.getLogger(__name__)
 class GateCrasherState: 
     def __init__(self):        
         ''' collection of frames '''
-        self.cameras_data = None    # type: CamerasData
+        self.frame_collection = None    # type: FrameCollection
 
         ''' GataCrasher running? '''
         self.running = False        # type: bool
-
-        self.cameras_data           # type: CamerasData
 
         ''' Max angle of aircraft a motion track will register '''
         self.max_dive_angle = 0
@@ -170,8 +168,8 @@ class Logic:
         event.on(CameraServer.EVENT_NEW_FRAME, self.__cameraserver_evt_new_frame)
         self.__state.running = True
 
-        self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_game(), self.__globals.get_flight())
-        self.__camera_server.start_shooting(self.__state.cameras_data)
+        self.__state.frame_collection = FrameCollection(self.__globals.get_db(), self.__globals.get_game(), self.__globals.get_flight())
+        self.__camera_server.start_shooting(self.__state.frame_collection)
         event.emit(EVENT_GAME_STARTED)
 
     def stop_run(self):
@@ -218,10 +216,10 @@ class Logic:
         cam = frame.get_cam()
 
         ''' The last frame on this camera '''
-        cameras_data_last_position = self.__state.cameras_data.get_last_frame(cam).get_position()
+        frame_collection_last_position = self.__state.frame_collection.get_last_frame(cam).get_position()
 
         ''' Check if we need to go into lag recovery mode '''
-        if cameras_data_last_position - frame.get_position() > self.__MAX_ALLOWED_LAG:
+        if frame_collection_last_position - frame.get_position() > self.__MAX_ALLOWED_LAG:
             logger.warning("Lag detected when fetching new frame " + cam + ": " + str(frame.get_position()) + ", skipping ahead " + str(self.__MAX_ALLOWED_LAG) + " frames")
             ''' Enable the lag recovery for __MAX_ALLOWED_LAG * 3 frames 
             We tripple up since there are two cameras that are sending images 
@@ -239,7 +237,7 @@ class Logic:
         since we don't want jitter oback and forth on this, we only use one cam.
         The finishing time will still get from the correct cam '''
         if self.__state.current_gate_number > 0 and cam == 'cam1':
-            self.__state.current_runtime_ms = self.__state.cameras_data.get_frame(cam, done_message.get_position()).get_timestamp() - self.__state.timestamp_start
+            self.__state.current_runtime_ms = self.__state.frame_collection.get_frame(cam, done_message.get_position()).get_timestamp() - self.__state.timestamp_start
 
         do_message = MotionTrackerDoMessage(
             frame.pop_image_load_if_missing(self.__globals.get_db(), self.__globals.get_game()),
@@ -250,7 +248,7 @@ class Logic:
         worker.do_motion_tracking(do_message)
 
         try:
-            frame = self.__state.cameras_data.get_frame(cam, done_message.get_position())
+            frame = self.__state.frame_collection.get_frame(cam, done_message.get_position())
         except IndexError:
             ''' This happens when reaching this the first time after reset 
             because we fetch a done_messsage which hasn't been processed '''
@@ -271,7 +269,7 @@ class Logic:
         hitpoint = self.__levels[self.__state.level].get_hitpoint(self.__state.current_gate_number)
         motion_tracker_direction_name = ['LEFT', 'RIGHT'][int((motion_tracker_done_message.get_direction() + 1) / 2)] # -1 == 0, 1 == 1
 
-        motion_tracker_timestamp = self.__state.cameras_data.get_frame(cam, motion_tracker_done_message.get_position()).get_timestamp()
+        motion_tracker_timestamp = self.__state.frame_collection.get_frame(cam, motion_tracker_done_message.get_position()).get_timestamp()
 
         if hitpoint.get_direction() == motion_tracker_direction_name and hitpoint.get_cam() == cam and time.time() >  self.__state.no_hit_until:
             ''' dont register a hit until this time has passed '''
@@ -319,7 +317,7 @@ class Logic:
 
     def get_time(self, frame: Frame) -> int:
         ''' get time on frame position '''
-        t = frame.get_timestamp() - self.__state.cameras_data.get_start_timestamp()
+        t = frame.get_timestamp() - self.__state.frame_collection.get_start_timestamp()
         if t < 0: t =0
         return t
 

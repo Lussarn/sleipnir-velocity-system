@@ -6,7 +6,7 @@ from PySide2.QtCore import QTimer
 import event
 from globals import Globals
 from frame import Frame
-from cameras_data import CamerasData
+from frame_collection import FrameCollection
 from configuration import Configuration
 from motion_tracker import MotionTracker, MotionTrackerDoMessage
 
@@ -39,7 +39,7 @@ class VideoPlayerState:
         }
 
         ''' frame collection '''
-        self.cameras_data = None        # type: CamerasData
+        self.frame_collection = None        # type: FrameCollection
 
         ''' Max angle of aircraft a motion track will register '''
         self.max_dive_angle = 0
@@ -92,10 +92,10 @@ class VideoPlayer:
         self.__timer_find.stop()
 
     def __evt_globals_flight_change(self, flight):
-        ''' When flights change load new cameras_datas '''
+        ''' When flights change load new FrameCollection '''
         self.__stop_timers()
-        self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_game(), flight)
-        self.__state.cameras_data.load()
+        self.__state.frame_collection = FrameCollection(self.__globals.get_db(), self.__globals.get_game(), flight)
+        self.__state.frame_collection.load()
         for cam in ['cam1', 'cam2']:
             self.__state.position[cam] = 1
             self.__state.direction[cam] = VideoPlayer.DIRECTION_FORWARD
@@ -108,9 +108,9 @@ class VideoPlayer:
                 if (self.__state.direction[cam] == VideoPlayer.DIRECTION_FORWARD):
                     ''' Play forward '''
                     self.__state.position[cam] += 1
-                    if self.__state.cameras_data.get_last_frame(cam) is None or self.__state.position[cam] >= self.__state.cameras_data.get_last_frame(cam).get_position():
+                    if self.__state.frame_collection.get_last_frame(cam) is None or self.__state.position[cam] >= self.__state.frame_collection.get_last_frame(cam).get_position():
                         self.stop(cam)
-                        frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+                        frame = self.__state.frame_collection.get_frame(cam, self.__state.position[cam])
                         event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
                         continue
                 else:
@@ -119,11 +119,11 @@ class VideoPlayer:
                     if self.__state.position[cam] == 0:
                         self.__state.position[cam] = 1
                         self.stop(cam)
-                        frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+                        frame = self.__state.frame_collection.get_frame(cam, self.__state.position[cam])
                         event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
                         continue
                 
-                frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+                frame = self.__state.frame_collection.get_frame(cam, self.__state.position[cam])
                 event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
     def __cb_timer_find(self):
@@ -132,12 +132,12 @@ class VideoPlayer:
             if self.__state.play[cam] == VideoPlayer.PLAY_FIND:
                 ''' Finding '''
                 self.__state.position[cam] += 1
-                if self.__state.cameras_data.get_last_frame(cam) is None or self.__state.position[cam] >= self.__state.cameras_data.get_last_frame(cam).get_position():
+                if self.__state.frame_collection.get_last_frame(cam) is None or self.__state.position[cam] >= self.__state.frame_collection.get_last_frame(cam).get_position():
                     self.stop(cam)
-                    frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+                    frame = self.__state.frame_collection.get_frame(cam, self.__state.position[cam])
                     event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
                     continue
-                frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+                frame = self.__state.frame_collection.get_frame(cam, self.__state.position[cam])
 
                 do_message = MotionTrackerDoMessage(
                     frame.pop_image_load_if_missing(self.__globals.get_db(), self.__globals.get_game()),
@@ -206,50 +206,50 @@ class VideoPlayer:
             if self.__state.position[cam] == 1: return
             self.__state.position[cam] -= 1
         else:
-            if self.__state.position[cam] == self.__state.cameras_data.get_last_frame(cam).get_position(): return
+            if self.__state.position[cam] == self.__state.frame_collection.get_last_frame(cam).get_position(): return
             self.__state.position[cam] += 1
 
-        frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+        frame = self.__state.frame_collection.get_frame(cam, self.__state.position[cam])
         event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
     def copy(self, source_cam: str, dest_cam: str):
         ''' Copy video the the other side based on timestamp '''
         self.stop_all()
-        timestamp_source = self.__state.cameras_data.get_frame(source_cam, self.__state.position[source_cam]).get_timestamp()
+        timestamp_source = self.__state.frame_collection.get_frame(source_cam, self.__state.position[source_cam]).get_timestamp()
 
         ''' Start at beginning of dest and move until timestamp is bigger than source '''
-        for i in range(1, self.__state.cameras_data.get_last_frame(dest_cam).get_position() + 1):
-            timestamp_dest = self.__state.cameras_data.get_frame(dest_cam, i).get_timestamp()
+        for i in range(1, self.__state.frame_collection.get_last_frame(dest_cam).get_position() + 1):
+            timestamp_dest = self.__state.frame_collection.get_frame(dest_cam, i).get_timestamp()
             if timestamp_dest >= timestamp_source:
                 break
         self.__state.position[dest_cam] = i
 
-        frame = self.__state.cameras_data.get_frame(dest_cam, self.__state.position[dest_cam])
+        frame = self.__state.frame_collection.get_frame(dest_cam, self.__state.position[dest_cam])
         event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
     def get_current_frame(self, cam) -> Frame:
         ''' Get frame on current position '''
-        return self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+        return self.__state.frame_collection.get_frame(cam, self.__state.position[cam])
 
     def set_position(self, cam: str, position: int):
         ''' Set current position '''
         if position < 1: raise IndexError("position out of range")
         self.__state.position[cam] = position
         try:
-            frame = self.__state.cameras_data.get_frame(cam, self.__state.position[cam])
+            frame = self.__state.frame_collection.get_frame(cam, self.__state.position[cam])
         except IndexError:
             return
         event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
     def get_time(self, cam: str):
         ''' get time on current position '''
-        t = self.__state.cameras_data.get_frame(cam, self.__state.position[cam]).get_timestamp() - self.__state.cameras_data.get_start_timestamp()
+        t = self.__state.frame_collection.get_frame(cam, self.__state.position[cam]).get_timestamp() - self.__state.frame_collection.get_start_timestamp()
         if t < 0: t =0
         return t
 
     def get_last_frame(self, cam: str):
         ''' Get last frame of video '''
-        return self.__state.cameras_data.get_last_frame(cam)
+        return self.__state.frame_collection.get_last_frame(cam)
 
     def get_frame(self, cam: str, position: int) -> Frame:
-        return self.__state.cameras_data.get_frame(cam, position)
+        return self.__state.frame_collection.get_frame(cam, position)

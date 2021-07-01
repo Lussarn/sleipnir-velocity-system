@@ -5,7 +5,7 @@ import event
 from globals import Globals
 from frame import Frame
 from camera_server import CameraServer
-from cameras_data import CamerasData
+from frame_collection import FrameCollection
 from game.align.events import *
 
 
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 class AlignState: 
     def __init__(self):        
         ''' collection of frames '''
-        self.cameras_data = None    # type: CamerasData
+        self.frame_collection = None    # type: FrameCollection
 
         ''' Are the Cameras aligning?
         possible values: None, cam1, cam2 '''
@@ -48,8 +48,8 @@ class Logic:
         logger.info("Deleting Frames for flight %d, hang on..." % self.__globals.get_flight())
         frame_dao.delete_flight(self.__globals.get_db(), Globals.GAME_ALIGN ,self.__globals.get_flight())
 
-        self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_game(), self.__globals.get_flight())
-        self.__camera_server.start_shooting(self.__state.cameras_data)
+        self.__state.frame_collection = FrameCollection(self.__globals.get_db(), self.__globals.get_game(), self.__globals.get_flight())
+        self.__camera_server.start_shooting(self.__state.frame_collection)
         event.emit(EVENT_ALIGN_START, cam)
     
     def stop_align_camera(self, cam: str) -> bool:

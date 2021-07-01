@@ -7,7 +7,7 @@ import asyncio
 
 import tornado.ioloop
 import tornado.web
-from cameras_data import CamerasData
+from frame_collection import FrameCollection
 
 from globals import Globals
 import event
@@ -41,7 +41,7 @@ class ServerState:
       self.request_pictures_from_camera = False
 
       ''' Camera Frames '''
-      self.cameras_data = None # type: CamerasData
+      self.frame_collection = None # type: FrameCollection
 
       # Last transmission
       self.camera_last_seen = {"cam1": 0, "cam2": 0}
@@ -99,7 +99,7 @@ class RequestHandler(tornado.web.RequestHandler):
 
             ''' Clear the image for memory reasons '''
             frame.set_image(None)
-            self.__state.cameras_data.add_frame(frame)
+            self.__state.frame_collection.add_frame(frame)
             ''' Emit new frame event '''
             event.emit(CameraServer.EVENT_NEW_FRAME, frame)
 
@@ -145,7 +145,7 @@ class CameraServer:
       return self.__state.request_pictures_from_camera and (self.__is_shooting('cam1') or self.__is_shooting('cam2'))
 
    ''' start requesting pictures from camera '''
-   def start_shooting(self, cameras_data :CamerasData) -> None:
+   def start_shooting(self, frame_collection :FrameCollection) -> None:
       if self.__state.request_pictures_from_camera:
          return False
 
@@ -153,7 +153,7 @@ class CameraServer:
          logger.error("Unable to start shooting because camera is not online")
          return False
 
-      self.__state.cameras_data = cameras_data
+      self.__state.frame_collection = frame_collection
       self.__state.request_pictures_from_camera = True
       return True
 

@@ -6,7 +6,7 @@ import event
 from errors import *
 from sound import Sound
 from ui_sleipnir_window import Ui_SleipnirWindow
-from configuration import Configuration, ConfigurationError
+from configuration import Configuration
 from camera_server import CameraServer
 from video_player.video_player import VideoPlayer
 from video_player.video_player_gui import VideoPlayerGUI
