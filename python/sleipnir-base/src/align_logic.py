@@ -52,6 +52,15 @@ class AlignLogic:
         event.on(CameraServer.EVENT_NEW_FRAME, self.__cameraserver_evt_new_frame)
         self.__state.cam_aligning = cam
 
+        try:
+            import database.frame_dao as frame_dao
+            logger.info("Deleting Frames for flight %d, hang on..." % self.__globals.get_flight())
+            frame_dao.delete_flight(self.__globals.get_db(), self.__globals.GAME_SPEED_TRAP ,self.__globals.get_flight())
+        except Exception as e:
+            logger.error(str(e))
+            return
+
+
         self.__state.cameras_data = CamerasData(self.__globals.get_db(), self.__globals.get_game(), self.__globals.get_flight())
         self.__camera_server.start_shooting(self.__state.cameras_data)
         event.emit(AlignLogic.EVENT_ALIGN_START, cam)
