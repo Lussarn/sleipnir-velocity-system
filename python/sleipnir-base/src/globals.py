@@ -29,6 +29,7 @@ class Globals:
     EVENT_GROUND_LEVEL_CHANGE   = "globals.ground_level.change"
     EVENT_GAME_CHANGE           = "globals.game.change"
 
+    GAME_ALIGN         = "align"
     GAME_SPEED_TRAP    = "speed_trap"
     GAME_GATE_CRASHER  = "gate_crasher"
 

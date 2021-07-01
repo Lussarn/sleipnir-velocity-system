@@ -62,8 +62,6 @@ class DB():
         try:
             ''' DROP tables '''
             cur.execute('DROP TABLE IF EXISTS version')
-#            cur.execute('DROP INDEX IF EXISTS frame_position_idx')
-#            cur.execute('DROP INDEX IF EXISTS frame_flight_idx')
             cur.execute('DROP TABLE IF EXISTS frame')
             cur.execute('DROP TABLE IF EXISTS speed_trap_frame')
             cur.execute('DROP TABLE IF EXISTS gate_crasher_frame')
@@ -72,7 +70,7 @@ class DB():
             cur.execute('DROP TABLE IF EXISTS gate_crasher_gate_hit')
 
             ''' CREATE frame tables for the games '''
-            for game in ['speed_trap', 'gate_crasher']:
+            for game in ['align', 'speed_trap', 'gate_crasher']:
                 cur.execute('''
                     CREATE TABLE %s_frame (
                         id INTEGER PRIMARY KEY,

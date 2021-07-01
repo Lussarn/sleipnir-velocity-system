@@ -89,9 +89,9 @@ class SleipnirWindow(QMainWindow):
       ''' Align callbacks and events '''
       self.__ui.align_push_button_video1.clicked.connect(self.__cb_align_cam1_clicked)
       self.__ui.align_push_button_video2.clicked.connect(self.__cb_align_cam2_clicked)
-      event.on(AlignLogic.EVENT_ALIGN_START, self.__evt_alignlogic_align_start)
-      event.on(AlignLogic.EVENT_ALIGN_STOP, self.__evt_alignlogic_align_stop)
-      event.on(AlignLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_alignlogic_align_new_frame)
+      event.on(AlignLogic.EVENT_ALIGN_START, self.__evt_align_start)
+      event.on(AlignLogic.EVENT_ALIGN_STOP, self.__evt_align_stop)
+      event.on(AlignLogic.EVENT_ALIGN_NEW_FRAME, self.__evt_align_new_frame)
       self.__ui.align_push_button_video1.setEnabled(False)
       self.__ui.align_push_button_video2.setEnabled(False)
 
@@ -173,18 +173,23 @@ class SleipnirWindow(QMainWindow):
 
    ''' ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø    Align GUI    ¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø¤º°`°º¤ø,¸¸,ø '''
    def __cb_align_cam1_clicked(self):
+      self.__globals.set_game(Globals.GAME_ALIGN)
+
       if self.__ui.align_push_button_video1.text() == 'Align':
          self.__align_logic.start_align_camera('cam1')
       else:
          self.__align_logic.stop_align_camera('cam1')
 
    def __cb_align_cam2_clicked(self):
+      ''' Set game to ALIGN '''
+      self.__globals.set_game(Globals.GAME_ALIGN)
+
       if self.__ui.align_push_button_video2.text() == 'Align':
          self.__align_logic.start_align_camera('cam2')
       else:
          self.__align_logic.stop_align_camera('cam2')
 
-   def __evt_alignlogic_align_start(self, cam):
+   def __evt_align_start(self, cam):
       self.enable_all_gui_elements(False)
       if cam == 'cam1':
          self.__ui.align_push_button_video1.setText('Stop')
@@ -193,7 +198,7 @@ class SleipnirWindow(QMainWindow):
          self.__ui.align_push_button_video2.setText('Stop')
          self.__ui.align_push_button_video1.setEnabled(False)
 
-   def __evt_alignlogic_align_stop(self, cam):
+   def __evt_align_stop(self, cam):
       self.enable_all_gui_elements(True)
 
       self.__ui.align_push_button_video1.setText('Align')
@@ -209,7 +214,10 @@ class SleipnirWindow(QMainWindow):
       if not self.__camera_server.is_ready_to_shoot():
          self.__ui.sleipnir_push_button_start.setEnabled(False)
 
-   def __evt_alignlogic_align_new_frame(self, frame :Frame):
+      ''' Restore game to what's in the game combobox '''
+      self.__cb_game_changed(self.__ui.sleipnir_combo_box_game_select.currentIndex())
+
+   def __evt_align_new_frame(self, frame :Frame):
       self.__video_player_gui.display_frame(frame)
 
 
@@ -227,6 +235,9 @@ class SleipnirWindow(QMainWindow):
          self.__globals.set_game(Globals.GAME_GATE_CRASHER)
 
    def __evt_globals_game_change(self, game):
+      ''' Check if we are aligning, the we do not change the GUI '''
+      if game == Globals.GAME_ALIGN: return
+
       ''' Show Correct Game GUI '''
       self.__ui.stacked_widget_game.setCurrentIndex(
          {

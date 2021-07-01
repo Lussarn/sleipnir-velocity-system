@@ -1,4 +1,5 @@
 import simplejpeg
+from errors import NotFoundError
 
 from database.db import DB
 
@@ -34,7 +35,8 @@ class Frame:
         if self.__image is None:
             import database.frame_dao as frame_dao
             frame = frame_dao.load(db, game, self.__flight, self.__cam, self.__position)
-            if frame is None: return
+            if frame is None:
+                raise NotFoundError("Frame not found")
             return simplejpeg.decode_jpeg(frame.get_image(), colorspace='GRAY')
         else:
             image = self.__image

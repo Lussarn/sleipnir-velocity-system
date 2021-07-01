@@ -35,7 +35,7 @@ class AlignLogic:
         self.__state = AlignState()
         self.__camera_server = camera_server
         event.on(CameraServer.EVENT_CAMERA_OFFLINE, self.__evt_camerserver_camera_offline)
-        
+
     def __evt_camerserver_camera_offline(self, cam):
         ''' Stop aligning camera if we are doing it '''
         if self.__state.cam_aligning is not None:
@@ -55,7 +55,7 @@ class AlignLogic:
         try:
             import database.frame_dao as frame_dao
             logger.info("Deleting Frames for flight %d, hang on..." % self.__globals.get_flight())
-            frame_dao.delete_flight(self.__globals.get_db(), self.__globals.GAME_SPEED_TRAP ,self.__globals.get_flight())
+            frame_dao.delete_flight(self.__globals.get_db(), Globals.GAME_ALIGN ,self.__globals.get_flight())
         except Exception as e:
             logger.error(str(e))
             return

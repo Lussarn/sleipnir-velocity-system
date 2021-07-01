@@ -116,7 +116,10 @@ class VideoPlayerGUI:
 
     def display_frame(self, frame :Frame):
         ''' display video frame '''
-        image = frame.pop_image_load_if_missing(self.__globals.get_db(), self.__globals.get_game())
+        try:
+            image = frame.pop_image_load_if_missing(self.__globals.get_db(), self.__globals.get_game())
+        except NotFoundError as e:
+            return
 
         # Draw center line
         cv.rectangle(image, (160, 0), (160, 480), (0, 0, 0), 1)
