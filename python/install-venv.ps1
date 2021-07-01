@@ -9,7 +9,7 @@ if (-Not (Get-Location).Path.EndsWith("python")) {
 Write-Output "Checking for existing 'venv' directory"
 if (Test-Path -Path .\venv) {
     Write-Output "WARNING: 'venv' already exists, exiting..."
-    exit 0
+    exit 1
 }
 
 Write-Output "Creating virtual environment..."
