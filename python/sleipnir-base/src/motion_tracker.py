@@ -123,7 +123,7 @@ class MotionTracker:
                         if direction == 0: break
 
                         # If the moving object is not passed about half the screen, test more further back, to raise confidence
-                        if last_box.x + (last_box.w / 2) > 80 and last_box.x + (last_box.w / 2) < 240 and test_frames < 30:
+                        if last_box.x + (last_box.w / 2) > 80 and last_box.x + (last_box.w / 2) < 240 and test_frames < 20:
                             test_frames += 10
                             continue
 
