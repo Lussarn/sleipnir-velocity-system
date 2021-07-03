@@ -124,10 +124,10 @@ class SleipnirWindow(QMainWindow):
       if self.__db is not None:
          self.__db.stop()
 
-   def get_globals(self):
+   def get_globals(self) -> Globals:
       return self.__globals
 
-   def get_ui(self):
+   def get_ui(self) -> Ui_SleipnirWindow:
       return self.__ui
 
    def get_sound(self) -> Sound:
@@ -246,8 +246,12 @@ class SleipnirWindow(QMainWindow):
    def __load_flight(self, flight):
       self.__ui.radio_buttons_flights[flight - 1].setChecked(True)
 
-      self.__ui.slider_video['cam1'].setMaximum(1 if not self.__video_player.get_last_frame("cam1") else (self.__video_player.get_last_frame('cam1').get_position() or 1))
-      self.__ui.slider_video['cam2'].setMaximum(1 if not self.__video_player.get_last_frame("cam2") else (self.__video_player.get_last_frame('cam2').get_position() or 1))
+
+      self.__ui.slider_video['cam1'].setMaximum(1 if not self.__video_player.get_last_frame('cam1') else (self.__video_player.get_last_frame('cam1').get_position() or 1))
+      self.__ui.slider_video['cam2'].setMaximum(1 if not self.__video_player.get_last_frame('cam2') else (self.__video_player.get_last_frame('cam2').get_position() or 1))
+
+      self.__video_player_gui.set_default_image('cam1')
+      self.__video_player_gui.set_default_image('cam2')
       self.__video_player.set_position('cam1', 1)
       self.__video_player.set_position('cam2', 1)
 
@@ -258,8 +262,8 @@ class SleipnirWindow(QMainWindow):
 
    def __evt_globals_ground_level_change(self, value):
       ''' When the ground level change the videos needs to redraw '''
-      self.__video_player_gui.display_frame(self.__video_player.get_current_frame('cam1'))
-      self.__video_player_gui.display_frame(self.__video_player.get_current_frame('cam2'))
+      self.__video_player_gui.display_frame(self.__video_player.get_current_frame('cam1'), 'cam1')
+      self.__video_player_gui.display_frame(self.__video_player.get_current_frame('cam2'), 'cam2')
 
       ''' Do not try to set position if we are currently dragging '''
       if self.__ui.verticalSlider_groundlevel.isSliderDown() == False:

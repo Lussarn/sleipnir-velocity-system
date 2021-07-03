@@ -1,5 +1,6 @@
 from PySide2 import QtGui
 import cv2 as cv
+import simplejpeg
 
 from globals import Globals
 import event
@@ -18,15 +19,18 @@ import logger
 logger = logging.getLogger(__name__)
 
 class VideoPlayerGUI:
+
     def __init__(self, win, video_player :VideoPlayer):
         from sleipnir import SleipnirWindow
         self.__win = win                                # type: SleipnirWindow
         self.__ui = win.get_ui()                        # type: Ui_SleipnirWindow
-        self.__sound = win.get_sound()                  # type: Sound
         self.__globals = win.get_globals()              # type: Globals
-        self.__camera_server = win.get_camera_server()  # type: CameraServer
-        self.__configuration = win.get_configuration()  # type: Configuration
         self.__video_player = video_player
+
+        ''' Default image '''
+        self.__cam_default_image = cv.imread('assets/image/cam-default.png', 0)
+        self.__cam_default_image = cv.resize(self.__cam_default_image, (320, 480),  interpolation = cv.INTER_AREA)
+
 
         ''' video 1 '''
         self.__ui.video_player_push_button_video1_play_forward.clicked.connect(self.__cb_video1_play_forward_clicked)
@@ -51,10 +55,10 @@ class VideoPlayerGUI:
         self.__ui.video_player_push_button_video2_find.clicked.connect(self.__cb_video2_find_clicked)
 
         ''' Video player callbacs and events '''
-        event.on(VideoPlayer.EVENT_FRAME_NEW, self.__evt_videoplayer_play_new_frame)
+        event.on(VideoPlayer.EVENT_FRAME_NEW, self.__evt_videoplayer_frame_new)
 
-    def __evt_videoplayer_play_new_frame(self, frame :Frame):
-        self.display_frame(frame)
+    def __evt_videoplayer_frame_new(self, frame :Frame):
+        self.display_frame(frame, frame.get_cam())
         ''' block signal on slider change since it will do a video_player.set_poistion on change
         and thereby intrduce a circular event '''
         self.__ui.slider_video[frame.get_cam()].blockSignals(True)
@@ -113,20 +117,29 @@ class VideoPlayerGUI:
             self.__win.format_time(time)
         )
 
-    def display_frame(self, frame :Frame):
+    def display_frame(self, frame :Frame, cam: str):
         ''' display video frame '''
-        try:
-            image = frame.pop_image_load_if_missing(self.__globals.get_db(), self.__globals.get_game())
-        except NotFoundError as e:
-            return
 
-        # Draw center line
-        cv.rectangle(image, (160, 0), (160, 480), (0, 0, 0), 1)
-        # Draw ground level
+        ''' If frame is None, display default image '''
+        if frame is None:
+            import copy
+            image = copy.copy(self.__cam_default_image)
+        else:
+            try:
+                image = frame.pop_image_load_if_missing(self.__globals.get_db(), self.__globals.get_game())
+                ''' Draw center line '''
+                cv.rectangle(image, (160, 0), (160, 480), (0, 0, 0), 1)
+            except NotFoundError as e:
+                return
+
+        ''' Draw ground level '''
         cv.rectangle(image, (0, self.__globals.get_ground_level()), (320, self.__globals.get_ground_level()), (0, 0, 0), 1)
 
         image_qt = QtGui.QImage(image, image.shape[1], image.shape[0], image.strides[0], QtGui.QImage.Format_Indexed8)
-        self.__ui.widget_video[frame.get_cam()].setPixmap(QtGui.QPixmap.fromImage(image_qt))
+        self.__ui.widget_video[cam].setPixmap(QtGui.QPixmap.fromImage(image_qt))
+
+    def set_default_image(self, cam: str):
+        self.display_frame(None, cam)
 
     def enable_gui_elements(self, enabled: bool):
         self.__ui.video_player_slider_video1.setEnabled(enabled)

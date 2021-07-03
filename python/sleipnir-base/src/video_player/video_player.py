@@ -228,6 +228,9 @@ class VideoPlayer:
         event.emit(VideoPlayer.EVENT_FRAME_NEW, frame)
 
     def get_current_frame(self, cam) -> Frame:
+        if self.__state.frame_collection.get_frame_count(cam) == None:
+            return None
+
         ''' Get frame on current position '''
         return self.__state.frame_collection.get_frame(cam, self.__state.position[cam])
 

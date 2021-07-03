@@ -56,4 +56,4 @@ class GUI:
 
 
     def __evt_align_frame_new(self, frame :Frame):
-        self.__video_player_gui.display_frame(frame)        
+        self.__video_player_gui.display_frame(frame, frame.get_cam())        

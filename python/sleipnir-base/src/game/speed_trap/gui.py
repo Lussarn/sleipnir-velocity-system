@@ -92,7 +92,7 @@ class GUI:
         ''' Only display every third frame when live trackng - 30 fps '''
 
         if self.__ui.checkBox_live.isChecked() and frame.get_position() % 3 == 0:
-            self.__video_player_gui.display_frame(frame)
+            self.__video_player_gui.display_frame(frame, frame.get_cam())
         else:
             ''' pop image from frame to prevent memory leak '''
             frame.pop_image_load_if_missing(self.__globals.get_db(), self.__globals.get_game())
