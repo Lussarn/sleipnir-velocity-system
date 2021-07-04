@@ -67,12 +67,6 @@ session = requests.session()
 start = time.time()
 count  = 0
 while True:
-    ''' Rate limit  to fps '''
-    if count > (time.time() - start) * fps:
-        time.sleep(0.001)
-        continue
-    count += 1    
-
     for cam_idx in range(2):
         cam = cams[cam_idx]
 
@@ -89,7 +83,17 @@ while True:
         if (cam.get_state() == Camera.STATE_UPLOADING):
             position = cam.get_position()
             cam.set_position(position + 1)
+
             frame = frame_dao.load(db, "speed_trap", flight, cam.get_cam(), position + jump)
+            if cam.get_cam() == 'cam1':
+                if frame.get_position() == jump + 1:
+                    cam1_start_timestamp = frame.get_timestamp()
+                    time_start = time.time()
+                cam1_timestamp = frame.get_timestamp()
+                cam1_duration = cam1_timestamp - cam1_start_timestamp
+                while cam1_duration > int((time.time() - time_start) * 1000):
+                    time.sleep(0.001)
+
             response = session.post(url + "?action=uploadframe&cam=" + cam.get_cam() + "&position=" + str(frame.get_position() - jump ) + "&timestamp=" + str(frame.get_timestamp()), 
                 data=frame.get_image(),
                 timeout=1)
